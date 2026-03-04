@@ -11,19 +11,19 @@ An educational football club management game for Year 7 maths, built on event-so
 
 ## Current Phase: MVP Build
 
-- 2.1 React + Tailwind CSS frontend scaffolded ✅
-- 2.2 `useGameState()` hook — wraps domain `buildState(events)` ✅
-- 2.3 Command Centre hub layout (12-column grid) ✅
-- 2.4 League table component ✅
-- 2.5 Data tiles (budget, board confidence, week, position) ✅
-- 2.6 News ticker (partial headlines) ✅
-- 2.7 Social Feed slide-over (chat bubble UI, WhatsApp-style) ✅
-- 2.8 Math challenge card + hint system ✅
-- 2.9 Week advance button (disabled until events resolved) ✅
-- 2.10 Isometric Blueprint placeholder tiles (card-based) ✅
-- 2.11 First playable: 3-week mid-season loop (week 20 onward) — in progress
-- 2.12 End-to-end integration (full loop: start → events → math → advance → results)
-- 2.13 UI polish pass (responsiveness, error states, loading)
+- 2.1 React + Tailwind CSS frontend scaffolded ✅ (issue #1)
+- 2.2 `useGameState()` hook — wraps domain `buildState(events)` ✅ (issue #2)
+- 2.3 Command Centre hub layout (12-column grid) ✅ (issue #3)
+- 2.4 League table component ✅ (issue #4)
+- 2.5 Data tiles (budget, board confidence, week, position) ✅ (issue #5)
+- 2.6 News ticker (partial headlines) ✅ (issue #6)
+- 2.7 Social Feed slide-over (chat bubble UI, WhatsApp-style) ✅ (issue #7)
+- 2.8 Math challenge card + hint system ✅ (issue #8)
+- 2.9 Week advance button (disabled until events resolved) ✅ (issue #9)
+- 2.10 Isometric Blueprint placeholder tiles (card-based) ✅ (issue #10)
+- 2.11 First playable: 3-week mid-season loop (week 20 onward) — in progress (issue #11)
+- 2.12 End-to-end integration testing (issue #12)
+- 2.13 UI polish pass (responsiveness, error states, loading) (issue #13)
 
 ## Completed Phase: Domain Logic
 

@@ -3,16 +3,16 @@ project: "Calculating Glory"
 type: "build"
 priority: 2
 phase: "MVP Build"
-progress: 20
-lastUpdated: "2026-03-03"
-lastTouched: "2026-03-03"
+progress: 77
+lastUpdated: "2026-03-04"
+lastTouched: "2026-03-04"
 status: "in-progress"
 ---
 
 # Calculating Glory - Current Status
 
-**Phase:** MVP Build (20% complete)
-**Last Updated:** 2026-03-03
+**Phase:** MVP Build (77% complete — 10/13 issues closed)
+**Last Updated:** 2026-03-04
 
 ## What's Done
 
