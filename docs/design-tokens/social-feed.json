@@ -1,0 +1,26 @@
+{
+  "style_name": "Social Feed",
+  "ux_pattern": "Mobile-first messaging / WhatsApp-style (rendered as phone aesthetic on desktop)",
+  "extends": "shared.json",
+  "geometry": {
+    "chat_bubble_radius": { "ref": "shared.border_radius.large" },
+    "max_bubble_width": "70%"
+  },
+  "colors": {
+    "bubble_npc": { "ref": "shared.colors.chat_bubble" },
+    "active_state": {
+      "ref": "shared.colors.data_blue",
+      "note": "Glow effect when math challenge is live"
+    },
+    "alert": { "ref": "shared.colors.alert_red" }
+  },
+  "components": {
+    "input": "Numeric-focused Negotiation Keyboard"
+  },
+  "animation": {
+    "new_bubbles": {
+      "duration": "300ms",
+      "easing": "ease-in-out"
+    }
+  }
+}

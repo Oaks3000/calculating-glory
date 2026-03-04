@@ -1,0 +1,133 @@
+{
+  "description": "Component inventory for UI build",
+  "command_centre": {
+    "league_table": {
+      "description": "24-team league table with position, P/W/D/L, GF/GA/GD, Pts, form (last 5)",
+      "font": "shared.typography.data",
+      "notes": "Always visible on Command Centre. Highlight player's club row."
+    },
+    "squad_audit_table": {
+      "description": "Player roster with name, position, rating, wage, stats",
+      "font": "shared.typography.data",
+      "notes": "Monospaced columns for numerical alignment"
+    },
+    "player_card": {
+      "description": "Individual player detail — name, position, rating, age, morale, stats, wage",
+      "notes": "Shown on hover/click from squad table"
+    },
+    "data_tile": {
+      "description": "Key stat with label, value, and sparkline/trend arrow",
+      "examples": ["Transfer Budget: £320k ↓", "Board Confidence: 68% →", "League Position: 8th ↑"],
+      "notes": "Grid of tiles across top of Command Centre"
+    },
+    "budget_dashboard": {
+      "description": "Transfer budget remaining, weekly wage bill, income/outgoings",
+      "font": "shared.typography.data"
+    },
+    "news_ticker": {
+      "description": "Scrolling or stacked feed of partial headlines about club progress, signings, fan sentiment",
+      "examples": [
+        "FANS BUZZING after back-to-back wins lift club to...",
+        "NEW SIGNING: Manager swoops for midfielder in £120k...",
+        "CONCERN as defensive record slips to worst in..."
+      ],
+      "notes": "Partial headlines create intrigue. Tapping expands to full story in Social Feed."
+    }
+  },
+  "social_feed": {
+    "chat_bubble": {
+      "description": "NPC message bubble (left-aligned) and player response bubble (right-aligned)",
+      "npc_bg": "shared.colors.chat_bubble",
+      "player_bg": "shared.colors.data_blue",
+      "max_width": "70%"
+    },
+    "negotiation_keyboard": {
+      "description": "Numeric-focused input for math challenges — large number keys, operator keys, submit",
+      "notes": "Replaces standard text input during math challenges"
+    },
+    "calculator": {
+      "description": "Floating calculator widget on side of chat screen",
+      "trigger": "Appears automatically for certain question types, or on request",
+      "notes": "Basic operations only: +, -, ×, ÷, %. Not a cheat — a tool."
+    },
+    "math_challenge_card": {
+      "description": "Structured problem display within chat — question, input field, hint button, submit",
+      "active_glow": "shared.colors.data_blue",
+      "notes": "Glows when active. Shows difficulty tier via subtle indicator."
+    },
+    "hint_system": {
+      "description": "Progressive hints: 1st wrong = retry, 2nd = conceptual hint, 3rd = step-by-step, 4th = walkthrough",
+      "notes": "Delivered as NPC chat messages to feel natural"
+    }
+  },
+  "isometric_blueprint": {
+    "stadium": {
+      "description": "Central stadium building with 4 modular stands (N/S/E/W)",
+      "upgradeable": true,
+      "modules": {
+        "north_stand": { "levels": 5, "description": "Upgradeable stand — capacity + revenue" },
+        "south_stand": { "levels": 5, "description": "Upgradeable stand — capacity + revenue" },
+        "east_stand": { "levels": 5, "description": "Upgradeable stand — capacity + revenue" },
+        "west_stand": { "levels": 5, "description": "Upgradeable stand — capacity + revenue" }
+      },
+      "notes": "Visual upgrade per level (scaffolding → basic → covered → modern → premium)"
+    },
+    "training_pitch": {
+      "description": "Training facility — improves squad performance",
+      "levels": 5,
+      "benefit": "performance"
+    },
+    "gym": {
+      "description": "Fitness/medical centre — reduces injuries",
+      "levels": 5,
+      "benefit": "injury_reduction"
+    },
+    "youth_academy": {
+      "description": "Youth development — produces young talent",
+      "levels": 5,
+      "benefit": "youth_quality"
+    },
+    "car_park": {
+      "description": "Matchday parking — revenue stream",
+      "levels": 3,
+      "benefit": "revenue"
+    },
+    "restaurant": {
+      "description": "Matchday hospitality / restaurant facilities — revenue stream",
+      "levels": 3,
+      "benefit": "revenue"
+    },
+    "club_store": {
+      "description": "Merchandise shop — revenue stream",
+      "levels": 3,
+      "benefit": "revenue"
+    },
+    "notes": "Each building clickable. Click opens Blueprint Slide-over with upgrade cost, ROI calculation (math challenge), and visual preview of next level."
+  },
+  "navigation": {
+    "hub_tiles": {
+      "isometric_tile": {
+        "description": "Small tile on Command Centre showing miniature isometric view",
+        "behaviour": "Glows when facility upgrade available. Click opens Isometric Blueprint as slide-over."
+      },
+      "social_tile": {
+        "description": "Small tile on Command Centre showing latest chat preview / notification count",
+        "behaviour": "Glows when unread events/negotiations. Click opens Social Feed as slide-over."
+      }
+    },
+    "slide_over": {
+      "description": "Full-height panel sliding in from the right, overlaying the Command Centre",
+      "width": "70-80% of viewport",
+      "close": "X button or click outside to return to Command Centre",
+      "backdrop": "Command Centre dims but remains partially visible"
+    },
+    "week_advance_button": {
+      "description": "Primary action button to advance to next week",
+      "location": "Bottom-right of Command Centre",
+      "states": {
+        "ready": "Enabled — all pending events resolved",
+        "blocked": "Disabled — pending events must be dealt with first"
+      }
+    }
+  }
+}

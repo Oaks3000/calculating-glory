@@ -1,0 +1,77 @@
+{
+  "style_name": "Shared",
+  "description": "Cross-pillar tokens used across Command Centre, Social Feed, and Isometric Blueprint",
+  "colors": {
+    "bg_deep_space": {
+      "value": "#0B1622",
+      "label": "Dashboard Background",
+      "css_var": "--bg-deep-space"
+    },
+    "bg_surface": {
+      "value": "#1B2635",
+      "label": "Card/Widget Background",
+      "css_var": "--bg-surface"
+    },
+    "text_primary": {
+      "value": "#F1F5F9",
+      "label": "Slate-100 (no pure white)",
+      "css_var": "--text-primary"
+    },
+    "data_blue": {
+      "value": "#448AFF",
+      "label": "Correct Math / Success / Positive Trends",
+      "css_var": "--data-blue"
+    },
+    "alert_red": {
+      "value": "#D32F2F",
+      "label": "Math Error / Debt / Warnings",
+      "css_var": "--alert-red"
+    },
+    "pitch_green": {
+      "value": "#4CAF50",
+      "label": "Isometric Grass / Stadium Ground",
+      "css_var": "--pitch-green"
+    },
+    "chat_bubble": {
+      "value": "#F0F2F5",
+      "label": "NPC Message Background",
+      "css_var": "--chat-bubble"
+    }
+  },
+  "typography": {
+    "headings": {
+      "family": "Inter",
+      "fallback": "sans-serif",
+      "weight_header": 600,
+      "weight_label": 400
+    },
+    "data": {
+      "family": "JetBrains Mono",
+      "fallback": "Roboto Mono, monospace",
+      "note": "Mandatory for tables, stats, math input"
+    },
+    "narrative": {
+      "family": "system-ui",
+      "fallback": "-apple-system, sans-serif",
+      "note": "Chat bubbles, story text, press headlines"
+    }
+  },
+  "spacing": {
+    "base_grid": "4px",
+    "note": "All margins and padding must be multiples of 4"
+  },
+  "border_radius": {
+    "small": {
+      "value": "4px",
+      "label": "Tags, badges"
+    },
+    "medium": {
+      "value": "12px",
+      "label": "Widgets, cards, data tiles"
+    },
+    "large": {
+      "value": "20px",
+      "label": "Chat bubbles"
+    }
+  }
+}

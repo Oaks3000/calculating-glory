@@ -1,0 +1,27 @@
+{
+  "name": "@calculating-glory/domain",
+  "version": "0.1.0",
+  "description": "Domain logic for calculating glory game",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:determinism": "jest --testPathPattern=determinism",
+    "lint": "echo 'Add linting here'",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "domain",
+    "game-logic"
+  ],
+  "author": "Educational Game Development",
+  "license": "SEE LICENSE IN LICENSE",
+  "devDependencies": {
+    "@types/jest": "^29.5.0",
+    "jest": "^29.5.0",
+    "ts-jest": "^29.1.0",
+    "typescript": "^5.3.0"
+  }
+}

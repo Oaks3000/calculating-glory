@@ -1,0 +1,36 @@
+{
+  "name": "calculating-glory",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Educational football club management game for Year 7 maths",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=frontend",
+    "build": "npm run build --workspaces",
+    "test": "npm run test --workspaces",
+    "test:domain": "npm run test --workspace=domain",
+    "test:determinism": "npm run test:determinism --workspace=domain",
+    "lint": "npm run lint --workspaces",
+    "clean": "rm -rf node_modules packages/*/node_modules packages/*/dist"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  },
+  "keywords": [
+    "education",
+    "mathematics",
+    "game",
+    "year-7",
+    "football",
+    "management"
+  ],
+  "author": "Educational Game Development",
+  "license": "SEE LICENSE IN LICENSE"
+}

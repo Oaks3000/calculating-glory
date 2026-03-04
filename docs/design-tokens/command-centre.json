@@ -1,0 +1,33 @@
+{
+  "style_name": "Command Center",
+  "philosophy": "NASA for Football / High-Density Data",
+  "extends": "shared.json",
+  "layout": {
+    "grid": "12-column",
+    "sidebar_collapsed": "80px",
+    "sidebar_expanded": "240px"
+  },
+  "typography": {
+    "ui_labels": {
+      "ref": "shared.typography.headings"
+    },
+    "numerical_data": {
+      "ref": "shared.typography.data"
+    }
+  },
+  "colors": {
+    "background": { "ref": "shared.colors.bg_deep_space" },
+    "surface": { "ref": "shared.colors.bg_surface" },
+    "text": { "ref": "shared.colors.text_primary" },
+    "data_highlight": { "ref": "shared.colors.data_blue" },
+    "alert": { "ref": "shared.colors.alert_red" }
+  },
+  "geometry": {
+    "base_grid": { "ref": "shared.spacing.base_grid" },
+    "widget_radius": { "ref": "shared.border_radius.medium" }
+  },
+  "rules": {
+    "text": "No pure white text — use Slate-100 to prevent eye-strain",
+    "data_tiles": "Must include sparkline or trend arrow next to math-based stats"
+  }
+}

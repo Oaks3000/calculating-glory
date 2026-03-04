@@ -1,0 +1,55 @@
+{
+  "description": "MVP UI scope — mid-season 3-week loop",
+  "target_device": {
+    "primary": "Chromebook (school-issued)",
+    "viewport": "1366x768",
+    "input": "keyboard + trackpad (no touch assumed)",
+    "notes": "Chromebook screens are small and low-res. Keep information dense but not cramped. Test at 1366x768."
+  },
+  "mvp_loop": {
+    "description": "3 consecutive mid-season weeks to prove the full gameplay loop",
+    "starting_state": "Week 20 of 46. Player is mid-table (8th-12th). Season in progress, squad established.",
+    "per_week_flow": [
+      "1. Command Centre: see league table, data tiles (budget, position, form, confidence), news ticker",
+      "2. Social Feed tile glows: 1-2 events to resolve (negotiation, sponsorship, crisis, etc.)",
+      "3. Open Social Feed slide-over: chat with NPC, resolve event (may include math challenge)",
+      "4. Return to Command Centre: see updated state from decisions",
+      "5. Optional: open Isometric Blueprint to upgrade a facility (math challenge for ROI)",
+      "6. Click 'Advance Week': simulation runs, match results appear, league table updates",
+      "7. News ticker updates with headlines from the week's results"
+    ],
+    "what_this_proves": [
+      "Command Centre as the hub works",
+      "Slide-over navigation between pillars feels natural",
+      "Math challenges are integrated into decisions, not bolted on",
+      "Week-to-week progression creates momentum",
+      "Domain logic (events, simulation, reducers) drives the UI correctly",
+      "Chromebook viewport is usable"
+    ]
+  },
+  "screens_needed": {
+    "command_centre": {
+      "components": ["league_table", "data_tiles", "news_ticker", "squad_audit_table", "isometric_tile", "social_tile", "week_advance_button"],
+      "priority": "Must have"
+    },
+    "social_feed_slideout": {
+      "components": ["chat_bubble", "math_challenge_card", "calculator", "negotiation_keyboard"],
+      "priority": "Must have"
+    },
+    "isometric_slideout": {
+      "components": ["stadium", "training_pitch", "gym", "club_store"],
+      "priority": "Nice to have for MVP (can stub with placeholder tiles)",
+      "notes": "Even a simplified version with clickable building cards (not full isometric) proves the loop"
+    }
+  },
+  "out_of_scope_for_mvp": [
+    "Pre-season flow (club intro, initial transfers, staff hiring)",
+    "Transfer window UI",
+    "End-of-season review",
+    "Tutorial/onboarding system",
+    "Adaptive difficulty engine",
+    "Full isometric rendering (card-based placeholder is fine)",
+    "Player card detail view",
+    "Budget dashboard (data tiles cover this for now)"
+  ]
+}

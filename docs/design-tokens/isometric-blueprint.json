@@ -1,0 +1,21 @@
+{
+  "style_name": "Isometric Blueprint",
+  "perspective": "Fixed 45-degree isometric",
+  "visual_language": "SNES-style Tycoon / Pixel Art",
+  "extends": "shared.json",
+  "grid": {
+    "tile_width": "64px",
+    "tile_height": "32px",
+    "ratio": "2:1"
+  },
+  "shading": "1px pixel-art outlines or sharp low-poly edges",
+  "colors": {
+    "primary_bg": { "ref": "shared.colors.pitch_green" },
+    "math_overlay": { "ref": "shared.colors.data_blue" },
+    "alert": { "ref": "shared.colors.alert_red" }
+  },
+  "rules": {
+    "outlines": "Objects must have 1px pixel-art outline or sharp low-poly edge",
+    "integration": "Clicking a building triggers Blueprint Slide-over from the right, using Command Centre aesthetic"
+  }
+}
