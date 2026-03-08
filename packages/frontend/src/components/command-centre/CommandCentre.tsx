@@ -5,7 +5,8 @@ import { LeagueTable } from './LeagueTable';
 import { SquadAuditTable } from './SquadAuditTable';
 import { NewsTicker } from './NewsTicker';
 import { WeekAdvanceButton } from './WeekAdvanceButton';
-import { PendingEventCard } from './PendingEventCard';
+import { InboxCard } from './InboxCard';
+import { InboxHistory } from './InboxHistory';
 import { HubTile } from './HubTiles';
 import { SlideOver } from '../shared/SlideOver';
 import { SocialFeed } from '../social-feed/SocialFeed';
@@ -23,6 +24,12 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
   const [socialOpen, setSocialOpen]           = useState(false);
   const [socialLinkedEvent, setSocialLinked]  = useState<PendingClubEvent | null>(null);
   const [isometricOpen, setIsometricOpen]     = useState(false);
+  const [inboxOpen, setInboxOpen]             = useState(false);
+  const [dismissed, setDismissed]             = useState<Set<number>>(new Set());
+
+  function handleDismiss(idx: number) {
+    setDismissed(prev => new Set([...prev, idx]));
+  }
 
   function handleMathChallenge(event: PendingClubEvent) {
     setSocialLinked(event);
@@ -35,13 +42,15 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
   }
 
   const unresolvedEvents = state.pendingEvents.filter(e => !e.resolved);
-  const maxFacilityLevel = Math.max(...state.club.facilities.map(f => f.level));
+  const maxFacilityLevel = state.club.facilities.length > 0
+    ? Math.max(...state.club.facilities.map(f => f.level))
+    : 0;
   const canUpgrade       = state.club.facilities.some(
     f => f.level < 5 && f.upgradeCost <= state.club.transferBudget
   );
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-screen overflow-hidden">
 
       {/* ── Live News Ticker (very top) ───────────────────────────────────── */}
       <NewsTicker
@@ -51,7 +60,7 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
       />
 
       {/* ── Header ───────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 pt-3 pb-2">
+      <div className="flex items-center justify-between px-4 pt-2 pb-1">
         <div>
           <h1 className="text-lg font-bold text-txt-primary tracking-tight">
             {state.club.name}
@@ -88,20 +97,59 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
       )}
 
       {/* ── Main area ────────────────────────────────────────────────────── */}
-      <div className="flex flex-col gap-4 px-4 pb-4 flex-1">
+      <div className="flex flex-col gap-2 px-4 pb-2 flex-1 overflow-y-auto">
 
-        {/* Top section: Squad (left) | Data tiles 2-col grid (right) */}
-        <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-4">
-          <SquadAuditTable state={state} />
+        {/* Top section: Inbox spans both rows (left) | DataTiles + Hub tiles stacked (right) */}
+        <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_1fr] gap-2">
+
+          {/* LEFT: Inbox — row-spans DataTiles row + hub tiles row */}
+          <div className="xl:row-span-2 min-h-0 relative">
+            <InboxCard
+              pendingEvents={state.pendingEvents}
+              events={events}
+              clubId={state.club.id}
+              leagueEntries={state.league.entries}
+              dismissed={dismissed}
+              onDismiss={handleDismiss}
+              dispatch={dispatch}
+              onError={setError}
+              onMathChallenge={handleMathChallenge}
+              onViewAll={() => setInboxOpen(true)}
+            />
+          </div>
+
+          {/* RIGHT row 1: DataTiles */}
           <DataTiles state={state} gridMode />
+
+          {/* RIGHT row 2: Stadium & Facilities + Chats side-by-side */}
+          <div className="grid grid-cols-2 gap-2">
+            <HubTile
+              icon="🏟"
+              label="Stadium & Facilities"
+              sub={canUpgrade ? 'Upgrade available' : `Facilities Lv${maxFacilityLevel}`}
+              hasEvent={canUpgrade}
+              onClick={() => setIsometricOpen(true)}
+            />
+            <HubTile
+              icon="💬"
+              label="Chats"
+              sub={
+                unresolvedEvents.some(e => e.choices.some(c => c.requiresMath))
+                  ? 'Negotiations waiting'
+                  : 'Practice sessions available'
+              }
+              hasEvent={unresolvedEvents.some(e => e.choices.some(c => c.requiresMath))}
+              onClick={() => { setSocialLinked(null); setSocialOpen(true); }}
+            />
+          </div>
         </div>
 
-        {/* Bottom section: 4 equal columns */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        {/* Bottom section: League Table + Squad full-width */}
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
 
-          {/* Col 1: League Table (scrollable) */}
-          <div className="flex flex-col">
-            <div className="overflow-y-auto max-h-80 rounded-card">
+          {/* League Table */}
+          <div className="flex flex-col min-w-0">
+            <div className="overflow-y-auto max-h-56 rounded-card">
               <LeagueTable
                 entries={state.league.entries}
                 playerClubId={state.club.id}
@@ -111,63 +159,41 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
             </div>
           </div>
 
-          {/* Col 2: Pending Decisions */}
-          <div className="flex flex-col gap-2">
-            <h2 className="text-xs font-semibold text-warn-amber uppercase tracking-wider">
-              {unresolvedEvents.length > 0
-                ? `⚠ Pending Decisions (${unresolvedEvents.length})`
-                : '✓ Pending Decisions'}
-            </h2>
-            {unresolvedEvents.length > 0 ? (
-              <div className="flex flex-col gap-2 overflow-y-auto max-h-72">
-                {unresolvedEvents.map(evt => (
-                  <PendingEventCard
-                    key={evt.id}
-                    event={evt}
-                    dispatch={dispatch}
-                    onError={setError}
-                    onMathChallenge={handleMathChallenge}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="card flex flex-col items-center justify-center gap-2 py-6 text-center border border-pitch-green/20 bg-pitch-green/5">
-                <span className="text-2xl">✓</span>
-                <span className="text-xs text-pitch-green font-medium">All clear</span>
-                <span className="text-xs2 text-txt-muted">No decisions waiting</span>
-              </div>
-            )}
+          {/* Squad */}
+          <div className="flex flex-col min-w-0">
+            <div className="overflow-y-auto max-h-56 rounded-card">
+              <SquadAuditTable state={state} />
+            </div>
           </div>
-
-          {/* Col 3: Club Blueprint */}
-          <HubTile
-            icon="🏟"
-            label="Club Blueprint"
-            sub={canUpgrade ? 'Upgrade available' : `Facilities Lv${maxFacilityLevel}`}
-            hasEvent={canUpgrade}
-            onClick={() => setIsometricOpen(true)}
-          />
-
-          {/* Col 4: Social Feed */}
-          <HubTile
-            icon="💬"
-            label="Social Feed"
-            sub={
-              unresolvedEvents.some(e => e.choices.some(c => c.requiresMath))
-                ? 'Negotiations waiting'
-                : 'Practice sessions available'
-            }
-            hasEvent={unresolvedEvents.some(e => e.choices.some(c => c.requiresMath))}
-            onClick={() => { setSocialLinked(null); setSocialOpen(true); }}
-          />
         </div>
       </div>
+
+      {/* ── Inbox slide-over ─────────────────────────────────────────────── */}
+      <SlideOver
+        isOpen={inboxOpen}
+        onClose={() => setInboxOpen(false)}
+        title="Inbox"
+      >
+        {inboxOpen && (
+          <InboxHistory
+            pendingEvents={state.pendingEvents}
+            events={events}
+            clubId={state.club.id}
+            leagueEntries={state.league.entries}
+            dismissed={dismissed}
+            onDismiss={handleDismiss}
+            dispatch={dispatch}
+            onError={setError}
+            onMathChallenge={handleMathChallenge}
+          />
+        )}
+      </SlideOver>
 
       {/* ── Social Feed slide-over ────────────────────────────────────────── */}
       <SlideOver
         isOpen={socialOpen}
         onClose={handleSocialClose}
-        title={socialLinkedEvent ? 'Negotiate — Agent Rodriguez' : 'Social Feed'}
+        title={socialLinkedEvent ? 'Negotiate — Agent Rodriguez' : 'Chats'}
       >
         {socialOpen && (
           <SocialFeed
@@ -182,7 +208,7 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
       <SlideOver
         isOpen={isometricOpen}
         onClose={() => setIsometricOpen(false)}
-        title="Club Blueprint"
+        title="Stadium &amp; Facilities"
       >
         <IsometricBlueprint state={state} dispatch={dispatch} onError={setError} />
       </SlideOver>

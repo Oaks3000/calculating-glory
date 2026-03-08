@@ -33,6 +33,7 @@ export function generateChallenge(
   index: number,
   performance?: TopicPerformance,
   topicOverride?: ChallengeTopic,
+  excludeTemplateSlug?: string,
 ): MathChallenge {
   const { club, league, boardConfidence } = state;
 
@@ -419,9 +420,18 @@ export function generateChallenge(
   ];
 
   // ── Topic override: filter bank to a single topic ────────────────────────────
-  const pool = topicOverride
+  const topicFiltered = topicOverride
     ? challenges.filter(c => c.topic === topicOverride)
     : challenges;
+
+  // ── Exclude the previously shown template to avoid back-to-back duplicates ──
+  const templateSlug = excludeTemplateSlug ?? '';
+  const deduped = templateSlug
+    ? topicFiltered.filter(c => !c.id.endsWith(`-${templateSlug}`))
+    : topicFiltered;
+
+  // Fall back to full topic pool if exclusion would empty it
+  const pool = deduped.length > 0 ? deduped : topicFiltered;
   const safePool = pool.length > 0 ? pool : challenges;
 
   // ── No performance data or all zeros → plain index cycling ─────────────────

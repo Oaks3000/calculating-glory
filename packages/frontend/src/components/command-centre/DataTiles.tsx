@@ -88,7 +88,7 @@ export function DataTiles({ state, gridMode }: DataTilesProps) {
       color: 'text-warn-amber',
     },
     {
-      label: 'Squad Size',
+      label: 'Backroom Team',
       value: `${club.squad.length}`,
       sub: `${club.staff.length} staff`,
       trend: club.squad.length < 18 ? 'down' : 'flat',
@@ -102,7 +102,7 @@ export function DataTiles({ state, gridMode }: DataTilesProps) {
   ];
 
   return (
-    <div className={gridMode ? 'grid grid-cols-2 gap-3' : 'flex flex-wrap gap-3'}>
+    <div className={gridMode ? 'grid grid-cols-4 gap-2' : 'flex flex-wrap gap-3'}>
       {tiles.map(tile => (
         <DataTile key={tile.label} {...tile} />
       ))}
