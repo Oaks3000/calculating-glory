@@ -12,6 +12,7 @@ import { SlideOver } from '../shared/SlideOver';
 import { SocialFeed } from '../social-feed/SocialFeed';
 import { IsometricBlueprint } from '../isometric/IsometricBlueprint';
 import { BackroomTeamSlideOver } from './BackroomTeamSlideOver';
+import { LearningProgressSlideOver } from './LearningProgressSlideOver';
 
 interface CommandCentreProps {
   state: GameState;
@@ -27,6 +28,7 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
   const [isometricOpen, setIsometricOpen]     = useState(false);
   const [inboxOpen, setInboxOpen]             = useState(false);
   const [backroomOpen, setBackroomOpen]       = useState(false);
+  const [learningOpen, setLearningOpen]       = useState(false);
   const [dismissed, setDismissed]             = useState<Set<number>>(new Set());
 
   function handleDismiss(idx: number) {
@@ -122,7 +124,7 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
           </div>
 
           {/* RIGHT row 1: DataTiles */}
-          <DataTiles state={state} gridMode onBackroomClick={() => setBackroomOpen(true)} />
+          <DataTiles state={state} gridMode onBackroomClick={() => setBackroomOpen(true)} onAcumenClick={() => setLearningOpen(true)} />
 
           {/* RIGHT row 2: Stadium & Facilities + Chats side-by-side */}
           <div className="grid grid-cols-2 gap-2">
@@ -225,6 +227,17 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
       >
         {backroomOpen && (
           <BackroomTeamSlideOver state={state} dispatch={dispatch} onError={setError} />
+        )}
+      </SlideOver>
+
+      {/* ── Learning Progress slide-over ─────────────────────────────────── */}
+      <SlideOver
+        isOpen={learningOpen}
+        onClose={() => setLearningOpen(false)}
+        title="Learning Progress"
+      >
+        {learningOpen && (
+          <LearningProgressSlideOver state={state} events={events} />
         )}
       </SlideOver>
 
