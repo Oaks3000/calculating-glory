@@ -11,6 +11,7 @@ import { HubTile } from './HubTiles';
 import { SlideOver } from '../shared/SlideOver';
 import { SocialFeed } from '../social-feed/SocialFeed';
 import { IsometricBlueprint } from '../isometric/IsometricBlueprint';
+import { BackroomTeamSlideOver } from './BackroomTeamSlideOver';
 
 interface CommandCentreProps {
   state: GameState;
@@ -25,6 +26,7 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
   const [socialLinkedEvent, setSocialLinked]  = useState<PendingClubEvent | null>(null);
   const [isometricOpen, setIsometricOpen]     = useState(false);
   const [inboxOpen, setInboxOpen]             = useState(false);
+  const [backroomOpen, setBackroomOpen]       = useState(false);
   const [dismissed, setDismissed]             = useState<Set<number>>(new Set());
 
   function handleDismiss(idx: number) {
@@ -109,6 +111,7 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
               events={events}
               clubId={state.club.id}
               leagueEntries={state.league.entries}
+              currentWeek={state.currentWeek}
               dismissed={dismissed}
               onDismiss={handleDismiss}
               dispatch={dispatch}
@@ -119,7 +122,7 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
           </div>
 
           {/* RIGHT row 1: DataTiles */}
-          <DataTiles state={state} gridMode />
+          <DataTiles state={state} gridMode onBackroomClick={() => setBackroomOpen(true)} />
 
           {/* RIGHT row 2: Stadium & Facilities + Chats side-by-side */}
           <div className="grid grid-cols-2 gap-2">
@@ -180,6 +183,7 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
             events={events}
             clubId={state.club.id}
             leagueEntries={state.league.entries}
+            currentWeek={state.currentWeek}
             dismissed={dismissed}
             onDismiss={handleDismiss}
             dispatch={dispatch}
@@ -211,6 +215,17 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
         title="Stadium &amp; Facilities"
       >
         <IsometricBlueprint state={state} dispatch={dispatch} onError={setError} />
+      </SlideOver>
+
+      {/* ── Backroom Team slide-over ──────────────────────────────────────── */}
+      <SlideOver
+        isOpen={backroomOpen}
+        onClose={() => setBackroomOpen(false)}
+        title="Backroom Team"
+      >
+        {backroomOpen && (
+          <BackroomTeamSlideOver state={state} dispatch={dispatch} onError={setError} />
+        )}
       </SlideOver>
 
       {/* ── Loading overlay ───────────────────────────────────────────────── */}

@@ -2,6 +2,7 @@ import { GameEvent, GameCommand, PendingClubEvent, LeagueTableEntry } from '@cal
 import { PendingEventCard } from './PendingEventCard';
 import {
   buildNotableMatches,
+  buildNewsItems,
   OUTCOME_STYLES,
   REASON_ORDER,
 } from './inboxUtils';
@@ -11,6 +12,7 @@ interface InboxCardProps {
   events: GameEvent[];
   clubId: string;
   leagueEntries: LeagueTableEntry[];
+  currentWeek: number;
   dismissed: Set<number>;
   onDismiss: (idx: number) => void;
   dispatch: (command: GameCommand) => { error?: string };
@@ -26,6 +28,7 @@ export function InboxCard({
   events,
   clubId,
   leagueEntries,
+  currentWeek,
   dismissed,
   onDismiss,
   dispatch,
@@ -35,14 +38,31 @@ export function InboxCard({
 }: InboxCardProps) {
   const unresolvedDecisions = pendingEvents.filter(e => !e.resolved);
 
-  // Build notable matches for the last round only (last 24 MATCH_SIMULATED events)
+  // Notable match results for latest round only
   const allNotable = buildNotableMatches(events, clubId, leagueEntries, dismissed, 24);
   allNotable.sort((a, b) => REASON_ORDER[a.reason] - REASON_ORDER[b.reason]);
 
-  const displayMatches = allNotable.slice(0, PREVIEW_LIMIT);
-  const hiddenCount    = allNotable.length - displayMatches.length;
+  // Random news items for the current week (seeded, deterministic)
+  const playerPosition = leagueEntries.findIndex(e => e.clubId === clubId);
+  const rivalNames = playerPosition >= 0
+    ? leagueEntries
+        .slice(Math.max(0, playerPosition - 3), Math.min(leagueEntries.length, playerPosition + 4))
+        .filter(e => e.clubId !== clubId)
+        .map(e => e.clubName)
+    : [];
+  const newsItems = buildNewsItems(currentWeek, rivalNames, dismissed);
 
-  const isEmpty = unresolvedDecisions.length === 0 && allNotable.length === 0;
+  // Combined preview pool: decisions first, then matches, then news
+  const totalMatches = allNotable.length;
+  const totalNews    = newsItems.length;
+  const previewMatchCount = Math.min(totalMatches, PREVIEW_LIMIT);
+  const previewNewsCount  = Math.min(totalNews, Math.max(0, PREVIEW_LIMIT - previewMatchCount));
+
+  const displayMatches = allNotable.slice(0, previewMatchCount);
+  const displayNews    = newsItems.slice(0, previewNewsCount);
+  const hiddenCount    = (totalMatches - previewMatchCount) + (totalNews - previewNewsCount);
+
+  const isEmpty = unresolvedDecisions.length === 0 && totalMatches === 0 && totalNews === 0;
 
   return (
     <div className="absolute inset-0 bg-bg-raised rounded-card p-4 overflow-hidden flex flex-col">
@@ -130,6 +150,39 @@ export function InboxCard({
                     {item.home} {item.homeGoals}–{item.awayGoals} {item.away}
                   </span>
                 </div>
+              </div>
+            ))}
+          </>
+        )}
+
+        {/* News items — texture, no gameplay effect */}
+        {displayNews.length > 0 && (
+          <>
+            {(unresolvedDecisions.length > 0 || displayMatches.length > 0) && (
+              <div className="border-t border-bg-deep/60 mt-0.5 mb-0.5" />
+            )}
+            <p className="text-xs2 text-txt-muted uppercase tracking-wider px-1">
+              Around the League
+            </p>
+            {displayNews.map((item) => (
+              <div
+                key={`news-${item.id}`}
+                className="flex items-start gap-2 px-3 py-1.5 rounded-card text-xs group
+                           relative bg-bg-surface/60 border border-bg-deep/20 hover:bg-bg-surface
+                           cursor-default"
+              >
+                <button
+                  onClick={() => onDismiss(item.id)}
+                  className="absolute top-1 right-1.5 text-txt-muted/30 hover:text-txt-muted
+                             opacity-0 group-hover:opacity-100 transition-opacity text-xs2 leading-none"
+                  aria-label="Dismiss"
+                >
+                  ✕
+                </button>
+                <span className="shrink-0 text-sm">{item.icon}</span>
+                <span className="text-xs2 text-txt-muted/90 pr-4 leading-relaxed">
+                  {item.headline}
+                </span>
               </div>
             ))}
           </>

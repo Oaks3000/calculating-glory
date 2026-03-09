@@ -2,8 +2,10 @@ import { GameEvent, GameCommand, PendingClubEvent, LeagueTableEntry } from '@cal
 import { PendingEventCard } from './PendingEventCard';
 import {
   buildNotableMatches,
+  buildNewsItems,
   OUTCOME_STYLES,
   NotableMatch,
+  NewsItem,
 } from './inboxUtils';
 
 interface InboxHistoryProps {
@@ -11,6 +13,7 @@ interface InboxHistoryProps {
   events: GameEvent[];
   clubId: string;
   leagueEntries: LeagueTableEntry[];
+  currentWeek: number;
   dismissed: Set<number>;
   onDismiss: (idx: number) => void;
   dispatch: (command: GameCommand) => { error?: string };
@@ -81,11 +84,33 @@ function MatchItem({
   );
 }
 
+function NewsRow({ item, onDismiss }: { item: NewsItem; onDismiss: (id: number) => void }) {
+  return (
+    <div className="flex items-start gap-2 mx-4 mb-1.5 px-3 py-2 rounded-card text-xs group
+                    relative bg-bg-raised border border-bg-deep/30">
+      <button
+        onClick={() => onDismiss(item.id)}
+        className="absolute top-1.5 right-2 text-txt-muted/30 hover:text-txt-muted
+                   opacity-0 group-hover:opacity-100 transition-opacity text-xs2 leading-none"
+        aria-label="Dismiss"
+      >
+        ✕
+      </button>
+      <span className="shrink-0 text-sm mt-0.5">{item.icon}</span>
+      <div className="min-w-0 pr-4">
+        <span className="text-xs2 text-txt-muted/90 leading-relaxed">{item.headline}</span>
+        <span className="block text-xs2 text-txt-muted/40 mt-0.5">Wk {item.week}</span>
+      </div>
+    </div>
+  );
+}
+
 export function InboxHistory({
   pendingEvents,
   events,
   clubId,
   leagueEntries,
+  currentWeek,
   dismissed,
   onDismiss,
   dispatch,
@@ -95,11 +120,22 @@ export function InboxHistory({
   const unresolved = pendingEvents.filter(e => !e.resolved);
   const resolved   = pendingEvents.filter(e => e.resolved);
 
-  // All notable matches across full history, newest first
+  // All notable matches — full history, newest first
   const allNotable = buildNotableMatches(events, clubId, leagueEntries, dismissed);
-  allNotable.sort((a, b) => b.idx - a.idx); // reverse chronological
+  allNotable.sort((a, b) => b.idx - a.idx);
 
-  const isEmpty = unresolved.length === 0 && allNotable.length === 0 && resolved.length === 0;
+  // News items for the current week
+  const playerPosition = leagueEntries.findIndex(e => e.clubId === clubId);
+  const rivalNames = playerPosition >= 0
+    ? leagueEntries
+        .slice(Math.max(0, playerPosition - 3), Math.min(leagueEntries.length, playerPosition + 4))
+        .filter(e => e.clubId !== clubId)
+        .map(e => e.clubName)
+    : [];
+  const newsItems = buildNewsItems(currentWeek, rivalNames, dismissed);
+
+  const resultsCount = allNotable.length + newsItems.length;
+  const isEmpty = unresolved.length === 0 && resultsCount === 0 && resolved.length === 0;
 
   if (isEmpty) {
     return (
@@ -132,12 +168,15 @@ export function InboxHistory({
         </>
       )}
 
-      {/* ── Match results (full history) ──────────────────────────────── */}
-      {allNotable.length > 0 && (
+      {/* ── Match results + news (full history) ───────────────────────── */}
+      {resultsCount > 0 && (
         <>
-          <SectionHeading label="Results" count={allNotable.length} />
+          <SectionHeading label="Results & News" count={resultsCount} />
           {allNotable.map(item => (
             <MatchItem key={`match-${item.idx}`} item={item} onDismiss={onDismiss} />
+          ))}
+          {newsItems.map(item => (
+            <NewsRow key={`news-${item.id}`} item={item} onDismiss={onDismiss} />
           ))}
         </>
       )}

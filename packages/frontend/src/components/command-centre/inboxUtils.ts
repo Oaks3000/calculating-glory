@@ -1,5 +1,132 @@
 import { GameEvent, LeagueTableEntry } from '@calculating-glory/domain';
 
+// ── Seeded PRNG (splitmix32) ──────────────────────────────────────────────────
+
+function splitmix32(seed: number) {
+  let s = seed >>> 0;
+  return function (): number {
+    s = (s + 0x9e3779b9) >>> 0;
+    let z = s;
+    z = ((z ^ (z >>> 16)) * 0x85ebca6b) >>> 0;
+    z = ((z ^ (z >>> 13)) * 0xc2b2ae35) >>> 0;
+    return (z ^ (z >>> 16)) >>> 0;
+  };
+}
+
+function seededPick<T>(arr: T[], rng: () => number): T {
+  return arr[rng() % arr.length];
+}
+
+// ── News item types & constants ───────────────────────────────────────────────
+
+/**
+ * Large offset keeps news IDs from colliding with MATCH_SIMULATED event indices
+ * (a full League Two season has ≤ ~1000 match events).
+ */
+export const NEWS_ID_OFFSET = 100_000;
+
+export type NewsCategory = 'transfer' | 'injury' | 'league';
+
+export interface NewsItem {
+  /** Globally unique numeric ID for use in the dismissed Set. */
+  id: number;
+  category: NewsCategory;
+  icon: string;
+  headline: string;
+  week: number;
+}
+
+// ── Narrative copy pools ──────────────────────────────────────────────────────
+
+const TRANSFER_HEADLINES = [
+  'Rumours link {rival} striker to a Premier League club.',
+  'Sources claim {rival} are close to a seven-figure signing.',
+  'Transfer window heats up: scouts seen watching League Two clash.',
+  '{rival} reject bid for their top scorer — "not for sale."',
+  'Agent spotted at {rival} training ground fuels speculation.',
+  'Championship scouts have been watching {rival}\'s number nine.',
+  'League Two clubs brace for January transfer activity.',
+  'Big clubs circling: several League Two stars linked with moves up.',
+  'Reported: {rival} set to offload fringe player this month.',
+];
+
+const INJURY_HEADLINES = [
+  'Muscle injuries on the rise as pitches harden into winter.',
+  '{rival} confirm midfielder out for three weeks.',
+  'Physio shortage hits clubs across the division.',
+  'Weather-related pitch damage forces training schedule changes.',
+  'Hamstring concerns cloud selection for several League Two sides.',
+  'Club doctors warn of fixture congestion fatigue risk.',
+  'Early-season injury list longer than expected across the division.',
+  'Rest demanded: players union calls for match schedule review.',
+];
+
+const LEAGUE_HEADLINES = [
+  'EFL announce stadium upgrade fund for lower league clubs.',
+  'League Two: this season\'s goal tally already 10% above last year.',
+  'Referee appointments criticised by multiple League Two managers.',
+  'Fan attendance in League Two up 8% versus last campaign.',
+  'Pitch conditions branded "unacceptable" after weekend downpours.',
+  'League Two play-off race predicted to go to final day.',
+  'TV cameras set to visit League Two for feature on rising clubs.',
+  'League table chaos: six points separate positions 8 through 18.',
+  'League Two clubs vote to trial new substitution rules next season.',
+  'Board confidence crisis: two clubs reportedly looking for new managers.',
+];
+
+const CATEGORY_META: Record<NewsCategory, { icon: string; headlines: string[] }> = {
+  transfer: { icon: '🔄', headlines: TRANSFER_HEADLINES },
+  injury:   { icon: '🩹', headlines: INJURY_HEADLINES  },
+  league:   { icon: '📰', headlines: LEAGUE_HEADLINES  },
+};
+
+const ALL_CATEGORIES: NewsCategory[] = ['transfer', 'injury', 'league'];
+
+// ── News builder ──────────────────────────────────────────────────────────────
+
+/**
+ * Deterministically generate 1–3 news items for a given week.
+ * Items are seeded by week so they are stable across re-renders.
+ *
+ * @param week      Current game week (drives the seed)
+ * @param rivals    Nearby club names from the table (used for flavour text substitution)
+ * @param dismissed Set of dismissed IDs (news IDs start at NEWS_ID_OFFSET)
+ */
+export function buildNewsItems(
+  week: number,
+  rivals: string[],
+  dismissed: Set<number>,
+): NewsItem[] {
+  if (week <= 0) return [];
+
+  const rng   = splitmix32(week * 2654435761);
+  const count = (rng() % 3) + 1; // 1–3 items
+
+  // Shuffle categories for variety
+  const cats = [...ALL_CATEGORIES].sort(() => (rng() % 2 === 0 ? -1 : 1));
+  const items: NewsItem[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const id = NEWS_ID_OFFSET + week * 10 + i;
+    if (dismissed.has(id)) continue;
+
+    const cat  = cats[i % cats.length];
+    const meta = CATEGORY_META[cat];
+    let headline = seededPick(meta.headlines, rng);
+
+    // Substitute a rival team name if the template has a placeholder
+    if (headline.includes('{rival}') && rivals.length > 0) {
+      headline = headline.replace('{rival}', rivals[rng() % rivals.length]);
+    } else {
+      headline = headline.replace(/{rival}/g, 'A nearby side');
+    }
+
+    items.push({ id, category: cat, icon: meta.icon, headline, week });
+  }
+
+  return items;
+}
+
 // ── Shared types ──────────────────────────────────────────────────────────────
 
 export interface MatchSimulatedEvent {

@@ -169,13 +169,27 @@ export function generateWeekEvents(
 
   const picked = shuffled.slice(0, count);
 
+  // Find the squad's highest-rated player for player-specific events
+  const starPlayer = state.club.squad.length > 0
+    ? state.club.squad.reduce((best, p) => p.overallRating > best.overallRating ? p : best)
+    : null;
+
   // Hydrate into PendingClubEvent objects
-  return picked.map((template, index): PendingClubEvent => ({
+  return picked.map((template, index): PendingClubEvent => {
+    // Personalise the player-unhappy event with the actual star player's name
+    let title       = template.title;
+    let description = template.description;
+    if (template.id === 'player-unhappy' && starPlayer) {
+      title       = `${starPlayer.name} Wants More Wages`;
+      description = `${starPlayer.name} has asked for a wage increase. You need to decide how to respond.`;
+    }
+
+    return ({
     id: `evt-S${season}-W${week}-${index}`,
     templateId: template.id,
     week,
-    title: template.title,
-    description: template.description,
+    title,
+    description,
     severity: template.severity,
     choices: template.choices.map(c => ({
       id: c.id,
@@ -187,5 +201,6 @@ export function generateWeekEvents(
       requiresMath: c.requiresMath
     })),
     resolved: false
-  }));
+    });
+  });
 }

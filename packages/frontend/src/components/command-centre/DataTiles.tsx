@@ -1,9 +1,11 @@
+import { useEffect, useRef, useState } from 'react';
 import { GameState } from '@calculating-glory/domain';
 import { formatMoney } from '@calculating-glory/domain';
 
 interface DataTilesProps {
   state: GameState;
   gridMode?: boolean;
+  onBackroomClick?: () => void;
 }
 
 interface Tile {
@@ -12,6 +14,8 @@ interface Tile {
   sub?: string;
   trend?: 'up' | 'down' | 'flat';
   color?: string;
+  animateClass?: string;
+  onClick?: () => void;
 }
 
 function TrendArrow({ trend }: { trend?: 'up' | 'down' | 'flat' }) {
@@ -21,9 +25,19 @@ function TrendArrow({ trend }: { trend?: 'up' | 'down' | 'flat' }) {
     : <span className="text-alert-red">↓</span>;
 }
 
-function DataTile({ label, value, sub, trend, color }: Tile) {
+function DataTile({ label, value, sub, trend, color, animateClass, onClick }: Tile) {
   return (
-    <div className="card flex flex-col gap-1 min-w-[120px]">
+    <div
+      className={[
+        'card flex flex-col gap-1 min-w-[120px]',
+        animateClass ?? '',
+        onClick ? 'cursor-pointer hover:border hover:border-data-blue/40 transition-colors' : '',
+      ].join(' ')}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') onClick(); } : undefined}
+    >
       <span className="text-xs text-txt-muted uppercase tracking-wide">{label}</span>
       <div className={`data-font text-lg font-semibold ${color ?? 'text-txt-primary'} flex items-center gap-1`}>
         {value}
@@ -34,7 +48,30 @@ function DataTile({ label, value, sub, trend, color }: Tile) {
   );
 }
 
-export function DataTiles({ state, gridMode }: DataTilesProps) {
+/** Track prev value and return an animation class on change (cleared after animation ends). */
+function useRepFlash(reputation: number): string {
+  const prevRef   = useRef<number | null>(null);
+  const [cls, setCls] = useState('');
+
+  useEffect(() => {
+    if (prevRef.current === null) {
+      prevRef.current = reputation;
+      return;
+    }
+    if (reputation === prevRef.current) return;
+
+    const next = reputation > prevRef.current ? 'animate-rep-flash-up' : 'animate-rep-flash-down';
+    prevRef.current = reputation;
+    setCls(next);
+
+    const id = setTimeout(() => setCls(''), 700);
+    return () => clearTimeout(id);
+  }, [reputation]);
+
+  return cls;
+}
+
+export function DataTiles({ state, gridMode, onBackroomClick }: DataTilesProps) {
   const { club, league, boardConfidence, currentWeek, businessAcumen } = state;
 
   const playerEntry = league.entries.find(e => e.clubId === club.id);
@@ -49,6 +86,9 @@ export function DataTiles({ state, gridMode }: DataTilesProps) {
   const acumenAvg = Math.round(
     (businessAcumen.financial + businessAcumen.statistical + businessAcumen.strategic) / 3
   );
+
+  // Reputation change animation
+  const repFlashClass = useRepFlash(club.reputation);
 
   const tiles: Tile[] = [
     {
@@ -90,14 +130,16 @@ export function DataTiles({ state, gridMode }: DataTilesProps) {
     {
       label: 'Backroom Team',
       value: `${club.squad.length}`,
-      sub: `${club.staff.length} staff`,
+      sub: `${club.staff.length} staff · tap to manage`,
       trend: club.squad.length < 18 ? 'down' : 'flat',
       color: club.squad.length < 18 ? 'text-alert-red' : 'text-txt-primary',
+      onClick: onBackroomClick,
     },
     {
       label: 'Reputation',
       value: `${club.reputation}`,
       sub: 'out of 100',
+      animateClass: repFlashClass,
     },
   ];
 
