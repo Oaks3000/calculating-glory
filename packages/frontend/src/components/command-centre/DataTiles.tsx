@@ -6,6 +6,7 @@ interface DataTilesProps {
   state: GameState;
   gridMode?: boolean;
   onBackroomClick?: () => void;
+  onAcumenClick?: () => void;
 }
 
 interface Tile {
@@ -71,7 +72,7 @@ function useRepFlash(reputation: number): string {
   return cls;
 }
 
-export function DataTiles({ state, gridMode, onBackroomClick }: DataTilesProps) {
+export function DataTiles({ state, gridMode, onBackroomClick, onAcumenClick }: DataTilesProps) {
   const { club, league, boardConfidence, currentWeek, businessAcumen } = state;
 
   const playerEntry = league.entries.find(e => e.clubId === club.id);
@@ -126,6 +127,7 @@ export function DataTiles({ state, gridMode, onBackroomClick }: DataTilesProps) 
       value: '★'.repeat(acumenAvg) + '☆'.repeat(5 - acumenAvg),
       sub: `Fin ${businessAcumen.financial}★  Stat ${businessAcumen.statistical}★  Strat ${businessAcumen.strategic}★`,
       color: 'text-warn-amber',
+      onClick: onAcumenClick,
     },
     {
       label: 'Backroom Team',

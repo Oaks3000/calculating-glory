@@ -419,10 +419,22 @@ export function generateChallenge(
     },
   ];
 
+  // ── Curriculum difficulty cap ─────────────────────────────────────────────────
+  const MAX_DIFFICULTY_BY_LEVEL: Record<string, number> = {
+    YEAR_7:          1,
+    YEAR_8:          2,
+    YEAR_9:          3,
+    GCSE_FOUNDATION: 3,
+    GCSE_HIGHER:     3,
+  };
+  const maxDifficulty = MAX_DIFFICULTY_BY_LEVEL[state.curriculum?.level ?? 'YEAR_7'] ?? 3;
+  const diffCapped = challenges.filter(c => c.difficulty <= maxDifficulty);
+  const challengePool = diffCapped.length > 0 ? diffCapped : challenges;
+
   // ── Topic override: filter bank to a single topic ────────────────────────────
   const topicFiltered = topicOverride
-    ? challenges.filter(c => c.topic === topicOverride)
-    : challenges;
+    ? challengePool.filter(c => c.topic === topicOverride)
+    : challengePool;
 
   // ── Exclude the previously shown template to avoid back-to-back duplicates ──
   const templateSlug = excludeTemplateSlug ?? '';
@@ -432,7 +444,7 @@ export function generateChallenge(
 
   // Fall back to full topic pool if exclusion would empty it
   const pool = deduped.length > 0 ? deduped : topicFiltered;
-  const safePool = pool.length > 0 ? pool : challenges;
+  const safePool = pool.length > 0 ? pool : challengePool;
 
   // ── No performance data or all zeros → plain index cycling ─────────────────
   const hasPerformanceData =
