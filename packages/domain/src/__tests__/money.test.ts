@@ -56,12 +56,15 @@ describe('fromPence', () => {
 });
 
 describe('formatMoney', () => {
+  // formatMoney uses no decimal places (minimumFractionDigits: 0) for cleaner
+  // game UI display — values are always meaningful whole-pound amounts.
+
   it('formats whole pounds', () => {
-    expect(formatMoney(10000)).toBe('£100.00');
+    expect(formatMoney(10000)).toBe('£100');
   });
 
-  it('formats pence correctly', () => {
-    expect(formatMoney(199)).toBe('£1.99');
+  it('formats sub-pound pence (rounded to nearest pound)', () => {
+    expect(formatMoney(199)).toBe('£2');
   });
 
   it('formats large amounts', () => {
@@ -71,7 +74,7 @@ describe('formatMoney', () => {
   });
 
   it('formats zero', () => {
-    expect(formatMoney(0)).toBe('£0.00');
+    expect(formatMoney(0)).toBe('£0');
   });
 });
 

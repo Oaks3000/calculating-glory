@@ -32,7 +32,9 @@ export default {
         'slide-in-right': 'slideInRight 0.3s ease-out',
         'fade-in':        'fadeIn 0.2s ease-in',
         'pulse-glow':     'pulseGlow 2s ease-in-out infinite',
-        'ticker':         'ticker 75s linear infinite',
+        'ticker':         'ticker 147s linear infinite',
+        'rep-flash-up':   'repFlashUp 0.7s ease-out forwards',
+        'rep-flash-down': 'repFlashDown 0.7s ease-out forwards',
       },
       keyframes: {
         slideInRight: {
@@ -50,6 +52,16 @@ export default {
         ticker: {
           from: { transform: 'translateX(100%)' },
           to:   { transform: 'translateX(-100%)' },
+        },
+        repFlashUp: {
+          '0%':   { boxShadow: '0 0 0 0 rgba(76,175,80,0)',  backgroundColor: 'rgba(76,175,80,0.25)' },
+          '30%':  { boxShadow: '0 0 0 8px rgba(76,175,80,0.35)', backgroundColor: 'rgba(76,175,80,0.18)' },
+          '100%': { boxShadow: '0 0 0 0 rgba(76,175,80,0)',  backgroundColor: 'transparent' },
+        },
+        repFlashDown: {
+          '0%':   { boxShadow: '0 0 0 0 rgba(211,47,47,0)',  backgroundColor: 'rgba(211,47,47,0.25)' },
+          '30%':  { boxShadow: '0 0 0 8px rgba(211,47,47,0.35)', backgroundColor: 'rgba(211,47,47,0.18)' },
+          '100%': { boxShadow: '0 0 0 0 rgba(211,47,47,0)',  backgroundColor: 'transparent' },
         },
       },
     },

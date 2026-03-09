@@ -26,8 +26,8 @@ export function fromPence(pence: number): number {
 export function formatMoney(pence: number): string {
   const pounds = fromPence(pence);
   return `£${pounds.toLocaleString('en-GB', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   })}`;
 }
 

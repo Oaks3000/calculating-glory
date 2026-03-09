@@ -32,9 +32,9 @@ export function WeekAdvanceButton({
   function handleClick() {
     const result = dispatch({
       type: 'SIMULATE_WEEK',
-      week: currentWeek,
+      week: currentWeek + 1,
       season,
-      seed: `calculating-glory-mvp-v1-w${currentWeek}`,
+      seed: `calculating-glory-mvp-v1-w${currentWeek + 1}`,
     });
     if (result.error) onError(result.error);
   }

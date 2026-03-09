@@ -110,7 +110,9 @@ export function SocialFeed({ state, dispatch, linkedEvent }: SocialFeedProps) {
   const [awaitingFallback, setAwaitingFallback]     = useState(false);
   const [activeLinkedEvent, setActiveLinkedEvent]   = useState<LinkedEvent | null>(null);
   const [practiceTopicOverride, setPracticeTopic]   = useState<ChallengeTopic | null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const [wasNegotiation, setWasNegotiation]         = useState(false);
+  const bottomRef   = useRef<HTMLDivElement>(null);
+  const seededRef   = useRef(false);
 
   function addMsg(msg: Omit<Message, 'id'>) {
     setMessages(prev => [...prev, { ...msg, id: uid() }]);
@@ -130,6 +132,7 @@ export function SocialFeed({ state, dispatch, linkedEvent }: SocialFeedProps) {
     setChallengeIndex(0);
     setSolved(false);
     setAwaitingAnswer(false);
+    setWasNegotiation(true);
 
     addMsg({
       kind: 'npc',
@@ -159,6 +162,7 @@ export function SocialFeed({ state, dispatch, linkedEvent }: SocialFeedProps) {
     setChallengeIndex(0);
     setSolved(false);
     setAwaitingAnswer(false);
+    setWasNegotiation(false);
 
     addMsg({
       kind: 'npc',
@@ -178,8 +182,11 @@ export function SocialFeed({ state, dispatch, linkedEvent }: SocialFeedProps) {
   }
 
   // ── Auto-seed when opened directly from a Pending Decision CTA ───────────
+  // Guard against React 18 StrictMode double-invoking this effect — refs
+  // survive the simulated unmount/remount cycle so seeding only ever fires once.
   useEffect(() => {
-    if (linkedEvent) {
+    if (linkedEvent && !seededRef.current) {
+      seededRef.current = true;
       setView('thread');
       seedNegotiation(linkedEvent);
     }
@@ -322,17 +329,21 @@ export function SocialFeed({ state, dispatch, linkedEvent }: SocialFeedProps) {
   // ── Next challenge (practice continuation) ────────────────────────────────
   function handleNextChallenge() {
     const nextIdx   = challengeIndex + 1;
-    const npcName   = activeLinkedEvent ? NPC_NAME : PRACTICE_NPC;
+    const npcName   = PRACTICE_NPC;
+    // Extract template slug from current challenge id (e.g. "ch-0-wage-pct" → "wage-pct")
+    const excludeSlug = currentChallenge?.id.replace(/^ch-\d+-/, '') ?? undefined;
     const challenge = generateChallenge(
       state,
       nextIdx,
       getPerformance(state),
       practiceTopicOverride ?? undefined,
+      excludeSlug,
     );
 
     setChallengeIndex(nextIdx);
     setChallengeHints(0);
     setSolved(false);
+    setWasNegotiation(false);
     setActiveLinkedEvent(null);
     setCurrentChallenge(challenge);
 
@@ -482,7 +493,7 @@ export function SocialFeed({ state, dispatch, linkedEvent }: SocialFeedProps) {
           </div>
         ) : solved ? (
           <div className="p-3 flex flex-col gap-2">
-            {!linkedEvent && (
+            {!linkedEvent && !wasNegotiation && (
               <button
                 onClick={handleNextChallenge}
                 className="w-full py-2.5 rounded-card bg-data-blue text-white font-semibold

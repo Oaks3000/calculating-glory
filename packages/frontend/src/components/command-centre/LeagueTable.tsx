@@ -27,13 +27,9 @@ export function LeagueTable({ entries, playerClubId, promotionCutoff, relegation
               <th className="text-left pb-1">Club</th>
               <th className="text-right pr-1 pb-1 w-6">P</th>
               <th className="text-right pr-1 pb-1 w-6">W</th>
-              <th className="text-right pr-1 pb-1 w-6">D</th>
-              <th className="text-right pr-1 pb-1 w-6">L</th>
-              <th className="text-right pr-1 pb-1 w-8">GF</th>
-              <th className="text-right pr-1 pb-1 w-8">GA</th>
               <th className="text-right pr-2 pb-1 w-8">GD</th>
               <th className="text-right pr-2 pb-1 w-8">Pts</th>
-              <th className="text-left pb-1 w-20">Form</th>
+              <th className="text-left pb-1 w-14">Form</th>
             </tr>
           </thead>
           <tbody>
@@ -67,10 +63,6 @@ export function LeagueTable({ entries, playerClubId, promotionCutoff, relegation
                   </td>
                   <td className="text-right pr-1 py-1">{entry.played}</td>
                   <td className="text-right pr-1 py-1">{entry.won}</td>
-                  <td className="text-right pr-1 py-1">{entry.drawn}</td>
-                  <td className="text-right pr-1 py-1">{entry.lost}</td>
-                  <td className="text-right pr-1 py-1">{entry.goalsFor}</td>
-                  <td className="text-right pr-1 py-1">{entry.goalsAgainst}</td>
                   <td className={[
                     'text-right pr-2 py-1',
                     entry.goalDifference > 0 ? 'text-pitch-green' : entry.goalDifference < 0 ? 'text-alert-red' : '',
@@ -80,7 +72,7 @@ export function LeagueTable({ entries, playerClubId, promotionCutoff, relegation
                   <td className="text-right pr-2 py-1 font-semibold text-txt-primary">{entry.points}</td>
                   <td className="py-1">
                     <div className="flex gap-0.5">
-                      {entry.form.slice(-5).map((r, j) => (
+                      {entry.form.slice(-3).map((r, j) => (
                         <span key={j} className={`${FORM_COLORS[r]} text-xs2 w-4 h-4 flex items-center justify-center rounded-sm font-bold`}>
                           {r}
                         </span>
