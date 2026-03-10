@@ -10,6 +10,7 @@ import { Club } from '../types/club';
 import { LeagueTable, LeagueTableEntry, sortLeagueTable } from '../types/league';
 import { CURRICULUM_LEVELS } from '../curriculum/curriculum-config';
 import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
+import { getDefaultFacilities, getUpgradeCost } from '../types/facility';
 
 /**
  * Reduce an event into state
@@ -135,7 +136,8 @@ function handleGameStarted(state: GameState, event: GameStartedEvent): GameState
       id: event.clubId,
       name: event.clubName,
       transferBudget: event.initialBudget,
-      wageBudget: event.initialBudget / 10 // 10% of budget for weekly wages
+      wageBudget: event.initialBudget / 10, // 10% of budget for weekly wages
+      facilities: getDefaultFacilities()
     },
     league: {
       ...state.league,
@@ -251,7 +253,7 @@ function handleFacilityUpgraded(state: GameState, event: any): GameState {
       ...state.club,
       facilities: state.club.facilities.map(f =>
         f.type === event.facilityType
-          ? { ...f, level: event.level }
+          ? { ...f, level: event.level, upgradeCost: getUpgradeCost(event.facilityType, event.level) }
           : f
       ),
       transferBudget: state.club.transferBudget - event.cost
@@ -345,6 +347,13 @@ function handleMathAttemptRecorded(state: GameState, event: MathAttemptRecordedE
 function handleWeekAdvanced(state: GameState, event: any): GameState {
   const week: number = event.week;
 
+  // Calculate weekly revenue from revenue-generating facilities
+  const commercial = state.club.facilities.find(f => f.type === 'CLUB_COMMERCIAL');
+  const foodBev = state.club.facilities.find(f => f.type === 'FOOD_AND_BEVERAGE');
+  const commercialRevenue = commercial ? commercial.level * 50_000 : 0; // £500/week per level
+  const foodRevenue = foodBev ? foodBev.level * 30_000 : 0;            // £300/week per level
+  const weeklyRevenue = commercialRevenue + foodRevenue;
+
   let phase = state.phase;
   if (week <= 15) {
     phase = 'EARLY_SEASON';
@@ -357,7 +366,11 @@ function handleWeekAdvanced(state: GameState, event: any): GameState {
   return {
     ...state,
     currentWeek: week,
-    phase
+    phase,
+    club: {
+      ...state.club,
+      transferBudget: state.club.transferBudget + weeklyRevenue,
+    }
   };
 }
 

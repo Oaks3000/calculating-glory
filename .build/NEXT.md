@@ -1,27 +1,27 @@
 ---
 project: "Calculating Glory"
 type: "build"
-lastUpdated: "2026-03-09"
+lastUpdated: "2026-03-10"
 ---
 
 # Calculating Glory - Next Steps
 
 ## Immediate (This Session/Week)
 
-1. Merge confident-colden PR into main
-2. Stadium View planning session — map core/sub-unit MECE grid before writing any code (issue #21)
-3. End-to-end smoke test: new game → resolve events via Social Feed → advance week → see match results update live
+1. PR 3: Isometric SVG renderer — IsometricGrid.tsx, CoreUnit.tsx, SubUnitRenderer.tsx, stadium-layout.ts, isometric-utils.ts, sub-unit art files (SNES pixel-art style)
+2. PR 4: Navigation wiring — core unit clicks open correct slide-overs, BuildPanel.tsx for undeveloped plots, "coming soon" placeholders
+3. Commit and PR the current work (domain foundation + app shell + stadium view cards)
 
 ## Short Term (Next 2-4 Weeks)
 
-1. Stadium View build — dual home screen, core units as navigation anchors, sub-units as visual stat effects
-2. UI polish pass — responsive layout at 1366x768, error states, loading skeletons
-3. Club event narrative copy — flesh out all 15 event templates' Social Feed chat bubbles
-4. Practice mode (Marcus Webb free drills) — business acumen improvement without game-state cost
-5. End-to-end integration tests (issue #12)
+1. PR 5: Weekly Training Focus — new command SET_TRAINING_FOCUS, training drill math challenges, adds ~2 decisions/week
+2. PR 6: Geometry challenges — 4 new MathTopics (AREA_AND_PERIMETER, ANGLES, SCALE_AND_PROPORTION, PROPERTIES_OF_SHAPES), stadium-themed templates
+3. End-to-end integration tests (issue #12)
+4. UI polish for Chromebook 1366x768 (issue #13)
+5. File separate issue: Decision Density Overhaul (squad selection, transfers, contracts, sponsorship)
 
 ## Questions / Unknowns
 
-- Stadium View: what are the definitive core units? (Training, Medical, Youth, Stadium, Office, Commercial confirmed — any others?)
-- Is the 3-week mid-season loop sufficient for the MVP demo or do stakeholders want a longer segment?
+- Sub-unit art style: how detailed should the SNES pixel-art SVG be? Simple geometric shapes or more elaborate?
+- Should isometric view support zoom/pan for smaller screens, or fixed viewport only?
 - Deployment target: school network hosted URL, or standalone Chromebook app?
