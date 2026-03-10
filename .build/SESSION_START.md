@@ -120,3 +120,82 @@ npm run dev --workspace=@calculating-glory/frontend
 ---
 
 **Status**: Stadium View plan complete, domain foundation + app shell implemented. Ready for isometric SVG renderer (PR 3).
+
+---
+
+# Session Progress - 2026-03-10 (Session 2 — Isometric Renderer)
+
+## Session Goals
+- Merge PR #23 after test plan verification
+- Implement PR 3: Isometric SVG renderer (real grid, 9 core units, hover tooltip)
+- Open PR #24 and update .build files
+
+## Completed Work
+
+### 1. PR #23 Merge
+- **Test plan** ✅
+  - 245 domain tests passing; `tsc --noEmit` clean
+  - Dev server verified: Command Centre, Stadium View, all 9 facility cards, ViewToggle, weekly revenue
+- Squash-merged to main; PR #23 closed
+
+### 2. PR 3 — Isometric SVG Renderer (PR #24)
+- **`isometric-utils.ts`** ✅ (new)
+  - Pure math for 20×14 grid (TILE_W=64, TILE_H=32), SVG 1088×640
+  - `gridToScreen`, `footprintVertices`, `footprintPath`, `blockPaths`, `topFaceCenter`, `groundCenter`
+  - Key insight: right vertex of tile (c,r) = top vertex of tile (c+1,r) → clean multi-tile footprint via `gridToScreen(gc+cols, gr)`
+- **`stadium-layout.ts`** ✅ (new)
+  - `CoreUnitDef` with grid position (gc,gr), dimensions (cols,rows), per-level blockHeights[6], colours
+  - 9 units: Pitch(6×5 green), Training(3×2 amber), Medical(2×2), Youth(3×2 teal), Office(2×2 blue), Commercial(2×2 gold), Food(2×2 orange), FanZone(3×2 purple), Security(3×2 grey)
+  - `STADIUM_LAYOUT_SORTED` by gc+gr ascending for painter's algorithm
+- **`CoreUnit.tsx`** ✅ (new)
+  - Level 0: flat dashed diamond + emoji; Level 1–5: coloured isometric block + pip dots + hover tint
+  - Transparent hit region at top of SVG group for reliable pointer events
+- **`IsometricBlueprint.tsx`** ✅ (rewritten from placeholder)
+  - Dark blue SVG background, all 9 CoreUnits back-to-front
+  - HTML tooltip: name, level label, description, "Click to upgrade →" (level 0 only)
+  - Stale closure fix: `hoveredIdRef = useRef` updated in `handleHover`; `handleMouseMove` reads ref not state
+  - `onCoreUnitClick` prop accepted (wired in PR 4)
+- **`StadiumView.tsx`** modified: `IsometricBlueprint` embedded above card grid
+
+### 3. .build Files Updated
+- STATUS.md (progress 30→55%), ROADMAP.md (4.4 ✅), NEXT.md (PR 4 routing map), BACKLOG.md, SESSION_START.md
+
+## Architecture Notes
+
+- **Painter's algorithm via SVG doc order**: sort gc+gr ascending; later elements render on top; no z-index needed
+- **React stale closure trap**: `mousemove` fires before state update propagates → `useRef` mirroring state is the correct fix
+- **Domain dist freshness in worktrees**: new worktrees have stale `dist/`; run `npm run build` in domain before first `tsc --noEmit` in frontend
+- **`preview_start` CWD gotcha**: tool uses session CWD, not worktree path; ran Vite via Bash with explicit path
+
+## Current Status
+
+### ✅ Working
+- All 9 core units render as interactive SVG buttons (verified with Playwright)
+- Hover tooltip correct: level label, description, upgrade CTA at level 0 only
+- Club Office renders at Level 1 (correct initial state)
+- 245 domain tests green; TypeScript clean
+
+### 🟡 In Progress
+- PR #24 open — awaiting merge
+- PR 4: Navigation wiring (next)
+
+### 🔴 Blocked
+- None
+
+## Build Commands / Key Files
+
+```bash
+cd packages/domain && npm run build   # rebuild domain dist after domain changes
+cd packages/domain && npm test        # 245 tests
+cd packages/frontend && npx tsc --noEmit
+cd packages/frontend && npx vite --port 3001  # from pr3 worktree
+```
+
+## Next Session Goals
+
+1. Merge PR #24 (test plan → squash merge → new worktree from main)
+2. PR 4: Wire `onCoreUnitClick` in `App.tsx`/`StadiumView.tsx` per full routing map in NEXT.md
+
+---
+
+**Status**: PR #24 open — isometric SVG renderer complete, 245 tests green, tsc clean. PR 4 navigation wiring is next.

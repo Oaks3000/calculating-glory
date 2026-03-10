@@ -3,7 +3,7 @@ project: "Calculating Glory"
 type: "build"
 priority: 2
 phase: "Stadium View & Integration"
-progress: 30
+progress: 55
 lastUpdated: "2026-03-10"
 lastTouched: "2026-03-10"
 status: "in-progress"
@@ -11,7 +11,7 @@ status: "in-progress"
 
 # Calculating Glory - Current Status
 
-**Phase:** Stadium View & Integration (30% — planning complete, domain + app shell coded)
+**Phase:** Stadium View & Integration (55% — PRs 1–3 merged, navigation wiring next)
 **Last Updated:** 2026-03-10
 
 ## What's Done
@@ -44,12 +44,17 @@ status: "in-progress"
 - **FACILITY_CONFIG** as single source of truth for all facility metadata
 - **Weekly revenue system** (CLUB_COMMERCIAL + FOOD_AND_BEVERAGE generate income per week)
 - **Persistent ViewToggle** top bar (Command Centre / Stadium View toggle + week advance)
-- **StadiumView** full-screen facility management with 2-col card grid
+- **StadiumView** full-screen facility management with 2-col card grid (PR #23 ✅)
+- **Isometric SVG renderer** — real 20×14 grid, 9 core units, coloured blocks scale with level, hover tooltip (PR #24 ✅)
+  - `isometric-utils.ts` — grid math (gridToScreen, footprintVertices, blockPaths)
+  - `stadium-layout.ts` — CoreUnitDef for all 9 facilities, STADIUM_LAYOUT_SORTED
+  - `CoreUnit.tsx` — flat diamond at level 0, isometric block at 1–5, hover highlight
+  - `IsometricBlueprint.tsx` — SVG canvas with HTML tooltip (stale-closure fix via useRef)
 
 ## What's In Progress
 
-- PR 3: Isometric SVG renderer (grid, core units, sub-unit art) — next up
-- PR 4: Navigation wiring (core unit clicks open correct slide-overs)
+- PR #24 open — awaiting review/merge
+- PR 4: Navigation wiring — core unit clicks open correct slide-overs/views
 
 ## Blockers
 
@@ -59,9 +64,9 @@ status: "in-progress"
 
 - Target device: Chromebook 1366x768 (keyboard + trackpad)
 - MVP scope: 3-week mid-season loop starting week 20 — not full season
-- Dev server: `npm run dev --workspace=@calculating-glory/frontend`
+- Dev server: `cd packages/frontend && npx vite`
 - Domain tests: `cd packages/domain && npm test`
-- Plan file: `.claude/plans/iterative-tinkering-snowglobe.md`
 - 10 core units map to 9 facility types (Pitch + Stands share STADIUM)
 - PR 5 (Weekly Training Focus) planned as decision density quick win
 - PR 6 (Geometry Challenges) planned for stadium-themed maths
+- Sub-unit art (individual buildings per level) deferred beyond PR 4

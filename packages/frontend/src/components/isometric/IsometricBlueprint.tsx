@@ -1,60 +1,154 @@
-import { GameState, GameCommand, FacilityType, FACILITY_CONFIG, formatMoney } from '@calculating-glory/domain';
-import { FacilityCard } from '../shared/FacilityCard';
+/**
+ * IsometricBlueprint — the isometric SVG stadium scene.
+ *
+ * Renders all 9 core units on a 20×14 isometric grid.  Each unit is a
+ * coloured building whose height reflects the facility level (0 = empty
+ * plot, 1–5 = increasingly tall block).
+ *
+ * Hover shows a React HTML tooltip (not SVG foreignObject, for styling
+ * consistency with the rest of the UI).
+ *
+ * Click fires onCoreUnitClick(facilityType) — navigation wiring is
+ * handled by the parent (StadiumView / App) in PR 4.
+ */
+
+import { useState, useCallback, useRef } from 'react';
+import { GameState, GameCommand, FacilityType, FACILITY_CONFIG } from '@calculating-glory/domain';
+import { SVG_W, SVG_H } from './isometric-utils';
+import { STADIUM_LAYOUT_SORTED } from './stadium-layout';
+import { CoreUnit } from './CoreUnit';
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
 
 interface IsometricBlueprintProps {
-  state: GameState;
+  state:    GameState;
   dispatch: (cmd: GameCommand) => { error?: string };
-  onError: (msg: string) => void;
+  onError:  (msg: string) => void;
+  /** Called when the player clicks a core unit. */
+  onCoreUnitClick?: (facilityType: FacilityType) => void;
 }
 
-export function IsometricBlueprint({ state, dispatch, onError }: IsometricBlueprintProps) {
+interface TooltipState {
+  id:     string;
+  mouseX: number;
+  mouseY: number;
+}
+
+const LEVEL_LABELS = ['Derelict', 'Basic', 'Decent', 'Good', 'Excellent', 'World-Class'] as const;
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
+
+export function IsometricBlueprint({
+  state,
+  dispatch: _dispatch,
+  onError: _onError,
+  onCoreUnitClick,
+}: IsometricBlueprintProps) {
   const { club } = state;
 
-  function handleUpgrade(facilityType: FacilityType) {
-    const result = dispatch({
-      type: 'UPGRADE_FACILITY',
-      clubId: club.id,
-      facilityType,
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [tooltip,   setTooltip]   = useState<TooltipState | null>(null);
+
+  // Ref so handleMouseMove can read the current hoveredId without stale closures.
+  const hoveredIdRef = useRef<string | null>(null);
+
+  // Fast lookup: facilityType → level
+  const levelOf = Object.fromEntries(
+    club.facilities.map(f => [f.type, f.level]),
+  ) as Record<FacilityType, number>;
+
+  // ── Handlers ─────────────────────────────────────────────────────────────
+
+  const handleHover = useCallback((id: string | null) => {
+    hoveredIdRef.current = id;
+    setHoveredId(id);
+    if (!id) setTooltip(null);
+  }, []);
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const id = hoveredIdRef.current;
+    if (!id) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    setTooltip({
+      id,
+      mouseX: e.clientX - rect.left,
+      mouseY: e.clientY - rect.top,
     });
-    if (result.error) onError(result.error);
   }
 
+  function handleMouseLeave() {
+    setHoveredId(null);
+    setTooltip(null);
+  }
+
+  // ── Tooltip ───────────────────────────────────────────────────────────────
+
+  const tooltipContent = (() => {
+    if (!tooltip || !hoveredId) return null;
+    const def = STADIUM_LAYOUT_SORTED.find(d => d.id === hoveredId);
+    if (!def) return null;
+    const level = levelOf[def.facilityType] ?? 0;
+    const meta  = FACILITY_CONFIG[def.facilityType];
+
+    const tipX = Math.min(tooltip.mouseX + 14, SVG_W - 190);
+    const tipY = Math.max(tooltip.mouseY - 64, 4);
+
+    return (
+      <div
+        className="absolute z-10 pointer-events-none bg-bg-surface border border-bg-raised
+                   rounded-card px-3 py-2 shadow-lg min-w-[160px]"
+        style={{ left: tipX, top: tipY }}
+      >
+        <p className="text-sm font-semibold text-txt-primary flex items-center gap-1.5">
+          <span>{def.icon}</span>
+          <span>{def.label}</span>
+        </p>
+        <p className="text-xs text-txt-muted mt-0.5">
+          Level {level} — {LEVEL_LABELS[level]}
+        </p>
+        <p className="text-xs2 text-txt-muted mt-0.5 italic">{meta.description}</p>
+        {level === 0 && (
+          <p className="text-xs2 text-data-blue mt-1">Click to upgrade →</p>
+        )}
+      </div>
+    );
+  })();
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
   return (
-    <div className="flex flex-col gap-4 p-4">
-      {/* Isometric header art */}
-      <div className="card flex flex-col items-center justify-center py-6 gap-2 bg-pitch-green/5 border border-pitch-green/20">
-        <div className="flex gap-2 text-4xl">
-          {club.facilities.map(f => FACILITY_CONFIG[f.type]?.icon ?? '🏗').join('')}
-        </div>
-        <p className="text-sm font-semibold text-txt-primary">{club.stadium.name}</p>
-        <p className="text-xs2 text-txt-muted">
-          Capacity: {club.stadium.capacity.toLocaleString()} ·
-          Avg attendance: {club.stadium.averageAttendance.toLocaleString()}
-        </p>
-        <p className="text-xs2 text-txt-muted italic mt-1">
-          Full 3D isometric view coming in next sprint
-        </p>
-      </div>
+    <div
+      className="relative w-full overflow-x-auto select-none"
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+    >
+      <svg
+        width={SVG_W}
+        height={SVG_H}
+        viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+        style={{ display: 'block', margin: '0 auto' }}
+      >
+        {/* Background */}
+        <rect width={SVG_W} height={SVG_H} fill="#0D1B2A" />
 
-      {/* Budget banner */}
-      <div className="flex items-center justify-between px-4 py-2 bg-bg-raised rounded-card">
-        <span className="text-xs text-txt-muted">Transfer Budget</span>
-        <span className="data-font text-sm font-semibold text-pitch-green">
-          {formatMoney(club.transferBudget)}
-        </span>
-      </div>
-
-      {/* Facility cards */}
-      <div className="flex flex-col gap-3">
-        {club.facilities.map(facility => (
-          <FacilityCard
-            key={facility.type}
-            facility={facility}
-            budget={club.transferBudget}
-            onUpgrade={() => handleUpgrade(facility.type)}
+        {/* Core units — back-to-front (painter's algorithm via STADIUM_LAYOUT_SORTED) */}
+        {STADIUM_LAYOUT_SORTED.map(def => (
+          <CoreUnit
+            key={def.id}
+            def={def}
+            level={levelOf[def.facilityType] ?? 0}
+            isHovered={hoveredId === def.id}
+            onClick={() => onCoreUnitClick?.(def.facilityType)}
+            onHover={handleHover}
           />
         ))}
-      </div>
+      </svg>
+
+      {tooltipContent}
     </div>
   );
 }

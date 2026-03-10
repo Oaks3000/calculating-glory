@@ -8,7 +8,7 @@ lastUpdated: "2026-03-10"
 
 ## Features / Functionality
 
-- [ ] Isometric SVG renderer — 20x14 tile grid, 10 core units, sub-unit art progression (#21 PR 3)
+- [x] Isometric SVG renderer — 20×14 grid, 9 core units, level-scaled coloured blocks, hover tooltip ✅ (PR #24)
 - [ ] Navigation wiring — core unit clicks open slide-overs, BuildPanel for upgrades (#21 PR 4)
 - [ ] Weekly Training Focus — SET_TRAINING_FOCUS command, training drill challenges (#21 PR 5)
 - [ ] Geometry challenges — 4 new MathTopics, stadium-themed templates (#21 PR 6)
@@ -68,6 +68,10 @@ lastUpdated: "2026-03-10"
 
 ## Captured Thoughts
 
+- Isometric SVG: right vertex of tile (c,r) = top vertex of tile (c+1,r) — this identity makes multi-tile footprint math clean and composable
+- Painter's algorithm in SVG is just document order — sort by gc+gr ascending, render first = draws under
+- React stale closure trap: mousemove handler captures state at render time; useRef is the correct escape hatch, not useCallback alone
+- Domain dist freshness is a hidden worktree gotcha — new worktrees branch from main but inherit stale `dist/`; always `npm run build` in domain first
 - The "NASA for Football" aesthetic is the north star for Command Centre — data-dense but legible
 - Club events are the main creative differentiator — invest time in the writing
 - Branching path dependency (past decisions unlock/block future events) creates replay value
