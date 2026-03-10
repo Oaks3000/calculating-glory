@@ -2,14 +2,14 @@
 project: "Calculating Glory"
 type: "build"
 createdAt: "2026-03-03"
-lastUpdated: "2026-03-09"
+lastUpdated: "2026-03-10"
 ---
 
 # Calculating Glory - Roadmap
 
 An educational football club management game for Year 7 maths, built on event-sourced domain logic with deterministic simulation. Players manage a League Two club through a season, making decisions that require mathematical problem-solving.
 
-## Current Phase: MVP Build
+## Completed Phases
 
 ### Phase 2: Frontend Foundation ✅
 - 2.1 React + Tailwind CSS frontend scaffolded ✅ (#1)
@@ -23,8 +23,6 @@ An educational football club management game for Year 7 maths, built on event-so
 - 2.9 Week advance button (disabled until events resolved) ✅ (#9)
 - 2.10 Isometric Blueprint placeholder tiles (card-based) ✅ (#10)
 - 2.11 First playable: 3-week mid-season loop (week 20 onward) ✅ (#11)
-- 2.12 End-to-end integration testing (pending)
-- 2.13 UI polish pass (responsiveness, error states, loading) (pending)
 
 ### Phase 3: UI Polish & Feature Completion ✅
 - 3.1–3.4 InboxCard overhaul, InboxHistory slide-over, Command Centre restructure ✅ (#14, #19)
@@ -34,13 +32,20 @@ An educational football club management game for Year 7 maths, built on event-so
 - 3.8 Star player name injected into wage-demand club event ✅ (#18)
 - 3.9 Learning Progress slide-over + Business Acumen tile click ✅ (#20)
 - 3.10 Challenge difficulty capped by curriculum level ✅ (#20)
+- 3.11 Curriculum progression UI ✅ (#22)
 
-## Next Phase: Stadium View & Integration
+## Current Phase: Stadium View & Integration
 
-- 4.1 Stadium View planning — define MECE core/sub-unit grid (#21)
-- 4.2 Stadium View build — dual home screen, core units as nav anchors
-- 4.3 End-to-end integration test pass (#12)
-- 4.4 UI polish for Chromebook 1366x768 (#13)
+### Phase 4: Stadium View (#21)
+- 4.1 Stadium View planning — MECE core/sub-unit grid, architectural decisions ✅
+- 4.2 Domain foundation — 9 facility types, FACILITY_CONFIG, weekly revenue, getDefaultFacilities() ✅
+- 4.3 App shell — ViewToggle, StadiumView card grid, shared FacilityCard ✅
+- 4.4 Isometric SVG renderer — 20x14 grid, 10 core units, sub-unit art (in progress)
+- 4.5 Navigation wiring — core unit clicks open slide-overs, BuildPanel
+- 4.6 Weekly Training Focus — SET_TRAINING_FOCUS command, training drill challenges
+- 4.7 Geometry challenges — 4 new MathTopics, stadium-themed templates
+- 4.8 End-to-end integration test pass (#12)
+- 4.9 UI polish for Chromebook 1366x768 (#13)
 
 ## Future Phases
 
@@ -59,10 +64,10 @@ An educational football club management game for Year 7 maths, built on event-so
 - Hint system with curriculum-appropriate scaffolding
 
 ### Phase 7: Polish & Multiplayer Prep
-- Full isometric rendering (pixel art upgrade from card placeholders)
 - AI team evolution (form/results affect strength over season)
 - Morale system
 - Match events beyond goals (injuries, red cards, suspensions)
+- Decision density overhaul (squad selection, transfers, contracts, sponsorship)
 - Multiplayer sync architecture (async, turn-based)
 
 ## Out of Scope (for now)

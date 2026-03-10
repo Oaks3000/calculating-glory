@@ -4,13 +4,11 @@ import { DataTiles } from './DataTiles';
 import { LeagueTable } from './LeagueTable';
 import { SquadAuditTable } from './SquadAuditTable';
 import { NewsTicker } from './NewsTicker';
-import { WeekAdvanceButton } from './WeekAdvanceButton';
 import { InboxCard } from './InboxCard';
 import { InboxHistory } from './InboxHistory';
 import { HubTile } from './HubTiles';
 import { SlideOver } from '../shared/SlideOver';
 import { SocialFeed } from '../social-feed/SocialFeed';
-import { IsometricBlueprint } from '../isometric/IsometricBlueprint';
 import { BackroomTeamSlideOver } from './BackroomTeamSlideOver';
 import { LearningProgressSlideOver } from './LearningProgressSlideOver';
 
@@ -19,13 +17,13 @@ interface CommandCentreProps {
   events: GameEvent[];
   dispatch: (command: GameCommand) => { error?: string };
   isLoading: boolean;
+  onNavigateToStadium: () => void;
 }
 
-export function CommandCentre({ state, events, dispatch, isLoading }: CommandCentreProps) {
+export function CommandCentre({ state, events, dispatch, isLoading, onNavigateToStadium }: CommandCentreProps) {
   const [error, setError]                     = useState<string | null>(null);
   const [socialOpen, setSocialOpen]           = useState(false);
   const [socialLinkedEvent, setSocialLinked]  = useState<PendingClubEvent | null>(null);
-  const [isometricOpen, setIsometricOpen]     = useState(false);
   const [inboxOpen, setInboxOpen]             = useState(false);
   const [backroomOpen, setBackroomOpen]       = useState(false);
   const [learningOpen, setLearningOpen]       = useState(false);
@@ -54,7 +52,7 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
   );
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col flex-1 overflow-hidden">
 
       {/* ── Live News Ticker (very top) ───────────────────────────────────── */}
       <NewsTicker
@@ -63,31 +61,10 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
         leagueEntries={state.league.entries}
       />
 
-      {/* ── Header ───────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 pt-2 pb-1">
-        <div>
-          <h1 className="text-lg font-bold text-txt-primary tracking-tight">
-            {state.club.name}
-          </h1>
-          <p className="text-xs text-txt-muted">
-            Season {state.season} · Week {state.currentWeek} ·{' '}
-            <span className="capitalize">{state.phase.replace('_', ' ').toLowerCase()}</span>
-          </p>
-        </div>
-        <WeekAdvanceButton
-          pendingEvents={state.pendingEvents}
-          currentWeek={state.currentWeek}
-          season={state.season}
-          isLoading={isLoading}
-          dispatch={dispatch}
-          onError={setError}
-        />
-      </div>
-
       {/* ── Error toast ──────────────────────────────────────────────────── */}
       {error && (
         <div
-          className="mx-4 bg-alert-red/10 border border-alert-red/40 rounded-card px-4 py-2
+          className="mx-4 mt-2 bg-alert-red/10 border border-alert-red/40 rounded-card px-4 py-2
                      text-sm text-alert-red flex items-center justify-between"
         >
           <span>{error}</span>
@@ -133,7 +110,7 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
               label="Stadium & Facilities"
               sub={canUpgrade ? 'Upgrade available' : `Facilities Lv${maxFacilityLevel}`}
               hasEvent={canUpgrade}
-              onClick={() => setIsometricOpen(true)}
+              onClick={onNavigateToStadium}
             />
             <HubTile
               icon="💬"
@@ -210,15 +187,6 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
         )}
       </SlideOver>
 
-      {/* ── Isometric Blueprint slide-over ───────────────────────────────── */}
-      <SlideOver
-        isOpen={isometricOpen}
-        onClose={() => setIsometricOpen(false)}
-        title="Stadium &amp; Facilities"
-      >
-        <IsometricBlueprint state={state} dispatch={dispatch} onError={setError} />
-      </SlideOver>
-
       {/* ── Backroom Team slide-over ──────────────────────────────────────── */}
       <SlideOver
         isOpen={backroomOpen}
@@ -241,15 +209,6 @@ export function CommandCentre({ state, events, dispatch, isLoading }: CommandCen
         )}
       </SlideOver>
 
-      {/* ── Loading overlay ───────────────────────────────────────────────── */}
-      {isLoading && (
-        <div className="fixed inset-0 bg-bg-deep/60 flex items-center justify-center z-50">
-          <div className="card flex items-center gap-3 text-sm text-txt-primary">
-            <div className="w-4 h-4 rounded-full border-2 border-data-blue border-t-transparent animate-spin" />
-            Simulating week…
-          </div>
-        </div>
-      )}
     </div>
   );
 }

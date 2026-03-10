@@ -1,22 +1,27 @@
 ---
 project: "Calculating Glory"
 type: "build"
-lastUpdated: "2026-03-09"
+lastUpdated: "2026-03-10"
 ---
 
 # Calculating Glory - Backlog & Ideas
 
 ## Features / Functionality
 
-- [ ] Stadium View — dual home screen with MECE core/sub-unit grid (#21 — needs planning session first)
+- [ ] Isometric SVG renderer — 20x14 tile grid, 10 core units, sub-unit art progression (#21 PR 3)
+- [ ] Navigation wiring — core unit clicks open slide-overs, BuildPanel for upgrades (#21 PR 4)
+- [ ] Weekly Training Focus — SET_TRAINING_FOCUS command, training drill challenges (#21 PR 5)
+- [ ] Geometry challenges — 4 new MathTopics, stadium-themed templates (#21 PR 6)
 - [ ] Player database/market — pool of purchasable players with real(ish) names and stats
 - [ ] Transfer window UI — browse market, make offers, negotiate
-- [ ] Full isometric rendering — pixel art stadium/facilities, 64x32px tiles
 - [ ] Tutorial/onboarding flow — first-time player guidance
 - [ ] Pre-season flow — squad building before the season starts
 - [ ] Season end screen — promotion/relegation celebration/commiseration
 - [ ] Multiplayer sync — async turn-based between friends
 - [ ] Save/load to server (beyond localStorage)
+- [x] Stadium View plan — MECE coverage, grid layout, hit regions, sub-unit progression ✅
+- [x] Domain foundation — 9 facility types, FACILITY_CONFIG, weekly revenue ✅
+- [x] App shell — ViewToggle, StadiumView card grid, shared FacilityCard ✅
 - [x] InboxCard overhaul — result cards, dismissal, preview cap ✅
 - [x] InboxHistory full slide-over ✅
 - [x] Seeded news generator (transfer/injury/league) ✅
@@ -32,6 +37,7 @@ lastUpdated: "2026-03-09"
 - [ ] Morale system — explicit morale stat rather than folded into randomness
 - [ ] Match events beyond goals — injuries, red cards, suspensions
 - [ ] Practice mode — Marcus Webb free math drills for business acumen improvement
+- [ ] Decision density overhaul — squad selection, transfers, contracts, sponsorship (separate issue)
 - [x] Business acumen tile clickable → Learning Progress slide-over ✅
 - [x] Challenge difficulty capped by curriculum level ✅
 - [x] Star player name injected into wage-demand event ✅
@@ -42,6 +48,8 @@ lastUpdated: "2026-03-09"
 - [ ] Hint system — curriculum-appropriate scaffolding for math challenges
 - [ ] All branching club event chains — 15 templates, 4 branching follow-ups fully written
 - [ ] Teacher dashboard — class view of student progress
+- [ ] Geometry/shape challenges from Stadium View (AREA_AND_PERIMETER, ANGLES, SCALE_AND_PROPORTION, PROPERTIES_OF_SHAPES)
+- [ ] "Groundskeeper" NPC for geometry practice from Stadium View
 - [x] Learning Progress slide-over (5-level pip track, readiness criteria, topic chips) ✅
 - [x] Curriculum difficulty cap in challenge generator ✅
 
@@ -50,7 +58,7 @@ lastUpdated: "2026-03-09"
 - [ ] Chromebook performance profiling — ensure smooth at 1366x768
 - [ ] Accessibility audit — keyboard nav, colour contrast for school use
 - [ ] Offline capability — service worker for no-internet classrooms
-- [ ] Stadium View MECE analysis — map every playable game aspect to a unit/sub-unit
+- [x] Stadium View MECE analysis — every game system mapped to exactly one core unit ✅
 
 ## Future Phases
 
@@ -65,6 +73,10 @@ lastUpdated: "2026-03-09"
 - Branching path dependency (past decisions unlock/block future events) creates replay value
 - Star ratings for business acumen should feel rewarding, not punishing
 - Integer pence arithmetic was the right call — no floating-point issues anywhere
-- Stadium View needs MECE coverage: every playable aspect of the game should map to exactly one core unit, no gaps, no overlaps
-- `CLUB_COMMERCIAL_CENTRE` concept: kit shop, sponsorship deals, TV rights — likely a Phase 5 sub-unit under a Commercial core unit
+- FACILITY_CONFIG is single source of truth — domain, reducers, and frontend all read from it
+- Pitch and Stands are two visual core units backed by one STADIUM facility
 - Two-tier grid principle: Core units = navigation anchors (clickable); Sub-units = visual/stat effects only (pointer-events: none)
+- Grounds & Security directly impacts attendance rate — natural math hook for percentages
+- Food & Beverage ties into existing "Hot Dog Hygiene" club events — narrative hooks built in
+- Fan Zone + Grounds & Security were late additions that improve decision density and visual variety
+- ~2.8 mandatory decisions/week is too thin — Weekly Training Focus (PR 5) is the quick win
