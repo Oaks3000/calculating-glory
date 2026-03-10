@@ -3,6 +3,7 @@ project: "Calculating Glory"
 type: "build"
 createdAt: "2026-03-03"
 lastUpdated: "2026-03-10"
+
 ---
 
 # Calculating Glory - Roadmap
@@ -40,7 +41,7 @@ An educational football club management game for Year 7 maths, built on event-so
 - 4.1 Stadium View planning — MECE core/sub-unit grid, architectural decisions ✅
 - 4.2 Domain foundation — 9 facility types, FACILITY_CONFIG, weekly revenue, getDefaultFacilities() ✅
 - 4.3 App shell — ViewToggle, StadiumView card grid, shared FacilityCard ✅
-- 4.4 Isometric SVG renderer — 20x14 grid, 10 core units, sub-unit art (in progress)
+- 4.4 Isometric SVG renderer — 20×14 grid, 9 core units, level-scaled blocks, hover tooltip ✅ (PR #24)
 - 4.5 Navigation wiring — core unit clicks open slide-overs, BuildPanel
 - 4.6 Weekly Training Focus — SET_TRAINING_FOCUS command, training drill challenges
 - 4.7 Geometry challenges — 4 new MathTopics, stadium-themed templates
