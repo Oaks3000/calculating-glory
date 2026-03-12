@@ -462,4 +462,49 @@ Run Architecture Review + Performance Check
 
 ## 7. Issue Management During Development
 See `.build/ISSUE_WORKFLOW.md` for how to structure and manage GitHub issues while building this project.
+
+---
+
+## 8. Worktree Workflow — Known Gotchas
+
+### 8.1 Domain dist is always read from the main project
+
+`node_modules/@calculating-glory/domain` is a symlink that **always points to `/calculating-glory/packages/domain/dist/`** — the main project folder — regardless of which worktree is active. Worktrees do not get their own copy of this symlink.
+
+**Consequence:** rebuilding the domain inside a worktree (`cd .claude/worktrees/my-branch/packages/domain && npm run build`) compiles a file nobody reads. The frontend in every worktree still imports from the main project's dist.
+
+**Rule:** whenever domain source code changes (new types, new exports, modified reducers), rebuild here:
+
+```bash
+cd /Users/oakleywalters/Projects/calculating-glory/packages/domain && npm run build
 ```
+
+Do this:
+- After creating a new worktree from a branch that includes domain changes
+- After pulling main when a domain-touching PR has just merged
+- Any time `tsc --noEmit` throws errors like `Module '@calculating-glory/domain' has no exported member 'X'` or `Type '"SOME_VALUE"' is not assignable to type 'SomeType'` — these are never code bugs, always a stale dist
+
+### 8.2 New worktree checklist
+
+When creating a new worktree for a PR, always run these steps in order:
+
+```bash
+# 1. Create worktree from fresh main
+git worktree add .claude/worktrees/<name> -b feat/<name> origin/main
+
+# 2. Rebuild domain dist (main project, not worktree)
+cd /Users/oakleywalters/Projects/calculating-glory/packages/domain && npm run build
+
+# 3. Verify TypeScript is clean before writing any new code
+cd /Users/oakleywalters/Projects/calculating-glory/.claude/worktrees/<name>/packages/frontend && npx tsc --noEmit
+```
+
+### 8.3 Keeping local main in sync
+
+PRs merge to `origin/main` (the remote). The local `main` checkout at `/calculating-glory/` does not update automatically. After each merge, pull it forward:
+
+```bash
+git -C /Users/oakleywalters/Projects/calculating-glory pull origin main
+```
+
+If the pull fails with "local changes would be overwritten", check the diff first (`git diff`) — if the changes match what's already on origin/main (i.e. duplicated edits from a worktree), it's safe to discard them with `git checkout -- .` and then pull.
