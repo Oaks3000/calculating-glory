@@ -3,16 +3,16 @@ project: "Calculating Glory"
 type: "build"
 priority: 2
 phase: "Stadium View & Integration"
-progress: 55
-lastUpdated: "2026-03-10"
-lastTouched: "2026-03-10"
+progress: 68
+lastUpdated: "2026-03-12"
+lastTouched: "2026-03-12"
 status: "in-progress"
 ---
 
 # Calculating Glory - Current Status
 
-**Phase:** Stadium View & Integration (55% — PRs 1–3 merged, navigation wiring next)
-**Last Updated:** 2026-03-10
+**Phase:** Stadium View & Integration (68% — PRs 23–25 merged, visual design spec in hand)
+**Last Updated:** 2026-03-12
 
 ## What's Done
 
@@ -50,11 +50,15 @@ status: "in-progress"
   - `stadium-layout.ts` — CoreUnitDef for all 9 facilities, STADIUM_LAYOUT_SORTED
   - `CoreUnit.tsx` — flat diamond at level 0, isometric block at 1–5, hover highlight
   - `IsometricBlueprint.tsx` — SVG canvas with HTML tooltip (stale-closure fix via useRef)
+- **Navigation wiring** — `handleCoreUnitClick(facilityType)` routes all 9 core units to correct slide-overs (PR #25 ✅)
+- **Visual design spec** — Gemini-produced aesthetic framework for isometric renderer (SimCity 2000 style): 3-tone lighting, SVG pattern library, level-progression rules, "living world" animations. Saved as `design/stadium-visual-spec.md`
+- **stadium-mockup.html** — standalone proof-of-concept SVG rendering North/South stands with seat rows, roof canopy, floodlights
+- **CLAUDE.md Section 8** — worktree gotchas documented (npm symlink, new-worktree checklist, local main sync)
+- **Stale worktrees pruned** — 5 merged-branch worktrees removed
 
 ## What's In Progress
 
-- PR #24 open — awaiting review/merge
-- PR 4: Navigation wiring — core unit clicks open correct slide-overs/views
+- PR 5: Weekly Training Focus — `SET_TRAINING_FOCUS` domain command + training drill math challenges
 
 ## Blockers
 
@@ -67,6 +71,8 @@ status: "in-progress"
 - Dev server: `cd packages/frontend && npx vite`
 - Domain tests: `cd packages/domain && npm test`
 - 10 core units map to 9 facility types (Pitch + Stands share STADIUM)
-- PR 5 (Weekly Training Focus) planned as decision density quick win
-- PR 6 (Geometry Challenges) planned for stadium-themed maths
-- Sub-unit art (individual buildings per level) deferred beyond PR 4
+- PR 5 (Weekly Training Focus) is the immediate next PR
+- PR 6 (Geometry Challenges) follows — 4 new MathTopics, stadium-themed templates
+- Visual design spec (Gemini output) to be implemented during/after PR 5 — validate in mockup first, then apply to production renderer
+- Sub-unit art (individual building sprites per level) deferred until visual design spec is implemented
+- Club colours for seating not yet decided — needed before pattern implementation
