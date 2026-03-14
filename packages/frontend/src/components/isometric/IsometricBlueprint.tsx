@@ -160,8 +160,8 @@ export function IsometricBlueprint({
           </pattern>
         </defs>
 
-        {/* Background */}
-        <rect width={SVG_W} height={SVG_H} fill="#0D1B2A" />
+        {/* Background — muted grassland surround, distinct from the manicured pitch */}
+        <rect width={SVG_W} height={SVG_H} fill="#1d3a0d" />
 
         {/* Core units — back-to-front (painter's algorithm via STADIUM_LAYOUT_SORTED) */}
         {STADIUM_LAYOUT_SORTED.map(def => (
