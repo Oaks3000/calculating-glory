@@ -91,7 +91,8 @@ describe('calculateClubStrength', () => {
       id: 'club-1', name: 'Test', transferBudget: 0, wageBudget: 0,
       squad: [], staff: [], facilities: [], reputation: 0,
       stadium: { name: '', capacity: 0, averageAttendance: 0, ticketPrice: 0 },
-      form: []
+      form: [],
+      trainingFocus: null,
     };
     // No squad → calculateSquadStrength crashes on division by zero? Let me check...
     // Actually: totalRating / squad.length = 0/0 = NaN → Math.floor(NaN * 100) = NaN
@@ -114,7 +115,8 @@ describe('calculateClubStrength', () => {
       staff: [{ id: 's1', name: 'Coach', role: 'ATTACKING_COACH', quality: 80, salary: 50000, bonus: { type: 'goals', improvement: 10 } }],
       facilities: [], reputation: 0,
       stadium: { name: '', capacity: 0, averageAttendance: 0, ticketPrice: 0 },
-      form: []
+      form: [],
+      trainingFocus: null,
     };
     const strength = calculateClubStrength(club);
     // squadStrength = floor(70 * 100) = 7000
@@ -134,7 +136,8 @@ describe('calculateClubStrength', () => {
       id: 'c1', name: 'Test', transferBudget: 0, wageBudget: 0,
       squad: [p], staff: [], facilities: [facility], reputation: 0,
       stadium: { name: '', capacity: 0, averageAttendance: 0, ticketPrice: 0 },
-      form: []
+      form: [],
+      trainingFocus: null,
     };
     const strength = calculateClubStrength(club);
     // squadStrength = 7000, staffBonus = 0, facilityBonus = 3 * 50 = 150, reputationBonus = 0

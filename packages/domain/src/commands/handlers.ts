@@ -32,6 +32,8 @@ export function handleCommand(command: GameCommand, state: GameState): CommandRe
       return handleResolveClubEvent(command, state);
     case 'START_SEASON':
       return handleStartSeason(command, state);
+    case 'SET_TRAINING_FOCUS':
+      return handleSetTrainingFocus(command, state);
     default:
       return {
         error: {
@@ -390,6 +392,19 @@ function buildTeamMap(
   }
 
   return teamMap;
+}
+
+function handleSetTrainingFocus(command: any, state: GameState): CommandResult {
+  const events: GameEvent[] = [
+    {
+      type: 'TRAINING_FOCUS_SET',
+      timestamp: Date.now(),
+      clubId: state.club.id,
+      focus: command.focus,
+      previousFocus: state.club.trainingFocus,
+    },
+  ];
+  return { events };
 }
 
 function handleRecordMathAttempt(command: any, _state: GameState): CommandResult {

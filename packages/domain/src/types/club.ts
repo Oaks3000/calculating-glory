@@ -3,7 +3,7 @@
  */
 
 import { Player } from './player';
-import { Facility } from './facility';
+import { Facility, TrainingFocus } from './facility';
 import { Staff } from './staff';
 
 /**
@@ -36,6 +36,9 @@ export interface Club {
   
   /** Form (last 5 results: W/D/L) */
   form: FormResult[];
+
+  /** Weekly training focus chosen by the manager (null = not yet set) */
+  trainingFocus: TrainingFocus | null;
 }
 
 /**

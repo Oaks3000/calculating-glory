@@ -8,6 +8,7 @@
 import { Player } from '../types/player';
 import { Staff } from '../types/staff';
 import { PendingClubEvent } from '../types/game-state-updated';
+import { TrainingFocus } from '../types/facility';
 
 export type GameEvent =
   | GameStartedEvent
@@ -23,7 +24,8 @@ export type GameEvent =
   | SeasonEndedEvent
   | ClubEventOccurredEvent
   | ClubEventResolvedEvent
-  | SeasonStartedEvent;
+  | SeasonStartedEvent
+  | TrainingFocusSetEvent;
 
 export interface TransferCompletedEvent {
   type: 'TRANSFER_COMPLETED';
@@ -148,4 +150,12 @@ export interface SeasonStartedEvent {
   type: 'SEASON_STARTED';
   timestamp: number;
   season: number;
+}
+
+export interface TrainingFocusSetEvent {
+  type: 'TRAINING_FOCUS_SET';
+  timestamp: number;
+  clubId: string;
+  focus: TrainingFocus;
+  previousFocus: TrainingFocus | null;
 }

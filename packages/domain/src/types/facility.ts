@@ -2,6 +2,58 @@
  * Facility-related types
  */
 
+// ── Training Focus ────────────────────────────────────────────────────────────
+
+export type TrainingFocus =
+  | 'ATTACKING'
+  | 'DEFENSIVE'
+  | 'FITNESS'
+  | 'SET_PIECES'
+  | 'YOUTH_INTEGRATION';
+
+export interface TrainingFocusConfig {
+  label: string;
+  icon: string;
+  description: string;
+  /** Short player-facing effect summary */
+  effect: string;
+}
+
+export const TRAINING_FOCUS_CONFIG: Record<TrainingFocus, TrainingFocusConfig> = {
+  ATTACKING: {
+    label: 'Attacking Play',
+    icon: '⚡',
+    description: 'Drill movement, finishing, and chance creation.',
+    effect: '+5% goals scored this week',
+  },
+  DEFENSIVE: {
+    label: 'Defensive Shape',
+    icon: '🛡️',
+    description: 'Rehearse defensive positioning and set-piece defending.',
+    effect: '-5% goals conceded this week',
+  },
+  FITNESS: {
+    label: 'Fitness & Conditioning',
+    icon: '💪',
+    description: 'Peak physical conditioning to reduce injury and fatigue.',
+    effect: '-10% injury risk this week',
+  },
+  SET_PIECES: {
+    label: 'Set Pieces',
+    icon: '🎯',
+    description: 'Rehearse corners, free kicks, and throw-in routines.',
+    effect: '+3% set-piece goal chance this week',
+  },
+  YOUTH_INTEGRATION: {
+    label: 'Youth Integration',
+    icon: '🎓',
+    description: 'Bring academy players into first-team sessions.',
+    effect: '+2% youth development bonus this season',
+  },
+};
+
+// ── Facility types ────────────────────────────────────────────────────────────
+
 export type FacilityType =
   | 'TRAINING_GROUND'
   | 'MEDICAL_CENTER'
