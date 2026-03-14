@@ -132,6 +132,34 @@ export function IsometricBlueprint({
         viewBox={`0 0 ${SVG_W} ${SVG_H}`}
         style={{ display: 'block', margin: '0 auto' }}
       >
+        {/* ── Pattern library ─────────────────────────────────────────── */}
+        <defs>
+          {/* Grass stripes — alternating dark/light green, rotated to align
+              with the isometric top face (arctan(TH/TW) ≈ 26.57°). */}
+          <pattern
+            id="pat-grass"
+            patternUnits="userSpaceOnUse"
+            width={32}
+            height={16}
+            patternTransform="rotate(-26.57)"
+          >
+            <rect x={0} y={0} width={32} height={8} fill="#2a5c14" />
+            <rect x={0} y={8} width={32} height={8} fill="#1e4a0c" />
+          </pattern>
+
+          {/* Concrete stipple — scattered dots at low opacity.
+              Applied as an overlay on SW faces of support buildings. */}
+          <pattern
+            id="pat-concrete"
+            patternUnits="userSpaceOnUse"
+            width={6}
+            height={6}
+          >
+            <circle cx={1} cy={1} r={0.7} fill="rgba(0,0,0,0.12)" />
+            <circle cx={4} cy={4} r={0.7} fill="rgba(0,0,0,0.08)" />
+          </pattern>
+        </defs>
+
         {/* Background */}
         <rect width={SVG_W} height={SVG_H} fill="#0D1B2A" />
 

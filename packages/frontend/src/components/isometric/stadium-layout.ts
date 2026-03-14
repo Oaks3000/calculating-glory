@@ -15,6 +15,12 @@
  * Every facility is represented by exactly one CoreUnitDef.  The STADIUM
  * facility is visualised as The Pitch only — The Stands will be added in a
  * later PR as a separate surrounding element driven by STADIUM level.
+ *
+ * Shading model (Gemini visual spec, PR 6):
+ *   Top face:  base colour (100% light)
+ *   SW face:   base colour + rgba(0,0,0,0.30) overlay (70% light)
+ *   SE face:   base colour + rgba(0,0,0,0.55) overlay (45% light)
+ *   Highlight: 1px rgba(255,255,255,0.20) line on top front edge (T→R)
  */
 
 import { FacilityType } from '@calculating-glory/domain';
@@ -26,13 +32,23 @@ import { FacilityType } from '@calculating-glory/domain';
 export interface CoreUnitColors {
   /** Ground tile fill (level 0 — empty plot). */
   ground: string;
-  /** Top face of the building block. */
-  top: string;
-  /** SW (left) face — slightly darker. */
-  left: string;
-  /** SE (right) face — darkest. */
-  right: string;
-  /** Icon / label text colour. */
+  /**
+   * Building base colour — applied at 100% on the top face.
+   * SW face receives an rgba(0,0,0,0.30) overlay; SE face gets rgba(0,0,0,0.55).
+   * This produces 3-tone shading from a single hue without pre-baking hex values.
+   */
+  base: string;
+  /**
+   * Optional SVG fill override for the top face (e.g. 'url(#pat-grass)').
+   * When set, the top face renders this pattern on top of the base colour.
+   */
+  topPattern?: string;
+  /**
+   * Optional SVG fill overlay for the SW face (e.g. 'url(#pat-concrete)').
+   * Applied on top of the base colour + 30% dark overlay.
+   */
+  swPattern?: string;
+  /** Icon / pip text colour. */
   label: string;
 }
 
@@ -77,11 +93,10 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     gc: 7, gr: 2, cols: 6, rows: 5,
     blockHeights: [4, 8, 12, 16, 20, 24],
     colors: {
-      ground: '#2D5A1B',
-      top:    '#4CAF50',
-      left:   '#388E3C',
-      right:  '#2E7D32',
-      label:  '#FFFFFF',
+      ground:     '#2D5A1B',
+      base:       '#4CAF50',
+      topPattern: 'url(#pat-grass)',  // grass stripe pattern on top face
+      label:      '#FFFFFF',
     },
   },
 
@@ -95,11 +110,10 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     gc: 1, gr: 1, cols: 3, rows: 2,
     blockHeights: [0, 20, 30, 40, 52, 64],
     colors: {
-      ground: '#5C4A18',
-      top:    '#FF8F00',
-      left:   '#E65100',
-      right:  '#BF360C',
-      label:  '#FFFFFF',
+      ground:    '#5C4A18',
+      base:      '#FF8F00',
+      swPattern: 'url(#pat-concrete)',  // concrete stipple on SW (shadow) face
+      label:     '#FFFFFF',
     },
   },
   {
@@ -110,11 +124,10 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     gc: 1, gr: 5, cols: 2, rows: 2,
     blockHeights: [0, 20, 30, 40, 52, 64],
     colors: {
-      ground: '#3A3A3A',
-      top:    '#ECEFF1',
-      left:   '#B0BEC5',
-      right:  '#78909C',
-      label:  '#263238',
+      ground:    '#3A3A3A',
+      base:      '#ECEFF1',
+      swPattern: 'url(#pat-concrete)',
+      label:     '#263238',
     },
   },
   {
@@ -126,9 +139,7 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     blockHeights: [0, 20, 30, 40, 52, 64],
     colors: {
       ground: '#0D3A3A',
-      top:    '#26C6DA',
-      left:   '#00838F',
-      right:  '#006064',
+      base:   '#26C6DA',
       label:  '#FFFFFF',
     },
   },
@@ -143,11 +154,10 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     gc: 15, gr: 1, cols: 2, rows: 2,
     blockHeights: [0, 24, 36, 48, 60, 72],
     colors: {
-      ground: '#1A2A4A',
-      top:    '#448AFF',
-      left:   '#1565C0',
-      right:  '#0D47A1',
-      label:  '#FFFFFF',
+      ground:    '#1A2A4A',
+      base:      '#448AFF',
+      swPattern: 'url(#pat-concrete)',
+      label:     '#FFFFFF',
     },
   },
   {
@@ -159,9 +169,7 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     blockHeights: [0, 20, 30, 42, 54, 66],
     colors: {
       ground: '#3A2A08',
-      top:    '#FDD835',
-      left:   '#F9A825',
-      right:  '#F57F17',
+      base:   '#FDD835',
       label:  '#212121',
     },
   },
@@ -174,9 +182,7 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     blockHeights: [0, 16, 24, 34, 44, 56],
     colors: {
       ground: '#3A1A08',
-      top:    '#FF7043',
-      left:   '#E64A19',
-      right:  '#BF360C',
+      base:   '#FF7043',
       label:  '#FFFFFF',
     },
   },
@@ -192,9 +198,7 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     blockHeights: [0, 14, 22, 32, 42, 52],
     colors: {
       ground: '#2A0A3A',
-      top:    '#AB47BC',
-      left:   '#6A1B9A',
-      right:  '#4A148C',
+      base:   '#AB47BC',
       label:  '#FFFFFF',
     },
   },
@@ -206,11 +210,10 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     gc: 11, gr: 11, cols: 3, rows: 2,
     blockHeights: [0, 14, 22, 32, 42, 52],
     colors: {
-      ground: '#2A2A2A',
-      top:    '#78909C',
-      left:   '#546E7A',
-      right:  '#37474F',
-      label:  '#FFFFFF',
+      ground:    '#2A2A2A',
+      base:      '#78909C',
+      swPattern: 'url(#pat-concrete)',
+      label:     '#FFFFFF',
     },
   },
 ];
