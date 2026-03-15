@@ -53,7 +53,7 @@ function makeState(entries: LeagueTableEntry[], playerClubId: string = 'club-1')
       financial: 0,
       statistical: 0,
       strategic: 0,
-      recentPerformance: { percentage: 0, decimals: 0, ratios: 0, algebra: 0, statistics: 0, multiStep: 0 }
+      recentPerformance: { percentage: 0, decimals: 0, ratios: 0, algebra: 0, statistics: 0, multiStep: 0, geometry: 0 }
     },
     phase: 'EARLY_SEASON',
     pendingEvents: [],

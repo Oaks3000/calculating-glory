@@ -7,10 +7,11 @@ interface MathChallengeCardProps {
 
 const TOPIC_LABELS: Record<string, string> = {
   percentage: 'Percentages',
-  decimals: 'Decimals',
-  ratios: 'Ratios',
-  algebra: 'Algebra',
+  decimals:   'Decimals',
+  ratios:     'Ratios',
+  algebra:    'Algebra',
   statistics: 'Statistics',
+  geometry:   'Geometry',
 };
 
 const DIFFICULTY_STARS = ['', '★', '★★', '★★★'];

@@ -75,7 +75,8 @@ export function buildState(events: GameEvent[]): GameState {
         ratios: 0,
         algebra: 0,
         statistics: 0,
-        multiStep: 0
+        multiStep: 0,
+        geometry: 0
       }
     },
     phase: 'PRE_SEASON',
@@ -297,7 +298,8 @@ function handleMathAttemptRecorded(state: GameState, event: MathAttemptRecordedE
     'statistics': 'statistics',
     'stats': 'statistics',
     'multiStep': 'multiStep',
-    'multi-step': 'multiStep'
+    'multi-step': 'multiStep',
+    'geometry': 'geometry'
   };
 
   const topicKey = topicMapping[event.topic.toLowerCase()];

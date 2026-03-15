@@ -98,6 +98,7 @@ export interface BusinessAcumen {
     algebra: number;
     statistics: number;
     multiStep: number;
+    geometry: number;
   };
 }
 

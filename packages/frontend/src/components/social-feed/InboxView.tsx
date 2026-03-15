@@ -25,13 +25,17 @@ const TOPIC_CONFIG: Record<ChallengeTopic, { label: string; preview: string }> =
     label: 'Stats & Averages',
     preview: 'Win rates, squad ratings, GD — read the numbers behind the game.',
   },
+  geometry: {
+    label: 'Geometry & Shapes',
+    preview: 'Pitch dimensions, stand angles, scale drawings — the maths of the stadium.',
+  },
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
 /** Return the 3 weakest topics from performance data */
 function weakestTopics(perf: TopicPerformance): ChallengeTopic[] {
-  const topics: ChallengeTopic[] = ['percentage', 'decimals', 'ratios', 'algebra', 'statistics'];
+  const topics: ChallengeTopic[] = ['percentage', 'decimals', 'ratios', 'algebra', 'statistics', 'geometry'];
   return [...topics]
     .sort((a, b) => (perf[a] ?? 0) - (perf[b] ?? 0))
     .slice(0, 3);

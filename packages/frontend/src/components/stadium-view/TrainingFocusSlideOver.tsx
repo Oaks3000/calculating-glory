@@ -6,8 +6,11 @@
  * The current selection is highlighted.
  */
 
+import { useState } from 'react';
 import { GameState, GameCommand, TrainingFocus, TRAINING_FOCUS_CONFIG } from '@calculating-glory/domain';
 import { SlideOver } from '../shared/SlideOver';
+import { GeometryDrillCard } from './GeometryDrillCard';
+import { generateChallenge } from '../social-feed/generateChallenge';
 
 const ALL_FOCUSES = Object.keys(TRAINING_FOCUS_CONFIG) as TrainingFocus[];
 
@@ -29,6 +32,10 @@ export function TrainingFocusSlideOver({
   const currentFocus = state.club.trainingFocus;
   const trainingGround = state.club.facilities.find(f => f.type === 'TRAINING_GROUND');
   const groundLevel = trainingGround?.level ?? 0;
+
+  // Geometry drill — cycle through challenges on "Next drill" clicks
+  const [drillIndex, setDrillIndex] = useState(0);
+  const geometryDrill = generateChallenge(state, drillIndex, undefined, 'geometry');
 
   function handleSelect(focus: TrainingFocus) {
     if (focus === currentFocus) return; // no-op if already selected
@@ -105,6 +112,19 @@ export function TrainingFocusSlideOver({
           <p className="text-xs2 text-txt-muted mt-4 italic">
             Training focus resets each week. Choose before advancing to apply the bonus.
           </p>
+
+          {/* Groundskeeper's Drill — geometry practice, shown when ground is built */}
+          {groundLevel >= 1 && (
+            <div className="mt-6">
+              <p className="text-xs text-txt-muted uppercase tracking-wide mb-3">
+                Groundskeeper's Drill
+              </p>
+              <GeometryDrillCard
+                challenge={geometryDrill}
+                onRefresh={() => setDrillIndex(i => i + 1)}
+              />
+            </div>
+          )}
         </div>
 
       </div>
