@@ -5,6 +5,7 @@
 import { Player } from './player';
 import { Facility, TrainingFocus } from './facility';
 import { Staff } from './staff';
+import { Formation } from './formation';
 
 /**
  * Football club representation
@@ -39,6 +40,12 @@ export interface Club {
 
   /** Weekly training focus chosen by the manager (null = not yet set) */
   trainingFocus: TrainingFocus | null;
+
+  /** Owner's preferred formation — governs recruitment strategy */
+  preferredFormation: Formation | null;
+
+  /** Total squad slots available (capped at 24) */
+  squadCapacity: number;
 }
 
 /**

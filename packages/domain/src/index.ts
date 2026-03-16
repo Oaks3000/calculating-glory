@@ -34,6 +34,7 @@ export * from './money/utils';
 // Data
 export * from './data/league-two-teams';
 export * from './data/club-events';
+export * from './data/squad-generator';
 
 // Core state types
 export * from './types/game-state-updated';
@@ -43,3 +44,4 @@ export * from './types/match';
 export * from './types/staff';
 export * from './types/facility';
 export * from './types/league';
+export * from './types/formation';

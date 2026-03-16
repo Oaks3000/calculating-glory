@@ -8,6 +8,7 @@
 import { GameEvent } from '../events/types';
 import { CommandError } from '../types/game-state-updated';
 import { TrainingFocus } from '../types/facility';
+import { Formation } from '../types/formation';
 
 export type GameCommand =
   | MakeTransferCommand
@@ -17,7 +18,8 @@ export type GameCommand =
   | RecordMathAttemptCommand
   | ResolveClubEventCommand
   | StartSeasonCommand
-  | SetTrainingFocusCommand;
+  | SetTrainingFocusCommand
+  | SetFormationCommand;
 
 export interface MakeTransferCommand {
   type: 'MAKE_TRANSFER';
@@ -71,6 +73,11 @@ export interface StartSeasonCommand {
 export interface SetTrainingFocusCommand {
   type: 'SET_TRAINING_FOCUS';
   focus: TrainingFocus;
+}
+
+export interface SetFormationCommand {
+  type: 'SET_FORMATION';
+  formation: Formation;
 }
 
 export interface CommandResult {

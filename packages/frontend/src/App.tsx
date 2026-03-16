@@ -3,11 +3,16 @@ import { useGameState } from './hooks/useGameState';
 import { CommandCentre } from './components/command-centre/CommandCentre';
 import { StadiumView } from './components/stadium-view/StadiumView';
 import { ViewToggle, ActiveView } from './components/shared/ViewToggle';
+import { PreSeasonScreen } from './components/pre-season/PreSeasonScreen';
 
 export default function App() {
   const { state, events, dispatch, isLoading } = useGameState();
   const [activeView, setActiveView] = useState<ActiveView>('command');
   const [error, setError] = useState<string | null>(null);
+
+  if (state.phase === 'PRE_SEASON') {
+    return <PreSeasonScreen state={state} dispatch={dispatch} />;
+  }
 
   return (
     <div className="min-h-screen bg-bg-deep text-txt-primary flex flex-col">
