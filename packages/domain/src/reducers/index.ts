@@ -4,7 +4,7 @@
  * Pure functions that apply events to state.
  */
 
-import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent } from '../events/types';
+import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent } from '../events/types';
 import { GameState } from '../types/game-state-updated';
 import { Club } from '../types/club';
 import { LeagueTable, LeagueTableEntry, sortLeagueTable } from '../types/league';
@@ -45,6 +45,8 @@ export function reduceEvent(state: GameState, event: GameEvent): GameState {
       return handleClubEventResolved(state, event);
     case 'SEASON_STARTED':
       return handleSeasonStarted(state, event);
+    case 'TRAINING_FOCUS_SET':
+      return handleTrainingFocusSet(state, event);
     default:
       return state;
   }
@@ -73,7 +75,8 @@ export function buildState(events: GameEvent[]): GameState {
         ratios: 0,
         algebra: 0,
         statistics: 0,
-        multiStep: 0
+        multiStep: 0,
+        geometry: 0
       }
     },
     phase: 'PRE_SEASON',
@@ -295,7 +298,8 @@ function handleMathAttemptRecorded(state: GameState, event: MathAttemptRecordedE
     'statistics': 'statistics',
     'stats': 'statistics',
     'multiStep': 'multiStep',
-    'multi-step': 'multiStep'
+    'multi-step': 'multiStep',
+    'geometry': 'geometry'
   };
 
   const topicKey = topicMapping[event.topic.toLowerCase()];
@@ -428,6 +432,16 @@ function handleSeasonStarted(state: GameState, event: SeasonStartedEvent): GameS
   };
 }
 
+function handleTrainingFocusSet(state: GameState, event: TrainingFocusSetEvent): GameState {
+  return {
+    ...state,
+    club: {
+      ...state.club,
+      trainingFocus: event.focus,
+    },
+  };
+}
+
 // Utility functions
 
 function createEmptyClub(): Club {
@@ -446,7 +460,8 @@ function createEmptyClub(): Club {
       averageAttendance: 0,
       ticketPrice: 0
     },
-    form: []
+    form: [],
+    trainingFocus: null,
   };
 }
 

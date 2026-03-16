@@ -8,9 +8,10 @@ export type TopicPerformance = {
   algebra:    number;
   statistics: number;
   multiStep:  number;
+  geometry:   number;
 };
 
-export type ChallengeTopic = 'percentage' | 'decimals' | 'ratios' | 'algebra' | 'statistics';
+export type ChallengeTopic = 'percentage' | 'decimals' | 'ratios' | 'algebra' | 'statistics' | 'geometry';
 
 export interface MathChallenge {
   id: string;
@@ -372,6 +373,173 @@ export function generateChallenge(
         `round up = ${Math.ceil((upgradeCostK * 1000) / 2500)} games`,
     },
 
+    // ── GEOMETRY CHALLENGES (stadium-themed, fixed pitch dimensions) ─────────
+    //
+    // Difficulty 1 — AREA_AND_PERIMETER / PROPERTIES_OF_SHAPES
+    // Difficulty 2 — SCALE_AND_PROPORTION / ANGLES / compound shapes
+    // Difficulty 3 — Pythagoras, multi-step geometry
+
+    {
+      id: `ch-${index}-geo-pitch-area`,
+      topic: 'geometry',
+      difficulty: 1,
+      context:
+        `The groundskeeper needs to order new turf for the playing surface. ` +
+        `Help him work out the total area so he doesn't order too much — or too little.`,
+      question:
+        `The pitch is 105 metres long and 68 metres wide. What is its area in m²?`,
+      answer: 7140,
+      unit: ' m²',
+      hints: [
+        'Area of a rectangle = length × width',
+        'Multiply 105 by 68',
+        '105 × 68 = 105 × 70 − 105 × 2 = 7,350 − 210 = ?',
+      ],
+      explanation: '105 × 68 = 7,140 m²',
+    },
+
+    {
+      id: `ch-${index}-geo-pitch-perimeter`,
+      topic: 'geometry',
+      difficulty: 1,
+      context:
+        `The groundskeeper is replacing the advertising boards that run all the way around the pitch. ` +
+        `He needs to know the total length to order the right amount of fencing.`,
+      question:
+        `The pitch is 105 metres long and 68 metres wide. What is its perimeter in metres?`,
+      answer: 346,
+      unit: ' m',
+      hints: [
+        'Perimeter of a rectangle = 2 × (length + width)',
+        'Add the length and width first: 105 + 68 = 173',
+        'Then multiply by 2: 2 × 173 = ?',
+      ],
+      explanation: '2 × (105 + 68) = 2 × 173 = 346 m',
+    },
+
+    {
+      id: `ch-${index}-geo-hexagon-angle`,
+      topic: 'geometry',
+      difficulty: 1,
+      context:
+        `The architect is designing a new stand using a regular hexagonal layout. ` +
+        `He needs the interior angle so the steel frames fit together perfectly.`,
+      question:
+        `What is the interior angle of a regular hexagon? ` +
+        `(Use: interior angle = (n − 2) × 180 ÷ n, where n is the number of sides.)`,
+      answer: 120,
+      unit: '°',
+      hints: [
+        'A hexagon has n = 6 sides',
+        'Substitute: (6 − 2) × 180 ÷ 6 = 4 × 180 ÷ 6',
+        '4 × 180 = 720 — now divide by 6',
+      ],
+      explanation: '(6 − 2) × 180 ÷ 6 = 720 ÷ 6 = 120°',
+    },
+
+    {
+      id: `ch-${index}-geo-penalty-area`,
+      topic: 'geometry',
+      difficulty: 2,
+      context:
+        `The penalty area needs new turf, but the goal area inside it was already relaid last week. ` +
+        `The groundskeeper only needs to order turf for the remaining section.`,
+      question:
+        `The penalty area is 40 m wide and 16 m deep. ` +
+        `Inside it, the goal area is 18 m wide and 6 m deep. ` +
+        `What area of new turf is needed (penalty area minus goal area)? Give your answer in m².`,
+      answer: 532,
+      unit: ' m²',
+      hints: [
+        'Work out each area separately, then subtract',
+        'Penalty area = 40 × 16 = 640 m². Goal area = 18 × 6 = 108 m²',
+        '640 − 108 = ?',
+      ],
+      explanation: '(40 × 16) − (18 × 6) = 640 − 108 = 532 m²',
+    },
+
+    {
+      id: `ch-${index}-geo-blueprint-scale`,
+      topic: 'geometry',
+      difficulty: 2,
+      context:
+        `The architects sent over the blueprint for the new stand extension. ` +
+        `Help work out the actual dimensions so the construction team can order the right amount of materials.`,
+      question:
+        `The blueprint is drawn at a scale of 1:500. ` +
+        `The front of the new stand measures 18 cm on the drawing. ` +
+        `What is the actual length of the stand in metres?`,
+      answer: 90,
+      unit: ' m',
+      hints: [
+        'Scale 1:500 means 1 cm on paper = 500 cm in real life',
+        'Actual length = 18 × 500 cm',
+        '18 × 500 = 9,000 cm — convert to metres by dividing by 100',
+      ],
+      explanation: '18 cm × 500 = 9,000 cm = 90 m',
+    },
+
+    {
+      id: `ch-${index}-geo-roof-angles`,
+      topic: 'geometry',
+      difficulty: 2,
+      context:
+        `The roof truss above the main stand is an isosceles triangle shape. ` +
+        `The carpenter needs the base angles to cut the timber correctly.`,
+      question:
+        `An isosceles triangle has an apex angle of 40°. ` +
+        `What is each base angle? (Angles in a triangle sum to 180°.)`,
+      answer: 70,
+      unit: '°',
+      hints: [
+        'All angles in a triangle sum to 180°',
+        'The two base angles are equal in an isosceles triangle',
+        'Base angles = (180° − 40°) ÷ 2 = ?',
+      ],
+      explanation: '(180 − 40) ÷ 2 = 140 ÷ 2 = 70°',
+    },
+
+    {
+      id: `ch-${index}-geo-seat-capacity`,
+      topic: 'geometry',
+      difficulty: 3,
+      context:
+        `The safety officer needs to calculate crowd density per tier to plan the evacuation routes. ` +
+        `He needs the exact seat count for the lower tier before filing the safety report.`,
+      question:
+        `The stadium has a capacity of 24,000 seats arranged across 3 tiers. ` +
+        `The lower tier holds 40% of all seats. How many seats are in the lower tier?`,
+      answer: 9600,
+      unit: ' seats',
+      hints: [
+        'You need to find 40% of 24,000',
+        '10% of 24,000 = 2,400',
+        '40% = 4 × 10% = 4 × 2,400 = ?',
+      ],
+      explanation: '40% of 24,000 = 0.40 × 24,000 = 9,600 seats',
+    },
+
+    {
+      id: `ch-${index}-geo-pythagoras`,
+      topic: 'geometry',
+      difficulty: 3,
+      context:
+        `The groundskeeper checks the pitch is a true rectangle by measuring the diagonal. ` +
+        `If the diagonal matches Pythagoras' theorem, the corners are perfect right angles — ` +
+        `essential for accurate line marking.`,
+      question:
+        `The pitch is 60 m long and 45 m wide. ` +
+        `Using Pythagoras' theorem (a² + b² = c²), what is the length of the diagonal in metres?`,
+      answer: 75,
+      unit: ' m',
+      hints: [
+        'Pythagoras: diagonal² = length² + width²',
+        '60² + 45² = 3,600 + 2,025 = 5,625',
+        '√5,625 = ? (it\'s a whole number)',
+      ],
+      explanation: '√(60² + 45²) = √(3,600 + 2,025) = √5,625 = 75 m',
+    },
+
     {
       id: `ch-${index}-budget-ratio`,
       topic: 'ratios',
@@ -462,6 +630,7 @@ export function generateChallenge(
     ratios:     performance.ratios,
     algebra:    performance.algebra,
     statistics: performance.statistics,
+    geometry:   performance.geometry,
   };
 
   const weighted = safePool.map(c => {

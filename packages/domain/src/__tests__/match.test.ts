@@ -143,7 +143,8 @@ describe('clubToTeam', () => {
       facilities: [],
       reputation: 50,
       stadium: { name: 'Test Arena', capacity: 5000, averageAttendance: 3000, ticketPrice: 2000 },
-      form: []
+      form: [],
+      trainingFocus: null,
     };
 
     const team = clubToTeam(club);
@@ -169,7 +170,8 @@ describe('clubToTeam', () => {
       facilities: [],
       reputation: 0,
       stadium: { name: '', capacity: 0, averageAttendance: 0, ticketPrice: 0 },
-      form: []
+      form: [],
+      trainingFocus: null,
     };
 
     const team = clubToTeam(club);
@@ -190,7 +192,8 @@ describe('clubToTeam', () => {
       facilities: [],
       reputation: 50,
       stadium: { name: '', capacity: 0, averageAttendance: 0, ticketPrice: 0 },
-      form: []
+      form: [],
+      trainingFocus: null,
     };
 
     const winningClub: Club = { ...baseClub, form: ['W', 'W', 'W', 'W', 'W'] };

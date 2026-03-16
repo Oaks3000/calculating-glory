@@ -30,7 +30,12 @@ export type MathTopic =
   | 'QUADRATIC_EQUATIONS'
   | 'ADVANCED_PROBABILITY'
   | 'STATISTICAL_ANALYSIS'
-  | 'GRAPH_INTERPRETATION';
+  | 'GRAPH_INTERPRETATION'
+  // Geometry topics — surfaced via Stadium View / Groundskeeper NPC (PR 7)
+  | 'AREA_AND_PERIMETER'
+  | 'ANGLES'
+  | 'SCALE_AND_PROPORTION'
+  | 'PROPERTIES_OF_SHAPES';
 
 export type CalculationType =
   | 'add'
@@ -141,7 +146,9 @@ export const CURRICULUM_LEVELS: Record<CurriculumLevel, CurriculumConfig> = {
       'SIMPLE_FRACTIONS',
       'RATIOS',
       'BASIC_ALGEBRA',
-      'DATA_INTERPRETATION'
+      'DATA_INTERPRETATION',
+      'AREA_AND_PERIMETER',
+      'PROPERTIES_OF_SHAPES',
     ],
     difficulty: {
       easy: {
@@ -201,7 +208,10 @@ export const CURRICULUM_LEVELS: Record<CurriculumLevel, CurriculumConfig> = {
       'NEGATIVE_NUMBERS',
       'SIMULTANEOUS_EQUATIONS',
       'PROBABILITY',
-      'SEQUENCES'
+      'SEQUENCES',
+      'AREA_AND_PERIMETER',
+      'ANGLES',
+      'PROPERTIES_OF_SHAPES',
     ],
     difficulty: {
       easy: {
@@ -267,7 +277,11 @@ export const CURRICULUM_LEVELS: Record<CurriculumLevel, CurriculumConfig> = {
       'QUADRATIC_EQUATIONS',
       'ADVANCED_PROBABILITY',
       'STATISTICAL_ANALYSIS',
-      'GRAPH_INTERPRETATION'
+      'GRAPH_INTERPRETATION',
+      'AREA_AND_PERIMETER',
+      'ANGLES',
+      'SCALE_AND_PROPORTION',
+      'PROPERTIES_OF_SHAPES',
     ],
     difficulty: {
       easy: {
@@ -329,7 +343,11 @@ export const CURRICULUM_LEVELS: Record<CurriculumLevel, CurriculumConfig> = {
       'NEGATIVE_NUMBERS',
       'SIMULTANEOUS_EQUATIONS',
       'PROBABILITY',
-      'SEQUENCES'
+      'SEQUENCES',
+      'AREA_AND_PERIMETER',
+      'ANGLES',
+      'SCALE_AND_PROPORTION',
+      'PROPERTIES_OF_SHAPES',
     ],
     difficulty: {
       easy: {
@@ -396,7 +414,11 @@ export const CURRICULUM_LEVELS: Record<CurriculumLevel, CurriculumConfig> = {
       'QUADRATIC_EQUATIONS',
       'ADVANCED_PROBABILITY',
       'STATISTICAL_ANALYSIS',
-      'GRAPH_INTERPRETATION'
+      'GRAPH_INTERPRETATION',
+      'AREA_AND_PERIMETER',
+      'ANGLES',
+      'SCALE_AND_PROPORTION',
+      'PROPERTIES_OF_SHAPES',
     ],
     difficulty: {
       easy: {

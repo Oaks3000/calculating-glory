@@ -199,3 +199,95 @@ cd packages/frontend && npx vite --port 3001  # from pr3 worktree
 ---
 
 **Status**: PR #24 open — isometric SVG renderer complete, 245 tests green, tsc clean. PR 4 navigation wiring is next.
+
+---
+
+# Session Handover — 2026-03-12
+
+## What Was Done This Session
+
+### 1. Local main synced
+- Local `main` was 6 commits behind `origin/main` — some uncommitted changes were already in origin/main (formatMoney decimals + WeekAdvanceButton currentWeek+1 fix). Discarded duplicates, pulled forward.
+
+### 2. PR #24 + PR #25 merged
+- PR #24 (Isometric SVG renderer) — merged ✅
+- PR #25 (Navigation wiring) — merged ✅; `handleCoreUnitClick(facilityType)` now routes all 9 core units to correct slide-overs
+
+### 3. CLAUDE.md — Section 8 added
+- Documented npm workspace symlink gotcha: `node_modules/@calculating-glory/domain` always points to main project's `dist/`, never the worktree's. Rule: rebuild domain at `/calculating-glory/packages/domain/` always.
+- New-worktree 3-step checklist added
+- Local main sync pattern documented
+
+### 4. Stadium visual design spec — Gemini output
+- Wrote a higher-level art direction brief (aesthetic-first, XXXXX placeholders for style choices)
+- Brief sent to Gemini; Gemini produced a full visual design spec:
+  - **3-tone lighting**: Top 100%, SW face 70% (30% black overlay), SE face 45% (55% black overlay)
+  - **1px highlight line** on every top edge (white, 20% opacity)
+  - **SVG pattern library** defined: `pat-grass-pro`, `pat-seats`, `pat-concrete`, `pat-corrugated`
+  - **Level progression**: L0 = scrub/construction tape → L5 = cantilevered roof, ribbed underside
+  - **"Living world" animations**: crowd stipple wave, swimming pool glint, flags, birds (matchday only)
+  - Reference aesthetic: SimCity 2000 — charming, textured, solid-feeling without being photorealistic
+
+### 5. Housekeeping
+- Removed 5 stale worktrees (agitated-austin, confident-colden, dreamy-bell, pr3-isometric-renderer, pr4-navigation)
+- Committed CLAUDE.md, stadium-mockup.html, TASKS.md, package-lock.json to main
+- .build files updated
+
+## Current Status
+
+### ✅ Done
+- PR #23 Stadium View foundation
+- PR #24 Isometric SVG renderer
+- PR #25 Navigation wiring
+- Visual design spec (Gemini) — ready to implement
+- Worktrees clean; main branch up to date
+
+### 🟡 Next
+- Validate visual design spec in `stadium-mockup.html` (30 min proof of concept)
+- PR 5: Weekly Training Focus
+
+### 🔴 Blocked
+- Club colours not decided — needed for seating banding in visual design spec
+
+## Key Files
+
+```
+/calculating-glory/stadium-mockup.html          — standalone SVG proof-of-concept
+/calculating-glory/CLAUDE.md                    — Section 8: worktree gotchas
+/calculating-glory/packages/frontend/src/components/isometric/
+  IsometricBlueprint.tsx                        — SVG canvas, tooltip, onCoreUnitClick
+  CoreUnit.tsx                                  — per-unit renderer (level 0 diamond / 1-5 block)
+  stadium-layout.ts                             — 9 CoreUnitDef with grid coords, heights, colours
+  isometric-utils.ts                            — gridToScreen, blockPaths, footprintVertices
+```
+
+## How to Start Next Session
+
+```bash
+# 1. Sync main (in case PRs have merged)
+git -C /Users/oakleywalters/Projects/calculating-glory pull origin main
+
+# 2. Rebuild domain
+cd /Users/oakleywalters/Projects/calculating-glory/packages/domain && npm run build
+
+# 3. Create worktree for PR 5
+git worktree add .claude/worktrees/<name> -b feat/pr5-training-focus origin/main
+
+# 4. TypeScript check before writing code
+cd /Users/oakleywalters/Projects/calculating-glory/.claude/worktrees/<name>/packages/frontend && npx tsc --noEmit
+```
+
+## Visual Design Spec Summary (for implementation)
+
+The spec is in the conversation history. Key rules to implement in `IsometricBlueprint.tsx` / `CoreUnit.tsx`:
+
+1. **Face shading**: top = base colour, SW face = base + `rgba(0,0,0,0.3)` overlay, SE face = base + `rgba(0,0,0,0.55)` overlay
+2. **Highlight line**: 1px white stroke at 20% opacity on top edge of each block
+3. **Grass pattern**: alternating green stripes via `<pattern>` in `<defs>` (Level 3+)
+4. **Seat pattern**: 2px horizontal bands in club colour, 1px dark separator, 1px drop shadow under each row
+5. **Concrete**: 1px dot stipple pattern at ~10% opacity over warm grey (#A8A8A8)
+6. **Validate in `stadium-mockup.html` before touching production renderer**
+
+---
+
+**Status**: PRs 23–25 merged, visual design spec in hand, worktrees clean. Next: validate spec in mockup, then PR 5 (Weekly Training Focus).

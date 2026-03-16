@@ -6,7 +6,7 @@
  *
  *  Level-0 plots        → FacilityUpgradeSlideOver (BuildPanel)
  *  STADIUM              → FixturesSlideOver
- *  TRAINING_GROUND      → SquadAuditSlideOver
+ *  TRAINING_GROUND      → TrainingFocusSlideOver
  *  MEDICAL_CENTER       → BackroomTeamSlideOver
  *  YOUTH_ACADEMY        → ScoutingSlideOver
  *  CLUB_OFFICE          → BoardConfidenceSlideOver
@@ -23,7 +23,7 @@ import { FacilityCard }                     from '../shared/FacilityCard';
 import { SlideOver }                        from '../shared/SlideOver';
 import { BackroomTeamSlideOver }            from '../command-centre/BackroomTeamSlideOver';
 import { FacilityUpgradeSlideOver }         from './FacilityUpgradeSlideOver';
-import { SquadAuditSlideOver }              from './SquadAuditSlideOver';
+import { TrainingFocusSlideOver }           from './TrainingFocusSlideOver';
 import { FixturesSlideOver }                from './FixturesSlideOver';
 import { BoardConfidenceSlideOver }         from './BoardConfidenceSlideOver';
 import { ScoutingSlideOver }                from './ScoutingSlideOver';
@@ -48,7 +48,7 @@ export function StadiumView({ state, dispatch, onError }: StadiumViewProps) {
   // ── Slide-over open state ──────────────────────────────────────────────────
   const [upgradeTarget, setUpgradeTarget] = useState<FacilityType | null>(null);
   const [fixturesOpen,  setFixturesOpen]  = useState(false);
-  const [squadOpen,     setSquadOpen]     = useState(false);
+  const [trainingOpen,     setTrainingOpen]     = useState(false);
   const [backroomOpen,  setBackroomOpen]  = useState(false);
   const [boardOpen,     setBoardOpen]     = useState(false);
   const [scoutingOpen,  setScoutingOpen]  = useState(false);
@@ -77,7 +77,7 @@ export function StadiumView({ state, dispatch, onError }: StadiumViewProps) {
     // Level 1+ navigation facilities → type-specific slide-over
     switch (facilityType) {
       case 'STADIUM':         setFixturesOpen(true);  break;
-      case 'TRAINING_GROUND': setSquadOpen(true);     break;
+      case 'TRAINING_GROUND': setTrainingOpen(true);     break;
       case 'MEDICAL_CENTER':  setBackroomOpen(true);  break;
       case 'YOUTH_ACADEMY':   setScoutingOpen(true);  break;
       case 'CLUB_OFFICE':     setBoardOpen(true);     break;
@@ -151,11 +151,13 @@ export function StadiumView({ state, dispatch, onError }: StadiumViewProps) {
         state={state}
       />
 
-      {/* TRAINING_GROUND → Squad Audit */}
-      <SquadAuditSlideOver
-        isOpen={squadOpen}
-        onClose={() => setSquadOpen(false)}
+      {/* TRAINING_GROUND → Training Focus */}
+      <TrainingFocusSlideOver
+        isOpen={trainingOpen}
+        onClose={() => setTrainingOpen(false)}
         state={state}
+        dispatch={dispatch}
+        onError={onError}
       />
 
       {/* MEDICAL_CENTER → Backroom Team */}

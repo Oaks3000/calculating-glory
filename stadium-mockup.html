@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Calculating Glory — Stadium Visual Exploration</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #060e18;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 16px 40px;
+    gap: 18px;
+    font-family: 'Courier New', monospace;
+  }
+  h1 { color: #2a4055; font-size: 9px; letter-spacing: 4px; text-transform: uppercase; }
+  .svg-wrap { border-radius: 6px; overflow: hidden; box-shadow: 0 0 80px rgba(0,0,0,0.9); }
+  .notes {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    max-width: 1088px;
+    width: 100%;
+  }
+  .card {
+    background: #0d1b2a;
+    border: 1px solid #182838;
+    border-radius: 4px;
+    padding: 14px 16px;
+  }
+  .card h2 {
+    font-size: 8px;
+    letter-spacing: 3px;
+    color: #2a4a6a;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #182838;
+  }
+  .card li {
+    font-size: 10px;
+    color: #5a7a8a;
+    line-height: 2;
+    list-style: none;
+    padding-left: 14px;
+    position: relative;
+  }
+  .card li::before { content: '—'; position: absolute; left: 0; color: #2a4a6a; }
+  .card li.q::before { content: '?'; color: #FF8F00; font-weight: bold; }
+  .card li.done::before { content: '✓'; color: #4CAF50; }
+  .card li.gem::before { content: '→'; color: #448AFF; }
+  .label {
+    position: absolute;
+    font-size: 8px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.25);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+
+<h1>Calculating Glory · Stadium View · North + South Stand Concept · Design Exploration</h1>
+
+<div class="svg-wrap">
+  <svg id="s" width="1088" height="640"></svg>
+</div>
+
+<div class="notes">
+  <div class="card">
+    <h2>What's rendered here</h2>
+    <ul>
+      <li class="done">North + South stand blocks (new, not yet in codebase)</li>
+      <li class="done">Seat rows on crowd-facing faces (SE / SW)</li>
+      <li class="done">Roof canopy overhang toward pitch</li>
+      <li class="done">Pitch with field markings + grass stripes</li>
+      <li class="done">Floodlight pylons at 4 pitch corners</li>
+      <li class="done">East + West stand footprints (dashed, future)</li>
+      <li class="done">All 9 existing core units at current fidelity</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>Open design questions</h2>
+    <ul>
+      <li class="q">Stands as STADIUM sub-units (visual only) or separate facility types?</li>
+      <li class="q">Roof overhang — per level, or only at level 3+?</li>
+      <li class="q">Seat colour — club colours, fixed, or player-chosen?</li>
+      <li class="q">Level 1 = open terrace, Level 5 = covered three-tier?</li>
+      <li class="q">East + West stands unlock at level 3 / 4?</li>
+      <li class="q">Floodlights appear at level 2 or as a separate sub-unit?</li>
+      <li class="q">Should sub-units be clickable (pointer-events) or purely visual?</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>If briefing Gemini</h2>
+    <ul>
+      <li class="gem">Provide the isometric math (gridToScreen, footprintVertices, blockPaths)</li>
+      <li class="gem">Share STADIUM_LAYOUT.ts for tile positions + dimensions</li>
+      <li class="gem">Define level progression table (0=empty plot → 5=world class)</li>
+      <li class="gem">Specify visible face rule: camera from SE → left+right faces only</li>
+      <li class="gem">Set pixel budget: SVG 1088×640, tile 64×32, max bh ~80</li>
+      <li class="gem">Ask for: per-level color palette, seat pattern, roof geometry</li>
+      <li class="gem">Ask for: sub-unit sprite concepts (signs, banners, screens)</li>
+    </ul>
+  </div>
+</div>
+
+<script>
+const SVG = document.getElementById('s');
+const TW = 64, TH = 32, GRID_ROWS = 14;
+const OX = GRID_ROWS * TW / 2; // 448
+const OY = 24;
+const W = 1088, H = 640;
+
+// ── Core math ──────────────────────────────────────────────────────────────────
+
+function gs(c, r) {
+  return [OX + (c - r) * (TW / 2), OY + (c + r) * (TH / 2)];
+}
+
+function fv(gc, gr, cols, rows) {
+  return {
+    T: gs(gc, gr),
+    R: gs(gc + cols, gr),
+    B: gs(gc + cols, gr + rows),
+    L: gs(gc, gr + rows),
+  };
+}
+
+function raised(v, bh) {
+  return {
+    T: [v.T[0], v.T[1] - bh],
+    R: [v.R[0], v.R[1] - bh],
+    B: [v.B[0], v.B[1] - bh],
+    L: [v.L[0], v.L[1] - bh],
+  };
+}
+
+function pt(arr) { return arr.join(','); }
+
+// ── SVG helpers ───────────────────────────────────────────────────────────────
+
+function addEl(tag, attrs) {
+  const e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  SVG.appendChild(e);
+  return e;
+}
+
+function path(d, fill, extra = {}) {
+  return addEl('path', { d, fill, ...extra });
+}
+
+function line(x1, y1, x2, y2, stroke, extra = {}) {
+  return addEl('line', { x1, y1, x2, y2, stroke, ...extra });
+}
+
+// ── Building primitives ───────────────────────────────────────────────────────
+
+function addBlock(gc, gr, cols, rows, bh, col) {
+  const v = fv(gc, gr, cols, rows);
+  const u = raised(v, bh);
+  // SW face (left)
+  path(`M${pt(u.T)} L${pt(u.L)} L${pt(v.L)} L${pt(v.T)}Z`, col.left);
+  // SE face (right)
+  path(`M${pt(u.R)} L${pt(u.B)} L${pt(v.B)} L${pt(v.R)}Z`, col.right);
+  // Top face
+  path(`M${pt(u.T)} L${pt(u.R)} L${pt(u.B)} L${pt(u.L)}Z`, col.top);
+}
+
+function addPlot(gc, gr, cols, rows, fill = '#111c28', stroke = '#1e3040') {
+  const v = fv(gc, gr, cols, rows);
+  path(`M${pt(v.T)} L${pt(v.R)} L${pt(v.B)} L${pt(v.L)}Z`, fill);
+  path(`M${pt(v.T)} L${pt(v.R)} L${pt(v.B)} L${pt(v.L)}Z`, 'none', {
+    stroke, 'stroke-width': '1', 'stroke-dasharray': '4,3'
+  });
+}
+
+// ── Seat rows on a parallelogram face ────────────────────────────────────────
+// p0 = top-right of face, p1 = top-left, p2 = bottom-left, p3 = bottom-right (screen coords)
+
+function addSeatRows(p0, p1, p2, p3, colors, rows = 8) {
+  for (let i = 0; i < rows; i++) {
+    const t1 = i / rows;
+    const t2 = (i + 0.72) / rows;
+    const lx = (a, b, t) => a[0] + (b[0] - a[0]) * t;
+    const ly = (a, b, t) => a[1] + (b[1] - a[1]) * t;
+    const x0 = lx(p0, p3, t1), y0 = ly(p0, p3, t1);
+    const x1 = lx(p1, p2, t1), y1 = ly(p1, p2, t1);
+    const x2 = lx(p0, p3, t2), y2 = ly(p0, p3, t2);
+    const x3 = lx(p1, p2, t2), y3 = ly(p1, p2, t2);
+    path(`M${x0},${y0} L${x1},${y1} L${x3},${y3} L${x2},${y2}Z`,
+      colors[i % colors.length], { opacity: '0.88' });
+  }
+}
+
+// ── Background ────────────────────────────────────────────────────────────────
+path(`M0,0 H${W} V${H} H0Z`, '#0D1B2A');
+
+// Subtle grid dots
+for (let c = 0; c <= 20; c++) {
+  for (let r = 0; r <= 14; r++) {
+    const [x, y] = gs(c, r);
+    if (x > 0 && x < W && y > 0 && y < H) {
+      addEl('circle', { cx: x, cy: y, r: '1', fill: 'rgba(255,255,255,0.04)' });
+    }
+  }
+}
+
+// ── Render order: painter's algorithm (ascending gc+gr) ───────────────────────
+
+// Training Ground (1,1) sum=2 — level 1
+addBlock(1, 1, 3, 2, 20, { top: '#c97a00', left: '#995c00', right: '#6b4000' });
+
+// Medical Center (1,5) sum=6 — level 0
+addPlot(1, 5, 2, 2);
+
+// ── NORTH STAND (7,0) sum=7 ──────────────────────────────────────────────────
+{
+  const gc = 7, gr = 0, cols = 6, rows = 2, bh = 62;
+  const v = fv(gc, gr, cols, rows);
+  const u = raised(v, bh);
+
+  // SW face (back of stand — away from pitch)
+  path(`M${pt(u.T)} L${pt(u.L)} L${pt(v.L)} L${pt(v.T)}Z`, '#18293a');
+
+  // SE face (crowd face — visible from camera)
+  path(`M${pt(u.R)} L${pt(u.B)} L${pt(v.B)} L${pt(v.R)}Z`, '#1e3347');
+
+  // Seat rows on SE face
+  // Face: top-right=u.R, top-left=u.B, bottom-left=v.B, bottom-right=v.R
+  addSeatRows(u.R, u.B, v.B, v.R,
+    ['#0d3a7a', '#1050a8', '#0d3a7a', '#1050a8', '#0d3a7a', '#b52020', '#0d3a7a', '#1050a8']);
+
+  // Top face (roof)
+  path(`M${pt(u.T)} L${pt(u.R)} L${pt(u.B)} L${pt(u.L)}Z`, '#2e4558');
+
+  // Roof fascia strip (front edge of roof, thin dark band)
+  const fascia_bh = bh + 4;
+  const uf = raised(v, fascia_bh);
+  path(`M${pt(u.L)} L${pt(u.B)} L${pt(uf.B)} L${pt(uf.L)}Z`, '#0f1e2d', { opacity: '0.9' });
+
+  // Roof overhang slab (extends 1 grid unit toward pitch)
+  const oh = 1.0;
+  const ohL = [u.L[0] - oh * (TW / 2), u.L[1] + oh * (TH / 2)];
+  const ohB = [u.B[0] - oh * (TW / 2), u.B[1] + oh * (TH / 2)];
+  path(`M${pt(u.L)} L${pt(u.B)} L${pt(ohB)} L${pt(ohL)}Z`, '#243545', { opacity: '0.85' });
+  // Overhang underside
+  const ohLd = [ohL[0], ohL[1] + 5];
+  const ohBd = [ohB[0], ohB[1] + 5];
+  path(`M${pt(ohL)} L${pt(ohB)} L${pt(ohBd)} L${pt(ohLd)}Z`, '#0a151f');
+
+  // Concrete band at base of stand (plinth)
+  const plinth_bh = 8;
+  const up = raised(v, plinth_bh);
+  path(`M${pt(up.R)} L${pt(up.B)} L${pt(v.B)} L${pt(v.R)}Z`, '#253545');
+}
+
+// ── PITCH (7,2) sum=9 ────────────────────────────────────────────────────────
+{
+  const gc = 7, gr = 2, cols = 6, rows = 5, bh = 3;
+  const v = fv(gc, gr, cols, rows);
+  const u = raised(v, bh);
+
+  // Side edges (very thin)
+  path(`M${pt(u.T)} L${pt(u.L)} L${pt(v.L)} L${pt(v.T)}Z`, '#1a3d0a');
+  path(`M${pt(u.R)} L${pt(u.B)} L${pt(v.B)} L${pt(v.R)}Z`, '#163508');
+
+  // Grass base
+  path(`M${pt(u.T)} L${pt(u.R)} L${pt(u.B)} L${pt(u.L)}Z`, '#245010');
+
+  // Grass stripes (alternating bands along gc axis)
+  for (let i = 0; i < 6; i++) {
+    if (i % 2 === 0) continue;
+    const t1 = i / 6, t2 = (i + 1) / 6;
+    const [ax, ay] = gs(gc + cols * t1, gr);
+    const [bx, by] = gs(gc + cols * t1, gr + rows);
+    const [cx2, cy2] = gs(gc + cols * t2, gr + rows);
+    const [dx, dy] = gs(gc + cols * t2, gr);
+    path(`M${ax},${ay - bh} L${dx},${dy - bh} L${cx2},${cy2 - bh} L${bx},${by - bh}Z`,
+      '#1e4a0c', { opacity: '0.55' });
+  }
+
+  // Field markings
+  const mk = (c, r) => { const [x, y] = gs(c, r); return [x, y - bh]; };
+
+  // Outer border
+  path(`M${pt(u.T)} L${pt(u.R)} L${pt(u.B)} L${pt(u.L)}Z`, 'none',
+    { stroke: 'rgba(255,255,255,0.18)', 'stroke-width': '1.5' });
+
+  // Halfway line
+  const [hl0x, hl0y] = mk(7, 4.5);
+  const [hl1x, hl1y] = mk(13, 4.5);
+  line(hl0x, hl0y, hl1x, hl1y, 'rgba(255,255,255,0.4)', { 'stroke-width': '1.5' });
+
+  // Centre circle (ellipse in isometric)
+  addEl('ellipse', {
+    cx: mk(10, 4.5)[0], cy: mk(10, 4.5)[1],
+    rx: '36', ry: '18',
+    fill: 'none', stroke: 'rgba(255,255,255,0.35)', 'stroke-width': '1.5'
+  });
+
+  // Centre spot
+  addEl('circle', {
+    cx: mk(10, 4.5)[0], cy: mk(10, 4.5)[1], r: '2.5',
+    fill: 'rgba(255,255,255,0.5)'
+  });
+
+  // Top penalty box
+  const tb = [mk(8.5, 2), mk(11.5, 2), mk(11.5, 3.5), mk(8.5, 3.5)];
+  path(`M${tb[0]} L${tb[1]} L${tb[2]} L${tb[3]}Z`, 'none',
+    { stroke: 'rgba(255,255,255,0.32)', 'stroke-width': '1.5' });
+
+  // Bottom penalty box
+  const bb = [mk(8.5, 5.5), mk(11.5, 5.5), mk(11.5, 7), mk(8.5, 7)];
+  path(`M${bb[0]} L${bb[1]} L${bb[2]} L${bb[3]}Z`, 'none',
+    { stroke: 'rgba(255,255,255,0.32)', 'stroke-width': '1.5' });
+
+  // Goal lines (thicker)
+  const [g0x, g0y] = mk(8.75, 2); const [g1x, g1y] = mk(11.25, 2);
+  line(g0x, g0y, g1x, g1y, 'rgba(255,255,255,0.55)', { 'stroke-width': '2' });
+  const [g2x, g2y] = mk(8.75, 7); const [g3x, g3y] = mk(11.25, 7);
+  line(g2x, g2y, g3x, g3y, 'rgba(255,255,255,0.55)', { 'stroke-width': '2' });
+}
+
+// Youth Academy (1,9) sum=10 — level 0
+addPlot(1, 9, 3, 2);
+
+// ── SOUTH STAND (7,7) sum=14 ─────────────────────────────────────────────────
+{
+  const gc = 7, gr = 7, cols = 6, rows = 2, bh = 62;
+  const v = fv(gc, gr, cols, rows);
+  const u = raised(v, bh);
+
+  // SE face (back of stand — away from pitch)
+  path(`M${pt(u.R)} L${pt(u.B)} L${pt(v.B)} L${pt(v.R)}Z`, '#18293a');
+
+  // SW face (crowd face — faces camera from below the pitch)
+  path(`M${pt(u.T)} L${pt(u.L)} L${pt(v.L)} L${pt(v.T)}Z`, '#1e3347');
+
+  // Seat rows on SW face
+  // Face: top-right=u.T, top-left=u.L, bottom-left=v.L, bottom-right=v.T
+  addSeatRows(u.T, u.L, v.L, v.T,
+    ['#0d3a7a', '#1050a8', '#0d3a7a', '#1050a8', '#0d3a7a', '#b52020', '#0d3a7a', '#1050a8']);
+
+  // Top face (roof)
+  path(`M${pt(u.T)} L${pt(u.R)} L${pt(u.B)} L${pt(u.L)}Z`, '#2e4558');
+
+  // Roof fascia strip
+  const fascia_bh = bh + 4;
+  const uf = raised(v, fascia_bh);
+  path(`M${pt(u.T)} L${pt(u.R)} L${pt(uf.R)} L${pt(uf.T)}Z`, '#0f1e2d', { opacity: '0.9' });
+
+  // Roof overhang slab (extends 1 grid unit toward pitch = toward lower gr)
+  const oh = 1.0;
+  const ohT = [u.T[0] + oh * (TW / 2), u.T[1] - oh * (TH / 2)];
+  const ohR = [u.R[0] + oh * (TW / 2), u.R[1] - oh * (TH / 2)];
+  path(`M${pt(u.T)} L${pt(u.R)} L${pt(ohR)} L${pt(ohT)}Z`, '#243545', { opacity: '0.85' });
+  // Overhang underside
+  const ohTd = [ohT[0], ohT[1] + 5];
+  const ohRd = [ohR[0], ohR[1] + 5];
+  path(`M${pt(ohT)} L${pt(ohR)} L${pt(ohRd)} L${pt(ohTd)}Z`, '#0a151f');
+
+  // Concrete plinth
+  const up = raised(v, 8);
+  path(`M${pt(up.T)} L${pt(up.L)} L${pt(v.L)} L${pt(v.T)}Z`, '#253545');
+}
+
+// Club Office (15,1) sum=16 — level 1
+addBlock(15, 1, 2, 2, 28, { top: '#3a78e0', left: '#1050b0', right: '#0a3a8a' });
+
+// Fan Zone (6,11) sum=17 — level 0
+addPlot(6, 11, 3, 2);
+
+// Club Commercial (15,5) sum=20 — level 1
+addBlock(15, 5, 2, 2, 20, { top: '#d4a800', left: '#a07800', right: '#705200' });
+
+// Grounds Security (11,11) sum=22 — level 0
+addPlot(11, 11, 3, 2);
+
+// Food & Beverage (15,9) sum=24 — level 1
+addBlock(15, 9, 2, 2, 16, { top: '#d05030', left: '#a03820', right: '#702010' });
+
+// ── East + West stand footprints (dashed — future sub-units) ──────────────────
+addPlot(5, 2, 2, 5, 'rgba(68,138,255,0.04)', 'rgba(68,138,255,0.18)');  // West stand
+addPlot(13, 2, 2, 5, 'rgba(68,138,255,0.04)', 'rgba(68,138,255,0.18)'); // East stand
+
+// ── Floodlight pylons at 4 corners of pitch ──────────────────────────────────
+{
+  const corners = [[7, 2], [13, 2], [13, 7], [7, 7]];
+  const PH = 88; // pylon height
+
+  corners.forEach(([c, r]) => {
+    const [x, y] = gs(c, r);
+    const base_y = y;
+
+    // Shadow/base
+    addEl('ellipse', {
+      cx: x, cy: base_y, rx: '4', ry: '2',
+      fill: 'rgba(0,0,0,0.4)'
+    });
+
+    // Pole
+    line(x, base_y, x, base_y - PH, '#3a5060', { 'stroke-width': '2.5' });
+
+    // Cross-arm
+    line(x - 10, base_y - PH + 6, x + 10, base_y - PH + 2,
+      '#3a5060', { 'stroke-width': '2' });
+
+    // Light heads (4 small rects at top)
+    [-10, -4, 4, 10].forEach((ox, i) => {
+      const arm_y = base_y - PH + (i < 2 ? 6 : 2);
+      addEl('rect', {
+        x: x + ox - 3, y: arm_y - 4, width: '6', height: '4',
+        fill: '#c8d8e8', rx: '1', opacity: '0.85'
+      });
+      // Subtle glow
+      addEl('circle', {
+        cx: x + ox, cy: arm_y - 2, r: '5',
+        fill: 'rgba(200,230,255,0.06)'
+      });
+    });
+  });
+}
+
+// ── Labels (very subtle) ──────────────────────────────────────────────────────
+{
+  function label(c, r, text, color = 'rgba(255,255,255,0.2)') {
+    const [x, y] = gs(c, r);
+    const t = addEl('text', {
+      x, y: y - 4,
+      'text-anchor': 'middle',
+      'font-family': 'Courier New, monospace',
+      'font-size': '7',
+      'letter-spacing': '1',
+      fill: color
+    });
+    t.textContent = text;
+  }
+
+  label(10, 4.5, 'PITCH', 'rgba(255,255,255,0.12)');
+  label(10, 1.0, 'NORTH STAND', 'rgba(100,160,220,0.3)');
+  label(10, 8.2, 'SOUTH STAND', 'rgba(100,160,220,0.3)');
+  label(6, 3.5, 'WEST', 'rgba(68,138,255,0.2)');
+  label(14, 3.5, 'EAST', 'rgba(68,138,255,0.2)');
+}
+</script>
+</body>
+</html>

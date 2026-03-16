@@ -132,8 +132,61 @@ export function IsometricBlueprint({
         viewBox={`0 0 ${SVG_W} ${SVG_H}`}
         style={{ display: 'block', margin: '0 auto' }}
       >
-        {/* Background */}
-        <rect width={SVG_W} height={SVG_H} fill="#0D1B2A" />
+        {/* ── Pattern library ─────────────────────────────────────────── */}
+        <defs>
+          {/* Grass stripes — alternating dark/light green, rotated to align
+              with the isometric top face (arctan(TH/TW) ≈ 26.57°). */}
+          <pattern
+            id="pat-grass"
+            patternUnits="userSpaceOnUse"
+            width={32}
+            height={16}
+            patternTransform="rotate(-26.57)"
+          >
+            <rect x={0} y={0} width={32} height={8} fill="#2a5c14" />
+            <rect x={0} y={8} width={32} height={8} fill="#1e4a0c" />
+          </pattern>
+
+          {/* Concrete stipple — scattered dots at low opacity.
+              Applied as an overlay on SW faces of support buildings. */}
+          <pattern
+            id="pat-concrete"
+            patternUnits="userSpaceOnUse"
+            width={6}
+            height={6}
+          >
+            <circle cx={1} cy={1} r={0.7} fill="rgba(0,0,0,0.12)" />
+            <circle cx={4} cy={4} r={0.7} fill="rgba(0,0,0,0.08)" />
+          </pattern>
+
+          {/* Grassland ground surround — 48×32 tile of organic ellipses in
+              lighter and darker greens. Large tile reduces visible repetition.
+              Ellipse positions deliberately irregular to avoid grid artifacts. */}
+          <pattern
+            id="pat-ground"
+            patternUnits="userSpaceOnUse"
+            width={48}
+            height={32}
+          >
+            <rect width={48} height={32} fill="#1d3a0d" />
+            {/* lighter patches */}
+            <ellipse cx={7}  cy={5}  rx={5}   ry={3}   fill="#264d10" opacity={0.65} />
+            <ellipse cx={31} cy={3}  rx={4}   ry={2.5} fill="#2c5514" opacity={0.55} />
+            <ellipse cx={20} cy={15} rx={7}   ry={3.5} fill="#234811" opacity={0.60} />
+            <ellipse cx={43} cy={19} rx={4}   ry={2.5} fill="#285010" opacity={0.60} />
+            <ellipse cx={11} cy={26} rx={5}   ry={2.5} fill="#274e0f" opacity={0.65} />
+            <ellipse cx={37} cy={28} rx={3}   ry={2}   fill="#2a5212" opacity={0.55} />
+            {/* darker patches */}
+            <ellipse cx={17} cy={9}  rx={3}   ry={2}   fill="#122508" opacity={0.55} />
+            <ellipse cx={40} cy={11} rx={2.5} ry={1.8} fill="#0f2006" opacity={0.50} />
+            <ellipse cx={25} cy={24} rx={3.5} ry={2}   fill="#132608" opacity={0.55} />
+            <ellipse cx={4}  cy={18} rx={2.5} ry={1.8} fill="#102208" opacity={0.50} />
+            <ellipse cx={46} cy={6}  rx={2}   ry={1.5} fill="#112408" opacity={0.45} />
+          </pattern>
+        </defs>
+
+        {/* Background — textured grassland surround */}
+        <rect width={SVG_W} height={SVG_H} fill="url(#pat-ground)" />
 
         {/* Core units — back-to-front (painter's algorithm via STADIUM_LAYOUT_SORTED) */}
         {STADIUM_LAYOUT_SORTED.map(def => (

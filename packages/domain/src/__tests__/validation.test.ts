@@ -64,8 +64,9 @@ function makeClub(overrides: Partial<Club> = {}): Club {
     reputation: 50,
     stadium: { name: 'Test Ground', capacity: 5000, averageAttendance: 3000, ticketPrice: 1500 },
     form: [],
+    trainingFocus: null,
     ...overrides
-  };
+  } as Club;
 }
 
 // ─── validateTransfer ─────────────────────────────────────────────────────────

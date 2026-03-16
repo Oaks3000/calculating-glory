@@ -5,12 +5,16 @@
  *   level 0  → flat ground diamond with "empty plot" marker (icon + dashed border)
  *   level 1+ → isometric block whose height scales with level, icon on top face
  *
+ * Shading model (Gemini visual spec — PR 6):
+ *   Top face:  base colour (100% light)   + optional topPattern overlay
+ *   SW face:   base colour + rgba(0,0,0,0.30) overlay + optional swPattern overlay
+ *   SE face:   base colour + rgba(0,0,0,0.55) overlay
+ *   Highlight: 1px rgba(255,255,255,0.20) on top front edge (T→R)
+ *              1px rgba(255,255,255,0.10) on top back edge  (T→L)
+ *
  * Interaction:
  *   - hover: block highlights with a blue outline + internal white tint
  *   - click: fires onCoreUnitClick (wired to navigation in PR 4)
- *
- * Sub-unit art is intentionally deferred to a later PR; the level-scaled block
- * height already gives clear visual progression feedback.
  */
 
 import {
@@ -44,8 +48,10 @@ export function CoreUnit({ def, level, isHovered, onClick, onHover }: CoreUnitPr
     ? topFaceCenter(fv, bh)
     : groundCenter(fv);
 
-  // Hover overlay opacity (hex suffix)
-  const hoverAlpha = isHovered ? '28' : '00';
+  // Top-face raised vertex coords — used for highlight lines
+  const txTop   = fv.top.x,   tyTop   = fv.top.y - bh;
+  const txRight = fv.right.x, tyRight = fv.right.y - bh;
+  const txLeft  = fv.left.x,  tyLeft  = fv.left.y - bh;
 
   // Hit region for click / hover — full block silhouette if built, ground diamond otherwise
   const hitPath = bp ? bp.hitRegion : gnd;
@@ -62,7 +68,7 @@ export function CoreUnit({ def, level, isHovered, onClick, onHover }: CoreUnitPr
       {/* ── Ground base (always drawn) ───────────────────────────── */}
       <path
         d={gnd}
-        fill={level === 0 ? def.colors.ground : def.colors.ground}
+        fill={def.colors.ground}
         stroke="#0B1622"
         strokeWidth="1"
       />
@@ -82,9 +88,39 @@ export function CoreUnit({ def, level, isHovered, onClick, onHover }: CoreUnitPr
       {/* ── Building block (level > 0) ───────────────────────────── */}
       {bp && (
         <>
-          <path d={bp.left}  fill={def.colors.left}  stroke="#0B1622" strokeWidth="0.5" />
-          <path d={bp.right} fill={def.colors.right} stroke="#0B1622" strokeWidth="0.5" />
-          <path d={bp.top}   fill={def.colors.top}   stroke="#0B1622" strokeWidth="0.5" />
+          {/* SW face — base colour + 30% dark overlay */}
+          <path d={bp.left} fill={def.colors.base} />
+          <path d={bp.left} fill="rgba(0,0,0,0.30)" style={{ pointerEvents: 'none' }} />
+          {def.colors.swPattern && (
+            <path d={bp.left} fill={def.colors.swPattern} style={{ pointerEvents: 'none' }} />
+          )}
+
+          {/* SE face — base colour + 55% dark overlay */}
+          <path d={bp.right} fill={def.colors.base} />
+          <path d={bp.right} fill="rgba(0,0,0,0.55)" style={{ pointerEvents: 'none' }} />
+
+          {/* Top face — base colour (+ optional pattern) */}
+          <path d={bp.top} fill={def.colors.base} />
+          {def.colors.topPattern && (
+            <path d={bp.top} fill={def.colors.topPattern} style={{ pointerEvents: 'none' }} />
+          )}
+
+          {/* 1px highlight on top front edge (north → east) — 20% white */}
+          <line
+            x1={txTop}   y1={tyTop}
+            x2={txRight} y2={tyRight}
+            stroke="rgba(255,255,255,0.20)"
+            strokeWidth={1}
+            style={{ pointerEvents: 'none' }}
+          />
+          {/* Subtler highlight on top back edge (north → west) — 10% white */}
+          <line
+            x1={txTop}  y1={tyTop}
+            x2={txLeft} y2={tyLeft}
+            stroke="rgba(255,255,255,0.10)"
+            strokeWidth={1}
+            style={{ pointerEvents: 'none' }}
+          />
         </>
       )}
 
@@ -92,7 +128,7 @@ export function CoreUnit({ def, level, isHovered, onClick, onHover }: CoreUnitPr
       {isHovered && (
         <path
           d={hitPath}
-          fill={`#FFFFFF${hoverAlpha}`}
+          fill="rgba(255,255,255,0.10)"
           stroke="#448AFF"
           strokeWidth="1.5"
           style={{ pointerEvents: 'none' }}
