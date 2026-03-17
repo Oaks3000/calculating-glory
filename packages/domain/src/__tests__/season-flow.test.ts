@@ -72,12 +72,17 @@ describe('Season Flow: START_SEASON command', () => {
 
     const result = handleCommand({ type: 'START_SEASON', season: 1 }, state);
     expect(result.error).toBeUndefined();
-    expect(result.events).toHaveLength(1);
+    // First event is SEASON_STARTED; subsequent events are NPC_PLAYER_SIGNED
     expect(result.events![0].type).toBe('SEASON_STARTED');
+    const npcEvents = result.events!.filter(e => e.type === 'NPC_PLAYER_SIGNED');
+    expect(npcEvents.length).toBeGreaterThan(0);
 
-    state = reduceEvent(state, result.events![0]);
+    // Apply all events and verify final state
+    state = result.events!.reduce(reduceEvent, state);
     expect(state.phase).toBe('EARLY_SEASON');
     expect(state.season).toBe(1);
+    // Free agent pool should be smaller after NPC signings
+    expect(state.freeAgentPool.length).toBeLessThan(60);
   });
 
   it('fails if START_SEASON is issued when not in PRE_SEASON phase', () => {

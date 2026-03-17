@@ -29,7 +29,8 @@ export type GameEvent =
   | TrainingFocusSetEvent
   | FormationSetEvent
   | FreeAgentSignedEvent
-  | PlayerReleasedEvent;
+  | PlayerReleasedEvent
+  | NpcPlayerSignedEvent;
 
 export interface TransferCompletedEvent {
   type: 'TRANSFER_COMPLETED';
@@ -188,4 +189,12 @@ export interface PlayerReleasedEvent {
   playerId: string;
   clubId: string;
   releaseFee: number;        // pence, 0 if out of contract
+}
+
+export interface NpcPlayerSignedEvent {
+  type: 'NPC_PLAYER_SIGNED';
+  timestamp: number;
+  npcClubId: string;
+  npcClubName: string;
+  player: Player;
 }

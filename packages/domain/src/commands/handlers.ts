@@ -6,12 +6,14 @@
 
 import { GameCommand, CommandResult } from './types';
 import { GameState } from '../types/game-state-updated';
-import { GameEvent } from '../events/types';
+import { GameEvent, NpcPlayerSignedEvent } from '../events/types';
 import { validateTransfer, validateFacilityUpgrade, validateStaffHire } from '../validation/rules';
 import { simulateMatch, clubToTeam, generateAITeam, Team } from '../simulation/match';
 import { generateSeasonFixtures, getWeekFixtures, matchSeed } from '../simulation/season';
 import { createRng } from '../simulation/rng';
 import { generateWeekEvents } from '../simulation/events';
+import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
+import { Player } from '../types/player';
 
 /**
  * Handle a game command
@@ -359,15 +361,71 @@ function handleStartSeason(command: any, state: GameState): CommandResult {
     };
   }
 
+  const now = Date.now();
   const events: GameEvent[] = [
-    {
-      type: 'SEASON_STARTED',
-      timestamp: Date.now(),
-      season: command.season
-    }
+    { type: 'SEASON_STARTED', timestamp: now, season: command.season }
   ];
 
+  // ── NPC season-start transfers ─────────────────────────────────────────────
+  // Get seed from GAME_STARTED event for determinism
+  const gameStartEvent = state.events.find(e => e.type === 'GAME_STARTED');
+  const baseSeed = gameStartEvent
+    ? (gameStartEvent as { type: 'GAME_STARTED'; seed: string }).seed
+    : 'default-seed';
+
+  const rng = createRng(`npc-transfers-${baseSeed}-season-${command.season}`);
+
+  // Build mutable pool (copy) — NPCs pick from this, consuming as they go
+  let remainingPool: Player[] = [...state.freeAgentPool];
+
+  // Stronger clubs pick first; exclude player's own club
+  const npcClubs = [...LEAGUE_TWO_TEAMS]
+    .filter(t => t.id !== state.club.id)
+    .sort((a, b) => b.baseStrength - a.baseStrength);
+
+  for (const club of npcClubs) {
+    // Tier determines how many they sign and max wage they'll pay
+    const { signings, maxWage } = npcTier(club.baseStrength);
+    // Small clubs occasionally don't sign anyone (30% skip chance)
+    const actualSignings = club.baseStrength < 45 && rng.next() < 0.3 ? 0 : signings;
+
+    let signed = 0;
+    for (let attempt = 0; attempt < actualSignings; attempt++) {
+      const affordable = remainingPool.filter(p => p.wage <= maxWage);
+      if (affordable.length === 0) break;
+
+      // Pick highest-rated affordable agent, with slight randomness to avoid
+      // every NPC taking the same top agent
+      affordable.sort((a, b) => b.overallRating - a.overallRating);
+      // Top 3 candidates, pick randomly among them
+      const candidates = affordable.slice(0, Math.min(3, affordable.length));
+      const picked = candidates[rng.nextInt(0, candidates.length - 1)];
+
+      const npcEvent: NpcPlayerSignedEvent = {
+        type: 'NPC_PLAYER_SIGNED',
+        timestamp: now + signed,
+        npcClubId: club.id,
+        npcClubName: club.name,
+        player: picked,
+      };
+
+      events.push(npcEvent);
+      remainingPool = remainingPool.filter(p => p.id !== picked.id);
+      signed++;
+    }
+  }
+
   return { events };
+}
+
+/**
+ * NPC budget tier based on club strength.
+ * Returns number of free-agent signings and maximum weekly wage (pence).
+ */
+function npcTier(strength: number): { signings: number; maxWage: number } {
+  if (strength >= 55) return { signings: 2, maxWage: 250_000 };   // £2,500/wk
+  if (strength >= 45) return { signings: 2, maxWage: 175_000 };   // £1,750/wk
+  return { signings: 1, maxWage: 120_000 };                        // £1,200/wk
 }
 
 /**
