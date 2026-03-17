@@ -34,6 +34,9 @@ function makePlayer(id: string, wage = 10000): Player {
   return {
     id, name: `Player ${id}`, overallRating: 70, position: 'MID',
     wage, transferValue: 1000000, age: 25, morale: 75,
+    attributes: { attack: 50, defence: 50, teamwork: 55, charisma: 45, publicPotential: 60 },
+    truePotential: 62,
+    contractExpiresWeek: 46,
     stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 70 }
   };
 }

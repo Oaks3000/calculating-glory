@@ -36,6 +36,10 @@ export function handleCommand(command: GameCommand, state: GameState): CommandRe
       return handleSetTrainingFocus(command, state);
     case 'SET_FORMATION':
       return handleSetFormation(command, state);
+    case 'SIGN_FREE_AGENT':
+      return handleSignFreeAgent(command, state);
+    case 'RELEASE_PLAYER':
+      return handleReleasePlayer(command, state);
     default:
       return {
         error: {
@@ -58,6 +62,9 @@ function handleMakeTransfer(command: any, state: GameState): CommandResult {
     transferValue: command.offeredFee,
     age: 25,
     morale: 75,
+    attributes: { attack: 55, defence: 55, teamwork: 60, charisma: 50, publicPotential: 65 },
+    truePotential: 68,
+    contractExpiresWeek: state.currentWeek + 46,
     stats: {
       goals: 0,
       assists: 0,
@@ -419,6 +426,93 @@ function handleSetFormation(command: any, state: GameState): CommandResult {
       previousFormation: state.club.preferredFormation,
     },
   ];
+  return { events };
+}
+
+function handleSignFreeAgent(command: any, state: GameState): CommandResult {
+  // Find player in free agent pool
+  const player = state.freeAgentPool.find(p => p.id === command.playerId);
+  if (!player) {
+    return {
+      error: {
+        code: 'PLAYER_NOT_FOUND',
+        message: `Player '${command.playerId}' not found in free agent pool`
+      }
+    };
+  }
+
+  // Check squad has room
+  if (state.club.squad.length >= state.club.squadCapacity) {
+    return {
+      error: {
+        code: 'SQUAD_LIMIT_EXCEEDED',
+        message: `Squad is at capacity (${state.club.squadCapacity} players)`
+      }
+    };
+  }
+
+  // Check wage budget
+  const currentTotalWages = state.club.squad.reduce((sum, p) => sum + p.wage, 0);
+  if (command.offeredWage > state.club.wageBudget - currentTotalWages) {
+    return {
+      error: {
+        code: 'INSUFFICIENT_BUDGET',
+        message: `Offered wage exceeds remaining wage budget`
+      }
+    };
+  }
+
+  const contractExpiresWeek = state.currentWeek + 46;
+
+  const updatedPlayer = {
+    ...player,
+    wage: command.offeredWage,
+    contractExpiresWeek,
+  };
+
+  const events: GameEvent[] = [
+    {
+      type: 'FREE_AGENT_SIGNED',
+      timestamp: Date.now(),
+      playerId: command.playerId,
+      clubId: state.club.id,
+      offeredWage: command.offeredWage,
+      contractExpiresWeek,
+      player: updatedPlayer,
+    }
+  ];
+
+  return { events };
+}
+
+function handleReleasePlayer(command: any, state: GameState): CommandResult {
+  // Find player in squad
+  const player = state.club.squad.find(p => p.id === command.playerId);
+  if (!player) {
+    return {
+      error: {
+        code: 'PLAYER_NOT_FOUND',
+        message: `Player '${command.playerId}' not found in squad`
+      }
+    };
+  }
+
+  // Compute release fee
+  let releaseFee = 0;
+  if (player.contractExpiresWeek > 0 && state.currentWeek < player.contractExpiresWeek) {
+    releaseFee = Math.round((player.contractExpiresWeek - state.currentWeek) * player.wage * 0.5);
+  }
+
+  const events: GameEvent[] = [
+    {
+      type: 'PLAYER_RELEASED',
+      timestamp: Date.now(),
+      playerId: command.playerId,
+      clubId: state.club.id,
+      releaseFee,
+    }
+  ];
+
   return { events };
 }
 

@@ -8,32 +8,64 @@
 export type Position = 'GK' | 'DEF' | 'MID' | 'FWD';
 
 /**
+ * Individual skill attributes for a player
+ */
+export interface PlayerAttributes {
+  /** Attacking ability (1–100). Weighted most heavily for FWD in match simulation. */
+  attack: number;
+  /** Defensive ability (1–100). Weighted most heavily for GK/DEF in match simulation. */
+  defence: number;
+  /** Teamwork (1–100). Sum of XI's teamwork modifies overall performance. */
+  teamwork: number;
+  /** Charisma (1–100). Sum drives club popularity → merch/attendance revenue. */
+  charisma: number;
+  /** Visible potential proxy (1–100). 55%-accurate representation of true development. */
+  publicPotential: number;
+}
+
+/**
  * Player representation (simplified for Year 7 level)
  */
 export interface Player {
   id: string;
   name: string;
-  
+
   /** Overall rating (0-100) */
   overallRating: number;
-  
+
   /** Primary position */
   position: Position;
-  
+
   /** Weekly wage in pence */
   wage: number;
-  
+
   /** Transfer value in pence */
   transferValue: number;
-  
+
   /** Age */
   age: number;
-  
+
   /** Morale (0-100) */
   morale: number;
-  
+
   /** Performance stats */
   stats: PlayerStats;
+
+  /** Individual skill attributes */
+  attributes: PlayerAttributes;
+
+  /**
+   * True development potential (1–100). Hidden — scouting reveals the gap.
+   * publicPotential is a 55%-accurate proxy for this value.
+   */
+  truePotential: number;
+
+  /**
+   * Game week when this player's contract with your club expires.
+   * 0 = free agent (not yet signed to your club).
+   * Releasing before expiry incurs a compensation fee.
+   */
+  contractExpiresWeek: number;
 }
 
 /**

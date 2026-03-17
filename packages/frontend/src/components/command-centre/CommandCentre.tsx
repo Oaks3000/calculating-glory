@@ -11,6 +11,7 @@ import { SlideOver } from '../shared/SlideOver';
 import { SocialFeed } from '../social-feed/SocialFeed';
 import { BackroomTeamSlideOver } from './BackroomTeamSlideOver';
 import { LearningProgressSlideOver } from './LearningProgressSlideOver';
+import { TransferMarketSlideOver } from '../transfer-market/TransferMarketSlideOver';
 
 interface CommandCentreProps {
   state: GameState;
@@ -27,6 +28,7 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
   const [inboxOpen, setInboxOpen]             = useState(false);
   const [backroomOpen, setBackroomOpen]       = useState(false);
   const [learningOpen, setLearningOpen]       = useState(false);
+  const [transfersOpen, setTransfersOpen]     = useState(false);
   const [dismissed, setDismissed]             = useState<Set<number>>(new Set());
 
   function handleDismiss(idx: number) {
@@ -103,8 +105,8 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
           {/* RIGHT row 1: DataTiles */}
           <DataTiles state={state} gridMode onBackroomClick={() => setBackroomOpen(true)} onAcumenClick={() => setLearningOpen(true)} />
 
-          {/* RIGHT row 2: Stadium & Facilities + Chats side-by-side */}
-          <div className="grid grid-cols-2 gap-2">
+          {/* RIGHT row 2: Stadium & Facilities + Chats + Transfers */}
+          <div className="grid grid-cols-3 gap-2">
             <HubTile
               icon="🏟"
               label="Stadium & Facilities"
@@ -122,6 +124,13 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
               }
               hasEvent={unresolvedEvents.some(e => e.choices.some(c => c.requiresMath))}
               onClick={() => { setSocialLinked(null); setSocialOpen(true); }}
+            />
+            <HubTile
+              icon="🔄"
+              label="Transfers"
+              sub={`${state.freeAgentPool?.length ?? 0} agents available`}
+              hasEvent={false}
+              onClick={() => setTransfersOpen(true)}
             />
           </div>
         </div>
@@ -206,6 +215,17 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
       >
         {learningOpen && (
           <LearningProgressSlideOver state={state} events={events} />
+        )}
+      </SlideOver>
+
+      {/* ── Transfers slide-over ──────────────────────────────────────────── */}
+      <SlideOver
+        isOpen={transfersOpen}
+        onClose={() => setTransfersOpen(false)}
+        title="Transfers"
+      >
+        {transfersOpen && (
+          <TransferMarketSlideOver state={state} dispatch={dispatch} onError={setError} />
         )}
       </SlideOver>
 

@@ -60,7 +60,8 @@ function makeState(entries: LeagueTableEntry[], playerClubId: string = 'club-1')
     phase: 'EARLY_SEASON',
     pendingEvents: [],
     resolvedEventHistory: [],
-    season: 1
+    season: 1,
+    freeAgentPool: [],
   };
 }
 
