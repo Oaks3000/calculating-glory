@@ -5,6 +5,7 @@ import {
   Player,
   Position,
   formatMoney,
+  FORMATION_CONFIG,
 } from '@calculating-glory/domain';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -17,6 +18,54 @@ interface TransferMarketSlideOverProps {
 
 type Tab = 'free-agents' | 'my-squad';
 type SortKey = 'rating' | 'attack' | 'defence' | 'wage';
+
+// ─── Formation gap panel ───────────────────────────────────────────────────────
+
+interface FormationGapPanelProps {
+  state: GameState;
+}
+
+const POSITION_ORDER: Position[] = ['GK', 'DEF', 'MID', 'FWD'];
+
+function FormationGapPanel({ state }: FormationGapPanelProps) {
+  const formation = state.club.preferredFormation;
+  if (!formation) return null;
+
+  const config = FORMATION_CONFIG[formation];
+  const squadByPosition = POSITION_ORDER.reduce<Record<Position, number>>((acc, pos) => {
+    acc[pos] = state.club.squad.filter(p => p.position === pos).length;
+    return acc;
+  }, { GK: 0, DEF: 0, MID: 0, FWD: 0 });
+
+  return (
+    <div className="bg-bg-raised rounded-card border border-white/5 px-4 py-2.5 flex flex-col gap-1.5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-txt-muted">Formation target</span>
+        <span className="text-xs font-semibold text-txt-primary">{config.label}</span>
+      </div>
+      <div className="flex gap-3">
+        {POSITION_ORDER.map(pos => {
+          const target = config.slots[pos];
+          const have = squadByPosition[pos];
+          const gap = have - target;
+          const isShort = gap < 0;
+          const isSurplus = gap > 0;
+          return (
+            <div key={pos} className="flex flex-col items-center gap-0.5 flex-1">
+              <span className="text-[10px] text-txt-muted">{pos}</span>
+              <span className={`text-sm font-bold ${isShort ? 'text-alert-red' : isSurplus ? 'text-warn-amber' : 'text-pitch-green'}`}>
+                {have}/{target}
+              </span>
+              <span className={`text-[10px] font-semibold ${isShort ? 'text-alert-red' : isSurplus ? 'text-warn-amber' : 'text-pitch-green'}`}>
+                {isShort ? `−${Math.abs(gap)}` : isSurplus ? `+${gap}` : '✓'}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 // ─── Position badge colours ────────────────────────────────────────────────────
 
@@ -307,6 +356,9 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
           </span>
         </span>
       </div>
+
+      {/* ── Formation gap panel ───────────────────────────────────────────── */}
+      <FormationGapPanel state={state} />
 
       {/* ── Tabs ──────────────────────────────────────────────────────────── */}
       <div className="flex gap-1">

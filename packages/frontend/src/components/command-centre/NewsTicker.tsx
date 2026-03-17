@@ -22,6 +22,8 @@ function buildHeadlines(
       const isPlayer = m.homeTeamId === clubId || m.awayTeamId === clubId;
       const score = `${m.homeGoals}–${m.awayGoals}`;
       headlines.push(isPlayer ? `★ ${home} ${score} ${away}` : `${home} ${score} ${away}`);
+    } else if (e.type === 'NPC_PLAYER_SIGNED') {
+      headlines.push(`${e.npcClubName} sign ${e.player.name}`);
     } else if (e.type === 'TRANSFER_COMPLETED') {
       headlines.push(`Transfer: ${e.player.name} joins the squad`);
     } else if (e.type === 'PLAYER_SOLD') {

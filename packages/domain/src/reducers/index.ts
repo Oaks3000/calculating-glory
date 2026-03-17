@@ -4,7 +4,7 @@
  * Pure functions that apply events to state.
  */
 
-import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent } from '../events/types';
+import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent } from '../events/types';
 import { GameState } from '../types/game-state-updated';
 import { Club } from '../types/club';
 import { LeagueTable, LeagueTableEntry, sortLeagueTable } from '../types/league';
@@ -55,6 +55,8 @@ export function reduceEvent(state: GameState, event: GameEvent): GameState {
       return handleFreeAgentSigned(state, event);
     case 'PLAYER_RELEASED':
       return handlePlayerReleased(state, event);
+    case 'NPC_PLAYER_SIGNED':
+      return handleNpcPlayerSigned(state, event);
     default:
       return state;
   }
@@ -490,6 +492,13 @@ function handlePlayerReleased(state: GameState, event: PlayerReleasedEvent): Gam
       squad: state.club.squad.filter(p => p.id !== event.playerId),
       transferBudget: state.club.transferBudget + event.releaseFee,
     },
+  };
+}
+
+function handleNpcPlayerSigned(state: GameState, event: NpcPlayerSignedEvent): GameState {
+  return {
+    ...state,
+    freeAgentPool: state.freeAgentPool.filter(p => p.id !== event.player.id),
   };
 }
 
