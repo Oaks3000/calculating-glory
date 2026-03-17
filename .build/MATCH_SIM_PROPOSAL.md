@@ -24,8 +24,8 @@
 
 | Attribute | FWD weight | MID weight | DEF weight | GK weight |
 |-----------|-----------|-----------|-----------|----------|
-| `attack`  | 3×        | 1×        | 0×        | 0×       |
-| `defence` | 0×        | 1×        | 3×        | 3×       |
+| `attack`  | 3×        | 2×        | 1×        | 0×       |
+| `defence` | 1×        | 2×        | 3×        | 3.5×     |
 
 No change to the formula structure — just swap `overallRating` for the relevant attribute.
 
@@ -38,7 +38,7 @@ No change to the formula structure — just swap `overallRating` for the relevan
 | Input | Modifier contribution | Notes |
 |-------|-----------------------|-------|
 | Squad avg `teamwork` | +0.00 to +0.08 | 0 at avg=0, +0.08 at avg=100 |
-| TRAINING_GROUND level (0–5) | +0.00 to +0.10 | replaces blended-all-facilities calc |
+| TRAINING_GROUND level (0–5) | +0.00 to +0.50 | replaces blended-all-facilities calc |
 | Staff avg quality (0–100) | +0.00 to +0.12 | was 0.15 — reduced to balance vs. training ground |
 | FAN_ZONE level (0–5) | +0.00 to +0.05 | **home matches only** |
 | Reputation (0–100) | +0.00 to +0.08 | was 0.10 |
