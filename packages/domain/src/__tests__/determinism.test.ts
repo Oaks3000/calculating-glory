@@ -11,7 +11,8 @@ const HOME_TEAM: Team = {
   name: 'Swindon Town',
   attackStrength: 55,
   defenceStrength: 48,
-  teamStrength: 1.05
+  teamStrength: 1.05,
+  fanZoneBonus: 0,
 };
 
 const AWAY_TEAM: Team = {
@@ -19,7 +20,8 @@ const AWAY_TEAM: Team = {
   name: 'Crawley Town',
   attackStrength: 45,
   defenceStrength: 52,
-  teamStrength: 0.95
+  teamStrength: 0.95,
+  fanZoneBonus: 0,
 };
 
 const GOLDEN_SEED = 'calculating-glory-S1-W1-M0';

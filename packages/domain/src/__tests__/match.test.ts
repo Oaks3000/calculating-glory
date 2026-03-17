@@ -8,6 +8,7 @@ function makeTeam(overrides: Partial<Team> = {}): Team {
     attackStrength: 50,
     defenceStrength: 50,
     teamStrength: 1.0,
+    fanZoneBonus: 0,
     ...overrides
   };
 }
@@ -153,12 +154,14 @@ describe('clubToTeam', () => {
 
     expect(team.id).toBe('club-1');
     expect(team.name).toBe('Test FC');
-    // FWD (80 * 3) + MID (70 * 1) = 310 / 4 = 77.5 attack
-    expect(team.attackStrength).toBeCloseTo(77.5, 1);
-    // GK (65 * 3) + DEF (60 * 3) + MID (70 * 1) = 445 / 7 ≈ 63.57 defence
-    expect(team.defenceStrength).toBeCloseTo(63.57, 1);
-    // Base 1.0 + reputation (50/100 * 0.10) = 1.05
-    expect(team.teamStrength).toBeCloseTo(1.05, 2);
+    // Attack: FWD(75×3) + MID(55×2) + DEF(30×1) / (3+2+1) = 365/6 ≈ 60.83
+    expect(team.attackStrength).toBeCloseTo(60.83, 1);
+    // Defence: FWD(20×1) + MID(50×2) + DEF(62×3) + GK(68×3.5) / (1+2+3+3.5) = 544/9.5 ≈ 57.26
+    expect(team.defenceStrength).toBeCloseTo(57.26, 1);
+    // Modifier: 1.0 + teamwork(56.25/100×0.08) + rep(50/100×0.08) + morale((0.75-0.5)×0.10) = 1.11
+    expect(team.teamStrength).toBeCloseTo(1.11, 2);
+    // Fan zone: no FAN_ZONE facility → 0
+    expect(team.fanZoneBonus).toBe(0);
   });
 
   it('handles empty squad with fallback strengths', () => {
