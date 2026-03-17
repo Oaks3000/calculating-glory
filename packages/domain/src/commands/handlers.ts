@@ -34,6 +34,8 @@ export function handleCommand(command: GameCommand, state: GameState): CommandRe
       return handleStartSeason(command, state);
     case 'SET_TRAINING_FOCUS':
       return handleSetTrainingFocus(command, state);
+    case 'SET_FORMATION':
+      return handleSetFormation(command, state);
     default:
       return {
         error: {
@@ -402,6 +404,19 @@ function handleSetTrainingFocus(command: any, state: GameState): CommandResult {
       clubId: state.club.id,
       focus: command.focus,
       previousFocus: state.club.trainingFocus,
+    },
+  ];
+  return { events };
+}
+
+function handleSetFormation(command: any, state: GameState): CommandResult {
+  const events: GameEvent[] = [
+    {
+      type: 'FORMATION_SET',
+      timestamp: Date.now(),
+      clubId: state.club.id,
+      formation: command.formation,
+      previousFormation: state.club.preferredFormation,
     },
   ];
   return { events };

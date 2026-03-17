@@ -41,6 +41,8 @@ function makeState(entries: LeagueTableEntry[], playerClubId: string = 'club-1')
       stadium: { name: 'Test', capacity: 5000, averageAttendance: 3000, ticketPrice: 2000 },
       form: [],
       trainingFocus: null,
+      preferredFormation: null,
+      squadCapacity: 24,
     },
     league: {
       entries,

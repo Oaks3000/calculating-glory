@@ -4,13 +4,14 @@
  * Pure functions that apply events to state.
  */
 
-import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent } from '../events/types';
+import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent } from '../events/types';
 import { GameState } from '../types/game-state-updated';
 import { Club } from '../types/club';
 import { LeagueTable, LeagueTableEntry, sortLeagueTable } from '../types/league';
 import { CURRICULUM_LEVELS } from '../curriculum/curriculum-config';
 import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
 import { getDefaultFacilities, getUpgradeCost } from '../types/facility';
+import { generateStartingSquad } from '../data/squad-generator';
 
 /**
  * Reduce an event into state
@@ -47,6 +48,8 @@ export function reduceEvent(state: GameState, event: GameEvent): GameState {
       return handleSeasonStarted(state, event);
     case 'TRAINING_FOCUS_SET':
       return handleTrainingFocusSet(state, event);
+    case 'FORMATION_SET':
+      return handleFormationSet(state, event);
     default:
       return state;
   }
@@ -132,15 +135,21 @@ function handleGameStarted(state: GameState, event: GameStartedEvent): GameState
     position: index + 1
   }));
 
+  // Generate the inherited starting squad of 16 weak non-league players
+  const inheritedSquad = generateStartingSquad(event.seed, event.clubId);
+
   return {
     ...state,
+    phase: 'PRE_SEASON',
     club: {
       ...state.club,
       id: event.clubId,
       name: event.clubName,
       transferBudget: event.initialBudget,
-      wageBudget: event.initialBudget / 10, // 10% of budget for weekly wages
-      facilities: getDefaultFacilities()
+      wageBudget: event.initialBudget / 10,
+      facilities: getDefaultFacilities(),
+      squad: inheritedSquad,
+      squadCapacity: 24,
     },
     league: {
       ...state.league,
@@ -442,6 +451,16 @@ function handleTrainingFocusSet(state: GameState, event: TrainingFocusSetEvent):
   };
 }
 
+function handleFormationSet(state: GameState, event: FormationSetEvent): GameState {
+  return {
+    ...state,
+    club: {
+      ...state.club,
+      preferredFormation: event.formation,
+    },
+  };
+}
+
 // Utility functions
 
 function createEmptyClub(): Club {
@@ -462,6 +481,8 @@ function createEmptyClub(): Club {
     },
     form: [],
     trainingFocus: null,
+    preferredFormation: null,
+    squadCapacity: 24,
   };
 }
 

@@ -1,8 +1,9 @@
 /**
  * League Two Teams Data
  *
- * Real English League Two clubs with base strength ratings (35-65).
- * These are used to populate the league when a new game starts.
+ * Fictional Pro-Evo style clubs — clearly recognisable analogues of real lower-league
+ * sides, slightly tweaked to sidestep licensing. Strength ratings reflect rough real-world
+ * standing at League Two level (35–65).
  */
 
 export interface LeagueTwoTeam {
@@ -12,28 +13,28 @@ export interface LeagueTwoTeam {
 }
 
 export const LEAGUE_TWO_TEAMS: LeagueTwoTeam[] = [
-  { id: 'swindon', name: 'Swindon Town', baseStrength: 62 },
-  { id: 'bradford', name: 'Bradford City', baseStrength: 60 },
-  { id: 'doncaster', name: 'Doncaster Rovers', baseStrength: 58 },
-  { id: 'gillingham', name: 'Gillingham', baseStrength: 56 },
-  { id: 'crewe', name: 'Crewe Alexandra', baseStrength: 55 },
-  { id: 'crawley', name: 'Crawley Town', baseStrength: 54 },
-  { id: 'salford', name: 'Salford City', baseStrength: 53 },
-  { id: 'newport', name: 'Newport County', baseStrength: 52 },
-  { id: 'colchester', name: 'Colchester United', baseStrength: 51 },
-  { id: 'tranmere', name: 'Tranmere Rovers', baseStrength: 50 },
-  { id: 'walsall', name: 'Walsall', baseStrength: 49 },
-  { id: 'harrogate', name: 'Harrogate Town', baseStrength: 48 },
-  { id: 'barrow', name: 'Barrow', baseStrength: 47 },
-  { id: 'grimsby', name: 'Grimsby Town', baseStrength: 46 },
-  { id: 'mansfield', name: 'Mansfield Town', baseStrength: 45 },
-  { id: 'sutton', name: 'Sutton United', baseStrength: 44 },
-  { id: 'rochdale', name: 'Rochdale', baseStrength: 43 },
-  { id: 'carlisle', name: 'Carlisle United', baseStrength: 42 },
-  { id: 'stevenage', name: 'Stevenage', baseStrength: 41 },
-  { id: 'hartlepool', name: 'Hartlepool United', baseStrength: 40 },
-  { id: 'leyton', name: 'Leyton Orient', baseStrength: 39 },
-  { id: 'scunthorpe', name: 'Scunthorpe United', baseStrength: 38 },
-  { id: 'oldham', name: 'Oldham Athletic', baseStrength: 37 },
-  { id: 'port-vale', name: 'Port Vale', baseStrength: 36 },
+  { id: 'swinton', name: 'Swinton Town', baseStrength: 62 },
+  { id: 'bradfield', name: 'Bradfield City', baseStrength: 60 },
+  { id: 'doncaster', name: 'Doncaster Ramblers', baseStrength: 58 },
+  { id: 'gillingsham', name: 'Gillingsham FC', baseStrength: 56 },
+  { id: 'crewe', name: 'Crewe Alexandros', baseStrength: 55 },
+  { id: 'crowley', name: 'Crowley Town', baseStrength: 54 },
+  { id: 'salchester', name: 'Salchester City', baseStrength: 53 },
+  { id: 'newport', name: 'Newport Athletic', baseStrength: 52 },
+  { id: 'coldale', name: 'Coldale United', baseStrength: 51 },
+  { id: 'tranmore', name: 'Tranmore Rovers', baseStrength: 50 },
+  { id: 'walshall', name: 'Walshall FC', baseStrength: 49 },
+  { id: 'harrowgate', name: 'Harrowgate Town', baseStrength: 48 },
+  { id: 'barrow-vale', name: 'Barrow Vale', baseStrength: 47 },
+  { id: 'grimstone', name: 'Grimstone Town', baseStrength: 46 },
+  { id: 'manyfield', name: 'Manyfield Town', baseStrength: 45 },
+  { id: 'sutbourne', name: 'Sutbourne United', baseStrength: 44 },
+  { id: 'rochford', name: 'Rochford FC', baseStrength: 43 },
+  { id: 'carlford', name: 'Carlford United', baseStrength: 42 },
+  { id: 'stevenham', name: 'Stevenham FC', baseStrength: 41 },
+  { id: 'hartpool', name: 'Hartpool United', baseStrength: 40 },
+  { id: 'layton', name: 'Layton Orient', baseStrength: 39 },
+  { id: 'scunbridge', name: 'Scunbridge United', baseStrength: 38 },
+  { id: 'oldfield', name: 'Oldfield Athletic', baseStrength: 37 },
+  { id: 'port-hill', name: 'Port Hill FC', baseStrength: 36 },
 ];
