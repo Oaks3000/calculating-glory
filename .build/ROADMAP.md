@@ -2,8 +2,7 @@
 project: "Calculating Glory"
 type: "build"
 createdAt: "2026-03-03"
-lastUpdated: "2026-03-12"
-
+lastUpdated: "2026-03-17"
 ---
 
 # Calculating Glory - Roadmap
@@ -13,50 +12,52 @@ An educational football club management game for Year 7 maths, built on event-so
 ## Completed Phases
 
 ### Phase 2: Frontend Foundation ✅
-- 2.1 React + Tailwind CSS frontend scaffolded ✅ (#1)
-- 2.2 `useGameState()` hook — wraps domain `buildState(events)` ✅ (#2)
-- 2.3 Command Centre hub layout (12-column grid) ✅ (#3)
-- 2.4 League table component ✅ (#4)
-- 2.5 Data tiles (budget, board confidence, week, position) ✅ (#5)
-- 2.6 News ticker (partial headlines) ✅ (#6)
-- 2.7 Social Feed slide-over (chat bubble UI, WhatsApp-style) ✅ (#7)
-- 2.8 Math challenge card + hint system ✅ (#8)
-- 2.9 Week advance button (disabled until events resolved) ✅ (#9)
-- 2.10 Isometric Blueprint placeholder tiles (card-based) ✅ (#10)
-- 2.11 First playable: 3-week mid-season loop (week 20 onward) ✅ (#11)
+- React + Tailwind frontend, `useGameState()` hook, Command Centre hub, league table, data tiles, news ticker, Social Feed slide-over, math challenge card, week advance button, first playable 3-week loop
 
 ### Phase 3: UI Polish & Feature Completion ✅
-- 3.1–3.4 InboxCard overhaul, InboxHistory slide-over, Command Centre restructure ✅ (#14, #19)
-- 3.5 Seeded deterministic news generator (transfer/injury/league copy) ✅ (#15)
-- 3.6 Reputation tile flash animation (green/red keyframe glow) ✅ (#16)
-- 3.7 Backroom Team slide-over (5 roles, hire CTA, wage summary) ✅ (#17)
-- 3.8 Star player name injected into wage-demand club event ✅ (#18)
-- 3.9 Learning Progress slide-over + Business Acumen tile click ✅ (#20)
-- 3.10 Challenge difficulty capped by curriculum level ✅ (#20)
-- 3.11 Curriculum progression UI ✅ (#22)
+- InboxCard overhaul, InboxHistory slide-over, seeded news generator, reputation flash animation, Backroom Team slide-over, star player name injection, Learning Progress slide-over, curriculum progression UI
 
-## Current Phase: Stadium View & Integration
+### Phase 4: Stadium View ✅
+- 9 facility types, FACILITY_CONFIG, weekly revenue, isometric SVG renderer (20×14 grid, 9 core units, level-scaled blocks), navigation wiring (all core units → slide-overs), Weekly Training Focus command + UI
 
-### Phase 4: Stadium View (#21)
-- 4.1 Stadium View planning — MECE core/sub-unit grid, architectural decisions ✅
-- 4.2 Domain foundation — 9 facility types, FACILITY_CONFIG, weekly revenue, getDefaultFacilities() ✅
-- 4.3 App shell — ViewToggle, StadiumView card grid, shared FacilityCard ✅
-- 4.4 Isometric SVG renderer — 20×14 grid, 9 core units, level-scaled blocks, hover tooltip ✅ (PR #24)
-- 4.5 Navigation wiring — core unit clicks open slide-overs, BuildPanel ✅ (PR #25)
-- 4.5a Visual design spec — Gemini-produced aesthetic framework (3-tone lighting, SVG patterns, level progression, living world) ✅
-- 4.6 Weekly Training Focus — SET_TRAINING_FOCUS command, training drill challenges
-- 4.7 Geometry challenges — 4 new MathTopics, stadium-themed templates
-- 4.8 End-to-end integration test pass (#12)
-- 4.9 UI polish for Chromebook 1366x768 (#13)
+### Phase 5.1: Pre-season Flow ✅ (PRs #33, #38)
+- Pre-season screen: narrative → formation picker → inherited squad → enter season
+- `SET_PREFERRED_FORMATION` command, `FORMATION_CONFIG` with slots + recruitmentPriority + `formationCoverage()`
+- 16 auto-generated inherited players (Pro-Evo names, weak, varied contracts)
+- `club.squadCapacity = 24`
+
+### Phase 5.2: Transfer Window ✅ (PR #37)
+- All 5 player attributes: attack, defence, teamwork, charisma, publicPotential (visible); truePotential (hidden)
+- Free agent pool: 60 seeded players with position-tier attribute variance
+- TransferMarketSlideOver: 2 tabs, position filter, sort, sign + release flows with fee logic
+- Formation recruitment gap panel in transfer market
+
+### Phase 5.3: Match Sim Rewrite + NPC Transfers ✅ (PRs #39, #42)
+- Player attributes (not overallRating) weighted by position for attack/defence strengths
+- Team modifier fully wired: teamwork, TRAINING_GROUND, staff, reputation, form, morale
+- FAN_ZONE as home-only atmosphere bonus
+- Training focus applied post-strength-calc
+- NPC season-start transfers: tier-based, strongest clubs pick first
+- Pro-Evo analogue team names (24 clubs)
+
+---
+
+## Current Phase: Phase 5.4 — Squad Dynamics
+
+### Phase 5.4 candidates (pick one to start)
+- 5.4a NPC poaching (#36) — NPCs approach your players; response options; teamwork/morale cascade
+- 5.4b Manager creation (#29) — manager attributes translate owner directives into results
+- 5.4c Scout facility (#31) — truePotential visibility unlocked by facility level
+
+### Phase 5.5 (follows 5.4)
+- Club-owned player transfers (#32) — sell to NPCs for transfer fee
+- Owner forced out + cascade re-entry (#34)
+- Revenue system — charisma → matchday/commercial revenue
+- Season end screen — promotion/relegation handling
+
+---
 
 ## Future Phases
-
-### Phase 5: Full Season Flow
-- Pre-season flow — squad building before season starts
-- Transfer window UI — browse market, make offers, negotiate
-- Player database/market — pool of purchasable players
-- Tutorial/onboarding system
-- Season end screen — promotion/relegation
 
 ### Phase 6: Educational Depth
 - Adaptive difficulty fully wired to curriculum progression UI
@@ -64,13 +65,14 @@ An educational football club management game for Year 7 maths, built on event-so
 - Practice mode (Marcus Webb free drills)
 - Teacher dashboard — class view of student progress
 - Hint system with curriculum-appropriate scaffolding
+- Player development / aging using truePotential
 
 ### Phase 7: Polish & Multiplayer Prep
-- AI team evolution (form/results affect strength over season)
-- Morale system
+- AI team evolution (form/results affect NPC strength over season)
 - Match events beyond goals (injuries, red cards, suspensions)
 - Decision density overhaul (squad selection, transfers, contracts, sponsorship)
 - Multiplayer sync architecture (async, turn-based)
+- Visual design spec applied to isometric renderer (3-tone shading, SVG patterns)
 
 ## Out of Scope (for now)
 

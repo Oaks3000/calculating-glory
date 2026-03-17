@@ -2,77 +2,76 @@
 project: "Calculating Glory"
 type: "build"
 priority: 2
-phase: "Stadium View & Integration"
-progress: 68
-lastUpdated: "2026-03-12"
-lastTouched: "2026-03-12"
+phase: "Phase 5 — Full Season Flow"
+progress: 78
+lastUpdated: "2026-03-17"
+lastTouched: "2026-03-17"
 status: "in-progress"
 ---
 
 # Calculating Glory - Current Status
 
-**Phase:** Stadium View & Integration (68% — PRs 23–25 merged, visual design spec in hand)
-**Last Updated:** 2026-03-12
+**Phase:** Phase 5 — Full Season Flow (78% — 5.1 + 5.2 + 5.3 all merged to main)
+**Last Updated:** 2026-03-17
 
 ## What's Done
 
 - Full TypeScript monorepo workspace (domain + frontend packages)
-- Domain package: clean build, 245 tests passing across 14 suites
 - Event sourcing architecture: all event types, reducers, command handlers
+- 269 domain tests passing across 16 suites
 - Deterministic match simulation (Poisson, seeded RNG, attack/defence split)
 - Season fixtures: circle method round-robin, 24 teams, 46 weeks
-- Game initialization: 24 real League Two teams, populated league table
-- Weekly club events system: 15 templates, branching chains, pending resolution
-- Business acumen tracking: rolling averages, star ratings
-- Curriculum progression system (5 levels, feature gating)
-- Design tokens: 4 token files + component inventory + MVP scope doc
-- Frontend scaffolded: React + Vite + Tailwind, all components built
-- Command Centre hub (12-column grid, data tiles, league table, squad audit)
-- Social Feed slide-over (chat bubbles, negotiation keyboard, math challenges)
-- News ticker, pending event cards, week advance button
-- InboxCard overhaul (result cards, dismissal, preview cap)
-- InboxHistory full slide-over (scrollable results + news, dismiss all)
-- Seeded deterministic news generator (transfer/injury/league copy, splitmix32 PRNG)
-- Reputation tile flash animation (green/red keyframe glow, useRepFlash hook)
-- Backroom Team slide-over (5 staff roles, star ratings, hire CTA, wage summary)
-- Star player name injection into player-unhappy event
-- Learning Progress slide-over (5-level pip track, 5 readiness criteria, topic chips, teacher level selector)
-- Business Acumen tile clickable → opens Learning Progress slide-over
-- generateChallenge difficulty cap by curriculum level
-- **Stadium View architectural plan complete** (MECE coverage, grid layout, hit regions, sub-unit progression)
-- **9 facility types** (added FAN_ZONE, GROUNDS_SECURITY, CLUB_OFFICE, CLUB_COMMERCIAL, FOOD_AND_BEVERAGE)
-- **FACILITY_CONFIG** as single source of truth for all facility metadata
-- **Weekly revenue system** (CLUB_COMMERCIAL + FOOD_AND_BEVERAGE generate income per week)
-- **Persistent ViewToggle** top bar (Command Centre / Stadium View toggle + week advance)
-- **StadiumView** full-screen facility management with 2-col card grid (PR #23 ✅)
-- **Isometric SVG renderer** — real 20×14 grid, 9 core units, coloured blocks scale with level, hover tooltip (PR #24 ✅)
-  - `isometric-utils.ts` — grid math (gridToScreen, footprintVertices, blockPaths)
-  - `stadium-layout.ts` — CoreUnitDef for all 9 facilities, STADIUM_LAYOUT_SORTED
-  - `CoreUnit.tsx` — flat diamond at level 0, isometric block at 1–5, hover highlight
-  - `IsometricBlueprint.tsx` — SVG canvas with HTML tooltip (stale-closure fix via useRef)
-- **Navigation wiring** — `handleCoreUnitClick(facilityType)` routes all 9 core units to correct slide-overs (PR #25 ✅)
-- **Visual design spec** — Gemini-produced aesthetic framework for isometric renderer (SimCity 2000 style): 3-tone lighting, SVG pattern library, level-progression rules, "living world" animations. Saved as `design/stadium-visual-spec.md`
-- **stadium-mockup.html** — standalone proof-of-concept SVG rendering North/South stands with seat rows, roof canopy, floodlights
-- **CLAUDE.md Section 8** — worktree gotchas documented (npm symlink, new-worktree checklist, local main sync)
-- **Stale worktrees pruned** — 5 merged-branch worktrees removed
+- Weekly club events: 15 templates, branching chains, pending resolution
+- Business acumen tracking, curriculum progression (5 levels, feature gating)
+- Full Command Centre hub + Stadium View (isometric SVG renderer, 9 facility types)
+- Navigation wiring — all 9 core units route to correct slide-overs
+- Weekly Training Focus (`SET_TRAINING_FOCUS` command, training drill challenges)
+- **Phase 5.1 — Pre-season flow** (PR #33 + #38 ✅)
+  - Pre-season screen: narrative intro → formation picker → inherited squad → enter season
+  - `SET_PREFERRED_FORMATION` command + reducer; `FORMATION_CONFIG` with `slots` + `recruitmentPriority`
+  - `formationCoverage()` helper; `InheritedSquad.tsx` position-grouped grid with contract badges
+  - 16 auto-generated inherited players (weak, ~45–55 OVR, Pro-Evo names, varied contracts)
+- **Phase 5.2 — Transfer window** (PR #37 ✅)
+  - All 5 player attributes wired: `attack`, `defence`, `teamwork`, `charisma`, `publicPotential` (visible); `truePotential` (hidden)
+  - Free agent pool: 60 seeded players, attribute variance by position tier
+  - `TransferMarketSlideOver.tsx`: 2 tabs (Free Agents / My Squad), position filter, sort by rating/attack/defence/wage
+  - Sign + release flows with wage budget guard, 24-slot cap, contract fee logic
+  - Formation recruitment gap panel — position-by-position target vs. actual, red/amber/green
+- **Phase 5.3 — Match sim + NPC transfers** (PRs #39 + #42 ✅)
+  - Match sim rewritten: player attributes (not overallRating) weighted by position
+    - Attack: FWD 3× · MID 2× · DEF 1× · GK 0×
+    - Defence: FWD 1× · MID 2× · DEF 3× · GK 3.5×
+  - Team modifier fully wired: teamwork (+0.08), TRAINING_GROUND (+0.50), staff (+0.12), reputation (+0.08), form (±0.02 each), morale (±0.05)
+  - FAN_ZONE extracted as home-only atmosphere bonus (not blended with other facilities)
+  - Training focus applied post-strength-calc (ATTACKING ×1.05 atk, DEFENSIVE ×1.05 def, FITNESS +0.03 modifier, SET_PIECES ×1.03 atk)
+  - NPC season-start transfers: strongest clubs pick first, tier-based wage limits, 30% skip chance for small clubs
+  - Pro-Evo analogue team names in `league-two-teams.ts` (24 clubs, #41 filed for review)
 
 ## What's In Progress
 
-- PR 5: Weekly Training Focus — `SET_TRAINING_FOCUS` domain command + training drill math challenges
+- Nothing — main is clean, no open PRs
 
 ## Blockers
 
 - None
 
+## Open Issues (Phase 5.4+)
+
+| # | Title | Priority |
+|---|-------|----------|
+| #29 | Manager creation — strengths, weaknesses, man-management | High |
+| #31 | Scout facility — unlocks truePotential visibility | Medium |
+| #32 | Club-owned players in transfer market (v2 transfers) | Medium |
+| #34 | Owner forced out + cascade re-entry mechanic | Medium |
+| #36 | NPC clubs poaching players from player's squad | Medium |
+| #41 | Review team and player name analogues | Non-critical |
+
+Closed this session: #30 (attribute wiring), #35 (NPC season-start transfers)
+
 ## Notes
 
-- Target device: Chromebook 1366x768 (keyboard + trackpad)
-- MVP scope: 3-week mid-season loop starting week 20 — not full season
+- Target device: Chromebook 1366×768 (keyboard + trackpad)
 - Dev server: `cd packages/frontend && npx vite`
 - Domain tests: `cd packages/domain && npm test`
-- 10 core units map to 9 facility types (Pitch + Stands share STADIUM)
-- PR 5 (Weekly Training Focus) is the immediate next PR
-- PR 6 (Geometry Challenges) follows — 4 new MathTopics, stadium-themed templates
-- Visual design spec (Gemini output) to be implemented during/after PR 5 — validate in mockup first, then apply to production renderer
-- Sub-unit art (individual building sprites per level) deferred until visual design spec is implemented
-- Club colours for seating not yet decided — needed before pattern implementation
+- Domain dist is a symlink to main project — always rebuild from `/packages/domain && npm run build`
+- Stale worktrees still registered: `cool-kalam`, `phase5-transfers`, `thirsty-archimedes`, `zealous-sutherland` — safe to prune

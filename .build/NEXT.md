@@ -1,29 +1,30 @@
 ---
 project: "Calculating Glory"
 type: "build"
-lastUpdated: "2026-03-12"
+lastUpdated: "2026-03-17"
 ---
 
 # Calculating Glory - Next Steps
 
 ## Immediate (Next Session)
 
-1. **Visual design spec — validate in mockup** — update `stadium-mockup.html` to implement Gemini's visual spec: 3-tone shading (100/70/45%), `<defs>` pattern library (grass stripes, seat banding, concrete stipple), highlight lines on top edges. Confirm it looks right before touching production code.
-2. **PR 5: Weekly Training Focus** — new `SET_TRAINING_FOCUS` domain command + training drill math challenges
-   - Adds ~2 extra decisions per week (one per training session)
-   - Domain: `TrainingFocus` type, `SET_TRAINING_FOCUS` command, reducer update
-   - UI: Training focus selector in StadiumView (TRAINING_GROUND click), challenge card format
+Pick one of these as Phase 5.4 — all are self-contained:
+
+1. **#36 NPC poaching** — NPCs can approach players from your squad; 4 response options (accept fee / reject / counter / ignore); teamwork degrades if player is unhappy → squad-wide performance hit → forced sale. Highest gameplay tension.
+2. **#29 Manager creation** — manager with strengths/weaknesses attributes; how well they translate owner directives (training focus, formation) into results. Prerequisite for several future features.
+3. **#31 Scout facility** — upgrading YOUTH_ACADEMY/scouting unlocks `truePotential` visibility; low levels show ±15 noise, high levels show exact value. Makes the free agent market interesting.
 
 ## Short Term (Next 2–4 Weeks)
 
-1. **Apply visual design spec to production renderer** — once validated in mockup, implement SVG `<defs>` patterns and 3-tone shading in `IsometricBlueprint.tsx` / `CoreUnit.tsx`
-2. **Decide club colours** — needed for seating banding pattern; block on visual spec implementation until resolved
-3. PR 6: Geometry challenges — 4 new MathTopics (AREA_AND_PERIMETER, ANGLES, SCALE_AND_PROPORTION, PROPERTIES_OF_SHAPES), stadium-themed templates
-4. End-to-end integration tests (issue #12)
-5. UI polish for Chromebook 1366x768 (issue #13)
+1. **#32 Club-owned transfers** — sell players to NPC clubs for a transfer fee; fee appears in budget; player moves to NPC roster (news ticker item). Completes the transfer loop.
+2. **#34 Owner forced out** — cascade failure re-entry mechanic: your collapse triggers bottom NPC club failing within 1–2 weeks; player parachutes in mid-season at rock bottom; Business Acumen persists, reputation malus attached.
+3. **Revenue system** — wire `charisma` aggregate into matchday/commercial revenue (currently deferred, touches revenue systems).
+4. **Player development** — `truePotential` + aging: players develop or decline week-to-week. Prerequisite for multi-season play.
+5. **#41 Name analogue review** — manual pass on 24 team names + player name bank before external playtest.
 
 ## Questions / Unknowns
 
-- **Club colours** — what are the default team's colours? Needed for seat row banding in visual design spec
-- Should the card grid below the isometric canvas collapse once all navigation is wired (redundant at that point)?
-- Visual design spec animations (birds, flags, crowd wave) — park in BACKLOG or target a specific PR?
+- **Phase 5.4 pick** — #36 (poaching), #29 (manager), or #31 (scout)? Poaching has most immediate gameplay impact; manager unlocks more depth.
+- **Morale system** — morale is now wired into match results (±0.05). What events raise/lower it beyond signing/releasing? Events system? Needs design before a PR touches it.
+- **Season end screen** — no promotion/relegation handling yet. Needed before full season playtesting.
+- **Stale worktrees** — `cool-kalam`, `phase5-transfers`, `thirsty-archimedes`, `zealous-sutherland` still registered locally. Prune when convenient.
