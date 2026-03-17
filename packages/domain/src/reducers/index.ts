@@ -433,12 +433,28 @@ function handleClubEventResolved(state: GameState, event: ClubEventResolvedEvent
   // Remove resolved events from pendingEvents
   const newPendingEvents = state.pendingEvents.filter(e => e.id !== event.eventId);
 
+  // Poaching: remove player from squad if accepted
+  let squad = state.club.squad;
+  if (event.playerRemovedId) {
+    squad = squad.filter(p => p.id !== event.playerRemovedId);
+  }
+
+  // Poaching: apply morale delta to target player (clamped 0-100)
+  if (event.moraleTargetId && event.moraleEffect !== undefined) {
+    squad = squad.map(p =>
+      p.id === event.moraleTargetId
+        ? { ...p, morale: Math.max(0, Math.min(100, p.morale + event.moraleEffect!)) }
+        : p
+    );
+  }
+
   return {
     ...state,
     club: {
       ...state.club,
       transferBudget: newBudget,
-      reputation: newReputation
+      reputation: newReputation,
+      squad,
     },
     pendingEvents: newPendingEvents,
     resolvedEventHistory: newHistory

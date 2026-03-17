@@ -11,7 +11,7 @@ import { validateTransfer, validateFacilityUpgrade, validateStaffHire } from '..
 import { simulateMatch, clubToTeam, generateAITeam, Team } from '../simulation/match';
 import { generateSeasonFixtures, getWeekFixtures, matchSeed } from '../simulation/season';
 import { createRng } from '../simulation/rng';
-import { generateWeekEvents } from '../simulation/events';
+import { generateWeekEvents, generatePoachAttempts } from '../simulation/events';
 import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
 import { Player } from '../types/player';
 
@@ -273,6 +273,20 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
     });
   }
 
+  // Generate NPC poach attempts (0 or 1 per week)
+  const poachEvents = generatePoachAttempts(state, week, season, baseSeed);
+  for (const pendingEvent of poachEvents) {
+    events.push({
+      type: 'CLUB_EVENT_OCCURRED',
+      timestamp: now,
+      eventId: pendingEvent.id,
+      templateId: pendingEvent.templateId,
+      week,
+      clubId: state.club.id,
+      pendingEvent
+    });
+  }
+
   // Advance the week after all matches and events
   events.push({
     type: 'WEEK_ADVANCED',
@@ -336,6 +350,11 @@ function handleResolveClubEvent(command: any, state: GameState): CommandResult {
     };
   }
 
+  // Propagate poach-specific fields from choice + event metadata
+  const poachTargetId = pendingEvent.metadata?.poachTargetPlayerId;
+  const playerRemovedId = choice.playerLeaves ? poachTargetId : undefined;
+  const moraleTargetId = choice.moraleEffect !== undefined ? poachTargetId : undefined;
+
   const events: GameEvent[] = [
     {
       type: 'CLUB_EVENT_RESOLVED',
@@ -344,7 +363,10 @@ function handleResolveClubEvent(command: any, state: GameState): CommandResult {
       choiceId,
       clubId: state.club.id,
       budgetEffect: choice.budgetEffect,
-      reputationEffect: choice.reputationEffect
+      reputationEffect: choice.reputationEffect,
+      playerRemovedId,
+      moraleTargetId,
+      moraleEffect: choice.moraleEffect,
     }
   ];
 

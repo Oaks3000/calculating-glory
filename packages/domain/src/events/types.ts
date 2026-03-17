@@ -149,6 +149,12 @@ export interface ClubEventResolvedEvent {
   clubId: string;
   budgetEffect?: number;
   reputationEffect?: number;
+  /** Poaching: player ID to remove from squad (accept/counter choices) */
+  playerRemovedId?: string;
+  /** Poaching: player ID whose morale should change (reject/ignore choices) */
+  moraleTargetId?: string;
+  /** Poaching: morale delta to apply to moraleTargetId */
+  moraleEffect?: number;
 }
 
 export interface SeasonStartedEvent {
