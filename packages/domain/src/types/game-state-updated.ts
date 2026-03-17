@@ -23,6 +23,10 @@ export interface ClubEventChoice {
   reputationEffect?: number;
   performanceEffect?: number;
   requiresMath?: boolean;
+  /** Poaching: if true, the poach target leaves the squad (transfer fee is in budgetEffect) */
+  playerLeaves?: boolean;
+  /** Poaching: morale delta applied to the poach target player (negative = unhappy) */
+  moraleEffect?: number;
 }
 
 /**
@@ -37,6 +41,16 @@ export interface PendingClubEvent {
   severity: 'minor' | 'major';
   choices: ClubEventChoice[];
   resolved: boolean;
+  /**
+   * Optional metadata for specialised event types (e.g. NPC poaching).
+   * Not present on standard club events.
+   */
+  metadata?: {
+    poachTargetPlayerId?: string;
+    npcClubId?: string;
+    npcClubName?: string;
+    offeredFee?: number;
+  };
 }
 
 /**

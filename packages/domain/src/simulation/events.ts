@@ -14,6 +14,7 @@
 import { GameState, PendingClubEvent } from '../types/game-state-updated';
 import { CLUB_EVENT_TEMPLATES, ClubEventTemplate } from '../data/club-events';
 import { createRng } from './rng';
+import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
 
 /**
  * Check whether a template's prerequisite has been met in the resolved history.
@@ -203,4 +204,136 @@ export function generateWeekEvents(
     resolved: false
     });
   });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// NPC Poaching
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Per-week chance of an NPC approaching each squad player.
+ * Rate scales with player quality: a 70-rated player has twice the chance of a 50-rated one.
+ */
+const POACH_BASE_RATE = 0.06; // 6% base per player per week for a 50-OVR player
+const POACH_RATING_SCALE = 0.004; // +0.4% per rating point above 50
+
+function poachChance(overallRating: number): number {
+  return POACH_BASE_RATE + Math.max(0, overallRating - 50) * POACH_RATING_SCALE;
+}
+
+/**
+ * Offered fee is 8–12 weeks' wages, scaled by player rating.
+ * Higher-rated players attract bigger bids.
+ */
+function offeredFee(wage: number, overallRating: number): number {
+  const weekMultiplier = 8 + Math.floor((overallRating - 40) / 10);
+  return Math.round(wage * Math.min(weekMultiplier, 16));
+}
+
+/**
+ * Generate 0–1 NPC poach attempt for this week (deterministic).
+ * At most one poach event fires per week to avoid inbox overload.
+ *
+ * Targeting logic:
+ * - Only players with overallRating >= 55 can be approached
+ * - Strongest NPC club (not already in state as player's club) makes the bid
+ * - The specific player is chosen probabilistically (higher rating = higher weight)
+ */
+export function generatePoachAttempts(
+  state: GameState,
+  week: number,
+  season: number,
+  seed: string
+): PendingClubEvent[] {
+  const rng = createRng(`${seed}-S${season}-W${week}-poach`);
+
+  // Only fire during the season, not pre-season
+  if (state.phase === 'PRE_SEASON' || state.phase === 'SEASON_END') return [];
+
+  // Squad must have at least one attractive player (OVR ≥ 55)
+  const targets = state.club.squad.filter(p => p.overallRating >= 55);
+  if (targets.length === 0) return [];
+
+  // Check if a poach event is already pending (one at a time)
+  const poachPending = state.pendingEvents.some(
+    e => e.templateId === 'npc-poach' && !e.resolved
+  );
+  if (poachPending) return [];
+
+  // Pick a random target, weighted by overallRating
+  const totalWeight = targets.reduce((sum, p) => sum + p.overallRating, 0);
+  let pick = rng.next() * totalWeight;
+  const target = targets.find(p => {
+    pick -= p.overallRating;
+    return pick <= 0;
+  }) ?? targets[targets.length - 1];
+
+  // Roll per-player chance
+  if (rng.next() > poachChance(target.overallRating)) return [];
+
+  // Pick a random NPC club (not the player's own club)
+  const npcClubs = LEAGUE_TWO_TEAMS.filter(t => t.id !== state.club.id);
+  const npcClub = npcClubs[rng.nextInt(0, npcClubs.length - 1)];
+
+  const fee = offeredFee(target.wage, target.overallRating);
+  const feeStr = (fee / 100).toLocaleString('en-GB', {
+    style: 'currency',
+    currency: 'GBP',
+    maximumFractionDigits: 0,
+  });
+  const counterFee = Math.round(fee * 1.5);
+  const counterFeeStr = (counterFee / 100).toLocaleString('en-GB', {
+    style: 'currency',
+    currency: 'GBP',
+    maximumFractionDigits: 0,
+  });
+
+  const poachEvent: PendingClubEvent = {
+    id: `evt-S${season}-W${week}-poach`,
+    templateId: 'npc-poach',
+    week,
+    title: `${npcClub.name} want ${target.name}`,
+    description: `${npcClub.name} have submitted a formal bid of ${feeStr} for ${target.name}. How do you respond?`,
+    severity: 'major',
+    metadata: {
+      poachTargetPlayerId: target.id,
+      npcClubId: npcClub.id,
+      npcClubName: npcClub.name,
+      offeredFee: fee,
+    },
+    choices: [
+      {
+        id: 'accept',
+        label: 'Accept the bid',
+        description: `Sell ${target.name} to ${npcClub.name} for ${feeStr}. The funds land immediately.`,
+        budgetEffect: fee,
+        reputationEffect: 3,
+        playerLeaves: true,
+      },
+      {
+        id: 'reject',
+        label: 'Reject the bid',
+        description: `Turn down the offer. ${target.name} stays — but may be unsettled.`,
+        moraleEffect: -15,
+      },
+      {
+        id: 'counter',
+        label: `Counter at ${counterFeeStr}`,
+        description: `Demand 50% more. ${npcClub.name} agrees — ${target.name} moves on for a premium fee.`,
+        budgetEffect: counterFee,
+        reputationEffect: 5,
+        playerLeaves: true,
+      },
+      {
+        id: 'ignore',
+        label: 'Say nothing',
+        description: `Don't respond at all. The bid lapses, but ${target.name} is left in the dark and is very unhappy.`,
+        moraleEffect: -25,
+        reputationEffect: -5,
+      },
+    ],
+    resolved: false,
+  };
+
+  return [poachEvent];
 }
