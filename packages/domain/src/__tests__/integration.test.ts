@@ -90,14 +90,16 @@ describe('Game Integration Test', () => {
         name: state.league.entries.find(e => e.clubId === fixture.homeTeamId)?.clubName || 'Home',
         attackStrength: 50,
         defenceStrength: 50,
-        teamStrength: 1.0
+        teamStrength: 1.0,
+        fanZoneBonus: 0,
       };
       const awayTeam = {
         id: fixture.awayTeamId,
         name: state.league.entries.find(e => e.clubId === fixture.awayTeamId)?.clubName || 'Away',
         attackStrength: 50,
         defenceStrength: 50,
-        teamStrength: 1.0
+        teamStrength: 1.0,
+        fanZoneBonus: 0,
       };
 
       const result = simulateMatch(homeTeam, awayTeam, seed);
@@ -201,14 +203,16 @@ describe('Game Integration Test', () => {
           name: state.league.entries.find(e => e.clubId === fixture.homeTeamId)?.clubName || 'Home',
           attackStrength: 50,
           defenceStrength: 50,
-          teamStrength: 1.0
+          teamStrength: 1.0,
+          fanZoneBonus: 0,
         };
         const awayTeam = {
           id: fixture.awayTeamId,
           name: state.league.entries.find(e => e.clubId === fixture.awayTeamId)?.clubName || 'Away',
           attackStrength: 50,
           defenceStrength: 50,
-          teamStrength: 1.0
+          teamStrength: 1.0,
+          fanZoneBonus: 0,
         };
 
         const result = simulateMatch(homeTeam, awayTeam, seed);
