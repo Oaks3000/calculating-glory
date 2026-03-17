@@ -134,10 +134,10 @@ describe('clubToTeam', () => {
       transferBudget: 0,
       wageBudget: 0,
       squad: [
-        { id: 'p1', name: 'Striker', overallRating: 80, position: 'FWD', wage: 0, transferValue: 0, age: 25, morale: 75, stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 0 } },
-        { id: 'p2', name: 'Midfielder', overallRating: 70, position: 'MID', wage: 0, transferValue: 0, age: 25, morale: 75, stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 0 } },
-        { id: 'p3', name: 'Defender', overallRating: 60, position: 'DEF', wage: 0, transferValue: 0, age: 25, morale: 75, stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 0 } },
-        { id: 'p4', name: 'Keeper', overallRating: 65, position: 'GK', wage: 0, transferValue: 0, age: 25, morale: 75, stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 0 } },
+        { id: 'p1', name: 'Striker', overallRating: 80, position: 'FWD', wage: 0, transferValue: 0, age: 25, morale: 75, attributes: { attack: 75, defence: 20, teamwork: 50, charisma: 50, publicPotential: 70 }, truePotential: 70, contractExpiresWeek: 46, stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 0 } },
+        { id: 'p2', name: 'Midfielder', overallRating: 70, position: 'MID', wage: 0, transferValue: 0, age: 25, morale: 75, attributes: { attack: 55, defence: 50, teamwork: 65, charisma: 50, publicPotential: 65 }, truePotential: 65, contractExpiresWeek: 46, stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 0 } },
+        { id: 'p3', name: 'Defender', overallRating: 60, position: 'DEF', wage: 0, transferValue: 0, age: 25, morale: 75, attributes: { attack: 30, defence: 62, teamwork: 55, charisma: 40, publicPotential: 55 }, truePotential: 55, contractExpiresWeek: 46, stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 0 } },
+        { id: 'p4', name: 'Keeper', overallRating: 65, position: 'GK', wage: 0, transferValue: 0, age: 25, morale: 75, attributes: { attack: 15, defence: 68, teamwork: 55, charisma: 40, publicPotential: 60 }, truePotential: 60, contractExpiresWeek: 46, stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 0 } },
       ],
       staff: [],
       facilities: [],
@@ -190,7 +190,7 @@ describe('clubToTeam', () => {
       transferBudget: 0,
       wageBudget: 0,
       squad: [
-        { id: 'p1', name: 'Player', overallRating: 50, position: 'FWD', wage: 0, transferValue: 0, age: 25, morale: 75, stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 0 } },
+        { id: 'p1', name: 'Player', overallRating: 50, position: 'FWD', wage: 0, transferValue: 0, age: 25, morale: 75, attributes: { attack: 50, defence: 20, teamwork: 45, charisma: 40, publicPotential: 45 }, truePotential: 45, contractExpiresWeek: 46, stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 0 } },
       ],
       staff: [],
       facilities: [],

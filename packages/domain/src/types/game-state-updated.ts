@@ -9,6 +9,7 @@ import { GameEvent } from '../events/types';
 import { Club } from './club';
 import { LeagueTable } from './league';
 import { CurriculumConfig } from '../curriculum/curriculum-config';
+import { Player } from './player';
 
 /**
  * A choice available within a club event
@@ -80,6 +81,9 @@ export interface GameState {
 
   /** Current season number */
   season: number;
+
+  /** Pool of available free agents */
+  freeAgentPool: Player[];
 }
 
 /**

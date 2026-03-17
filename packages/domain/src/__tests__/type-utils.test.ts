@@ -20,6 +20,9 @@ function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
     id: 'p1', name: 'Test', overallRating: 70, position: 'FWD',
     wage: 50000, transferValue: 5000000, age: 25, morale: 75,
+    attributes: { attack: 60, defence: 20, teamwork: 50, charisma: 45, publicPotential: 60 },
+    truePotential: 62,
+    contractExpiresWeek: 46,
     stats: { goals: 10, assists: 5, cleanSheets: 0, appearances: 20, averageRating: 70 },
     ...overrides
   };
