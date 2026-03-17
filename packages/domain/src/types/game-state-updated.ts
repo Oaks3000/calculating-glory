@@ -10,6 +10,7 @@ import { Club } from './club';
 import { LeagueTable } from './league';
 import { CurriculumConfig } from '../curriculum/curriculum-config';
 import { Player } from './player';
+import { Manager } from './staff';
 
 /**
  * A choice available within a club event
@@ -98,6 +99,9 @@ export interface GameState {
 
   /** Pool of available free agents */
   freeAgentPool: Player[];
+
+  /** Available managers to hire (generated at game start, removed on hire) */
+  managerPool: Manager[];
 }
 
 /**

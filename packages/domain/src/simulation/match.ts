@@ -165,23 +165,32 @@ export function clubToTeam(club: Club): Team {
   const { attack, defence } = calculatePositionalStrengths(club.squad);
   const { modifier, fanZoneBonus } = calculateTeamModifier(club);
 
-  // Apply training focus multipliers after base calculation
+  // Apply training focus multipliers after base calculation.
+  //
+  // Manager tactical attribute amplifies how well the focus translates to results:
+  //   tactical=0   → amplifier 0.5  (focus half as effective — poor communication)
+  //   tactical=50  → amplifier 1.0  (neutral, baseline)
+  //   tactical=100 → amplifier 1.5  (50% more effective — elite implementer)
+  //   no manager   → amplifier 1.0  (no penalty, no bonus)
   let attackStrength = attack;
   let defenceStrength = defence;
   let teamModifier = modifier;
+  const tacticalAmplifier = club.manager
+    ? 0.5 + club.manager.attributes.tactical / 100
+    : 1.0;
 
   switch (club.trainingFocus) {
     case 'ATTACKING':
-      attackStrength *= 1.05;
+      attackStrength *= 1 + 0.05 * tacticalAmplifier;
       break;
     case 'DEFENSIVE':
-      defenceStrength *= 1.05;
+      defenceStrength *= 1 + 0.05 * tacticalAmplifier;
       break;
     case 'FITNESS':
-      teamModifier += 0.03;
+      teamModifier += 0.03 * tacticalAmplifier;
       break;
     case 'SET_PIECES':
-      attackStrength *= 1.03;
+      attackStrength *= 1 + 0.03 * tacticalAmplifier;
       break;
     case 'YOUTH_INTEGRATION':
       // No match effect — developmental benefit accrues over the season
@@ -279,12 +288,15 @@ function calculatePositionalStrengths(squad: Player[]): {
  *   Squad avg teamwork  (0–100)   → +0.00 to +0.08
  *   TRAINING_GROUND level (0–5)   → +0.00 to +0.50  ← primary performance lever
  *   Staff avg quality   (0–100)   → +0.00 to +0.12
+ *   Manager experience  (0–100)   → +0.00 to +0.06
  *   Reputation          (0–100)   → +0.00 to +0.08
  *   Form last 5 (W/D/L)           → W=+0.02, D=0, L=−0.02 each
  *   Squad avg morale    (0–100)   → −0.05 to +0.05 (centred at 50)
  *   FAN_ZONE level (0–5)          → +0.00 to +0.05 (home only, returned separately)
  *
- * Theoretical max before clamping: 1.0+0.08+0.50+0.12+0.08+0.10+0.05+0.05 = 1.98 → clamped to 1.30
+ * Note: Manager tactical attribute amplifies training focus in clubToTeam (not here).
+ *
+ * Theoretical max before clamping: 1.0+0.08+0.50+0.12+0.06+0.08+0.10+0.05+0.05 = 2.04 → clamped to 1.30
  * Facilities NOT in the modifier: STADIUM, COMMERCIAL, F&B (revenue), MEDICAL_CENTER (injury),
  *   YOUTH_ACADEMY (development), GROUNDS_SECURITY (attendance/reputation).
  */
@@ -312,6 +324,13 @@ function calculateTeamModifier(club: Club): {
     const avgQuality =
       club.staff.reduce((sum, s) => sum + s.quality, 0) / club.staff.length;
     modifier += (avgQuality / 100) * 0.12;
+  }
+
+  // Manager experience (0–100) → +0.00 to +0.06
+  // A seasoned manager gets more from the same resources.
+  // (Tactical impact is handled in clubToTeam via training focus amplification.)
+  if (club.manager) {
+    modifier += (club.manager.attributes.experience / 100) * 0.06;
   }
 
   // Reputation (0–100) → +0.00 to +0.08

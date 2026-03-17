@@ -42,6 +42,10 @@ export function handleCommand(command: GameCommand, state: GameState): CommandRe
       return handleSignFreeAgent(command, state);
     case 'RELEASE_PLAYER':
       return handleReleasePlayer(command, state);
+    case 'HIRE_MANAGER':
+      return handleHireManager(command, state);
+    case 'SACK_MANAGER':
+      return handleSackManager(command, state);
     default:
       return {
         error: {
@@ -591,6 +595,96 @@ function handleReleasePlayer(command: any, state: GameState): CommandResult {
       clubId: state.club.id,
       releaseFee,
     }
+  ];
+
+  return { events };
+}
+
+function handleHireManager(command: any, state: GameState): CommandResult {
+  // Find manager in pool
+  const manager = state.managerPool.find(m => m.id === command.managerId);
+  if (!manager) {
+    return {
+      error: {
+        code: 'PLAYER_NOT_FOUND',
+        message: `Manager '${command.managerId}' not found in pool`,
+      },
+    };
+  }
+
+  // Check whether we can afford the weekly wage
+  const currentTotalWages =
+    state.club.squad.reduce((sum, p) => sum + p.wage, 0) +
+    state.club.staff.reduce((sum, s) => sum + s.salary, 0) +
+    (state.club.manager ? state.club.manager.wage : 0);
+
+  if (manager.wage > state.club.wageBudget - currentTotalWages) {
+    return {
+      error: {
+        code: 'INSUFFICIENT_BUDGET',
+        message: `Manager wage exceeds remaining weekly wage budget`,
+      },
+    };
+  }
+
+  // Sack existing manager first (no compensation in pre-season — mutual consent)
+  const events: GameEvent[] = [];
+  if (state.club.manager) {
+    events.push({
+      type: 'MANAGER_SACKED',
+      timestamp: Date.now(),
+      clubId: state.club.id,
+      managerId: state.club.manager.id,
+      compensationPaid: 0,
+    });
+  }
+
+  const contractExpiresWeek = state.currentWeek + manager.contractLengthWeeks;
+
+  events.push({
+    type: 'MANAGER_HIRED',
+    timestamp: Date.now(),
+    clubId: state.club.id,
+    manager,
+    contractExpiresWeek,
+  });
+
+  return { events };
+}
+
+function handleSackManager(_command: any, state: GameState): CommandResult {
+  if (!state.club.manager) {
+    return {
+      error: {
+        code: 'VALIDATION_FAILED',
+        message: `No manager to sack`,
+      },
+    };
+  }
+
+  const manager = state.club.manager;
+  // Compensation: half of remaining contracted wages
+  const weeksRemaining = Math.max(0, manager.contractExpiresWeek - state.currentWeek);
+  const compensationPaid = Math.round(weeksRemaining * manager.wage * 0.5);
+
+  // Check club can afford compensation
+  if (compensationPaid > state.club.transferBudget) {
+    return {
+      error: {
+        code: 'INSUFFICIENT_BUDGET',
+        message: `Cannot afford sacking compensation of ${compensationPaid} pence`,
+      },
+    };
+  }
+
+  const events: GameEvent[] = [
+    {
+      type: 'MANAGER_SACKED',
+      timestamp: Date.now(),
+      clubId: state.club.id,
+      managerId: manager.id,
+      compensationPaid,
+    },
   ];
 
   return { events };

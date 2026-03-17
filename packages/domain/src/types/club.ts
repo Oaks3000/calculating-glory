@@ -4,7 +4,7 @@
 
 import { Player } from './player';
 import { Facility, TrainingFocus } from './facility';
-import { Staff } from './staff';
+import { Staff, Manager } from './staff';
 import { Formation } from './formation';
 
 /**
@@ -46,6 +46,9 @@ export interface Club {
 
   /** Total squad slots available (capped at 24) */
   squadCapacity: number;
+
+  /** Currently hired manager (null = no manager appointed) */
+  manager: Manager | null;
 }
 
 /**

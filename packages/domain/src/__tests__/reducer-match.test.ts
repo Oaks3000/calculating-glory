@@ -43,6 +43,7 @@ function makeState(entries: LeagueTableEntry[], playerClubId: string = 'club-1')
       trainingFocus: null,
       preferredFormation: null,
       squadCapacity: 24,
+      manager: null,
     },
     league: {
       entries,
@@ -62,6 +63,7 @@ function makeState(entries: LeagueTableEntry[], playerClubId: string = 'club-1')
     resolvedEventHistory: [],
     season: 1,
     freeAgentPool: [],
+    managerPool: [],
   };
 }
 
