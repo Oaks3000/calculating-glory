@@ -4,7 +4,7 @@
  * Pure functions that apply events to state.
  */
 
-import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent } from '../events/types';
+import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent } from '../events/types';
 import { GameState } from '../types/game-state-updated';
 import { Club } from '../types/club';
 import { LeagueTable, LeagueTableEntry, sortLeagueTable } from '../types/league';
@@ -12,6 +12,7 @@ import { CURRICULUM_LEVELS } from '../curriculum/curriculum-config';
 import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
 import { getDefaultFacilities, getUpgradeCost } from '../types/facility';
 import { generateStartingSquad } from '../data/squad-generator';
+import { generateFreeAgentPool } from '../data/free-agent-generator';
 
 /**
  * Reduce an event into state
@@ -50,6 +51,10 @@ export function reduceEvent(state: GameState, event: GameEvent): GameState {
       return handleTrainingFocusSet(state, event);
     case 'FORMATION_SET':
       return handleFormationSet(state, event);
+    case 'FREE_AGENT_SIGNED':
+      return handleFreeAgentSigned(state, event);
+    case 'PLAYER_RELEASED':
+      return handlePlayerReleased(state, event);
     default:
       return state;
   }
@@ -85,7 +90,8 @@ export function buildState(events: GameEvent[]): GameState {
     phase: 'PRE_SEASON',
     pendingEvents: [],
     resolvedEventHistory: [],
-    season: 1
+    season: 1,
+    freeAgentPool: [],
   };
 
   return events.reduce(reduceEvent, initialState);
@@ -138,6 +144,9 @@ function handleGameStarted(state: GameState, event: GameStartedEvent): GameState
   // Generate the inherited starting squad of 16 weak non-league players
   const inheritedSquad = generateStartingSquad(event.seed, event.clubId);
 
+  // Generate the free agent pool for the season
+  const freeAgentPool = generateFreeAgentPool(event.seed);
+
   return {
     ...state,
     phase: 'PRE_SEASON',
@@ -154,7 +163,8 @@ function handleGameStarted(state: GameState, event: GameStartedEvent): GameState
     league: {
       ...state.league,
       entries: sortedEntries
-    }
+    },
+    freeAgentPool,
   };
 }
 
@@ -457,6 +467,28 @@ function handleFormationSet(state: GameState, event: FormationSetEvent): GameSta
     club: {
       ...state.club,
       preferredFormation: event.formation,
+    },
+  };
+}
+
+function handleFreeAgentSigned(state: GameState, event: FreeAgentSignedEvent): GameState {
+  return {
+    ...state,
+    freeAgentPool: state.freeAgentPool.filter(p => p.id !== event.playerId),
+    club: {
+      ...state.club,
+      squad: [...state.club.squad, event.player],
+    },
+  };
+}
+
+function handlePlayerReleased(state: GameState, event: PlayerReleasedEvent): GameState {
+  return {
+    ...state,
+    club: {
+      ...state.club,
+      squad: state.club.squad.filter(p => p.id !== event.playerId),
+      transferBudget: state.club.transferBudget + event.releaseFee,
     },
   };
 }

@@ -35,6 +35,7 @@ export * from './money/utils';
 export * from './data/league-two-teams';
 export * from './data/club-events';
 export * from './data/squad-generator';
+export * from './data/free-agent-generator';
 
 // Core state types
 export * from './types/game-state-updated';

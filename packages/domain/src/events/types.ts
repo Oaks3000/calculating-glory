@@ -27,7 +27,9 @@ export type GameEvent =
   | ClubEventResolvedEvent
   | SeasonStartedEvent
   | TrainingFocusSetEvent
-  | FormationSetEvent;
+  | FormationSetEvent
+  | FreeAgentSignedEvent
+  | PlayerReleasedEvent;
 
 export interface TransferCompletedEvent {
   type: 'TRANSFER_COMPLETED';
@@ -168,4 +170,22 @@ export interface FormationSetEvent {
   clubId: string;
   formation: Formation;
   previousFormation: Formation | null;
+}
+
+export interface FreeAgentSignedEvent {
+  type: 'FREE_AGENT_SIGNED';
+  timestamp: number;
+  playerId: string;
+  clubId: string;
+  offeredWage: number;       // pence/week
+  contractExpiresWeek: number;
+  player: Player;            // Full player object with updated wage + contractExpiresWeek
+}
+
+export interface PlayerReleasedEvent {
+  type: 'PLAYER_RELEASED';
+  timestamp: number;
+  playerId: string;
+  clubId: string;
+  releaseFee: number;        // pence, 0 if out of contract
 }

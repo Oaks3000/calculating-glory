@@ -19,7 +19,9 @@ export type GameCommand =
   | ResolveClubEventCommand
   | StartSeasonCommand
   | SetTrainingFocusCommand
-  | SetFormationCommand;
+  | SetFormationCommand
+  | SignFreeAgentCommand
+  | ReleasePlayerCommand;
 
 export interface MakeTransferCommand {
   type: 'MAKE_TRANSFER';
@@ -78,6 +80,17 @@ export interface SetTrainingFocusCommand {
 export interface SetFormationCommand {
   type: 'SET_FORMATION';
   formation: Formation;
+}
+
+export interface SignFreeAgentCommand {
+  type: 'SIGN_FREE_AGENT';
+  playerId: string;
+  offeredWage: number;       // pence/week
+}
+
+export interface ReleasePlayerCommand {
+  type: 'RELEASE_PLAYER';
+  playerId: string;
 }
 
 export interface CommandResult {
