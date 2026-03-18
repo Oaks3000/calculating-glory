@@ -23,7 +23,8 @@ export type GameCommand =
   | SignFreeAgentCommand
   | ReleasePlayerCommand
   | HireManagerCommand
-  | SackManagerCommand;
+  | SackManagerCommand
+  | SellPlayerToNpcCommand;
 
 export interface MakeTransferCommand {
   type: 'MAKE_TRANSFER';
@@ -102,6 +103,13 @@ export interface HireManagerCommand {
 
 export interface SackManagerCommand {
   type: 'SACK_MANAGER';
+}
+
+export interface SellPlayerToNpcCommand {
+  type: 'SELL_PLAYER_TO_NPC';
+  playerId: string;
+  /** ID of the buying NPC club (from LEAGUE_TWO_TEAMS) */
+  npcClubId: string;
 }
 
 export interface CommandResult {

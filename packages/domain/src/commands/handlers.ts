@@ -46,6 +46,8 @@ export function handleCommand(command: GameCommand, state: GameState): CommandRe
       return handleHireManager(command, state);
     case 'SACK_MANAGER':
       return handleSackManager(command, state);
+    case 'SELL_PLAYER_TO_NPC':
+      return handleSellPlayerToNpc(command, state);
     default:
       return {
         error: {
@@ -684,6 +686,60 @@ function handleSackManager(_command: any, state: GameState): CommandResult {
       clubId: state.club.id,
       managerId: manager.id,
       compensationPaid,
+    },
+  ];
+
+  return { events };
+}
+
+function handleSellPlayerToNpc(command: any, state: GameState): CommandResult {
+  // Validate player is in squad
+  const player = state.club.squad.find(p => p.id === command.playerId);
+  if (!player) {
+    return {
+      error: {
+        code: 'PLAYER_NOT_FOUND',
+        message: `Player '${command.playerId}' not found in squad`,
+      },
+    };
+  }
+
+  // Validate buying club exists
+  const buyingClub = LEAGUE_TWO_TEAMS.find(t => t.id === command.npcClubId);
+  if (!buyingClub) {
+    return {
+      error: {
+        code: 'VALIDATION_FAILED',
+        message: `NPC club '${command.npcClubId}' not found`,
+      },
+    };
+  }
+
+  // Buying club cannot be the player's own club
+  if (command.npcClubId === state.club.id) {
+    return {
+      error: {
+        code: 'VALIDATION_FAILED',
+        message: `Cannot sell a player to your own club`,
+      },
+    };
+  }
+
+  // Fee: use player's transferValue if set, otherwise derive from overallRating
+  const fee = player.transferValue > 0
+    ? player.transferValue
+    : Math.max(10_000, player.overallRating * player.overallRating * 500);
+
+  const events: GameEvent[] = [
+    {
+      type: 'PLAYER_SOLD',
+      timestamp: Date.now(),
+      playerId: player.id,
+      clubId: state.club.id,
+      fee,
+      playerName: player.name,
+      npcClubId: buyingClub.id,
+      npcClubName: buyingClub.name,
     },
   ];
 

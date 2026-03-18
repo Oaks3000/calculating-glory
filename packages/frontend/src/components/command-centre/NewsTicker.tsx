@@ -27,7 +27,12 @@ function buildHeadlines(
     } else if (e.type === 'TRANSFER_COMPLETED') {
       headlines.push(`Transfer: ${e.player.name} joins the squad`);
     } else if (e.type === 'PLAYER_SOLD') {
-      headlines.push(`Departure: Player sold for ${(e.fee / 100).toLocaleString('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 })}`);
+      const fee = (e.fee / 100).toLocaleString('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 });
+      if (e.playerName && e.npcClubName) {
+        headlines.push(`${e.playerName} joins ${e.npcClubName} for ${fee}`);
+      } else {
+        headlines.push(`Departure: Player sold for ${fee}`);
+      }
     } else if (e.type === 'FACILITY_UPGRADED') {
       headlines.push(`Facility upgraded: ${e.facilityType} → Level ${e.level}`);
     } else if (e.type === 'SEASON_ENDED') {

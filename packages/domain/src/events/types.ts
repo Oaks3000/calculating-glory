@@ -115,6 +115,12 @@ export interface PlayerSoldEvent {
   playerId: string;
   clubId: string;
   fee: number; // in pence
+  /** Name of the sold player (for news ticker) */
+  playerName?: string;
+  /** Buying NPC club ID */
+  npcClubId?: string;
+  /** Buying NPC club name (for news ticker) */
+  npcClubName?: string;
 }
 
 export interface StaffFiredEvent {

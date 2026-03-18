@@ -6,6 +6,7 @@ import {
   Position,
   formatMoney,
   FORMATION_CONFIG,
+  LEAGUE_TWO_TEAMS,
 } from '@calculating-glory/domain';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -191,18 +192,31 @@ function FreeAgentCard({ player, canAfford, hasSquadRoom, onSign }: FreeAgentCar
 interface SquadPlayerCardProps {
   player: Player;
   currentWeek: number;
+  clubId: string;
   onRelease: () => void;
+  onSellToNpc: (npcClubId: string) => void;
 }
 
-function SquadPlayerCard({ player, currentWeek, onRelease }: SquadPlayerCardProps) {
-  const [confirming, setConfirming] = useState(false);
-  const [released, setReleased] = useState(false);
+type SquadAction = 'idle' | 'confirm-release' | 'pick-club' | 'confirm-sell';
+
+function SquadPlayerCard({ player, currentWeek, clubId, onRelease, onSellToNpc }: SquadPlayerCardProps) {
+  const [action, setAction] = useState<SquadAction>('idle');
+  const [selectedClubId, setSelectedClubId] = useState('');
+  const [done, setDone] = useState<'released' | 'sold' | null>(null);
 
   const isFreeAgent = player.contractExpiresWeek === 0;
   const isExpired = !isFreeAgent && currentWeek >= player.contractExpiresWeek;
   const releaseFee = (!isFreeAgent && !isExpired && player.contractExpiresWeek > currentWeek)
     ? Math.round((player.contractExpiresWeek - currentWeek) * player.wage * 0.5)
     : 0;
+
+  const sellFee = player.transferValue > 0
+    ? player.transferValue
+    : Math.max(10_000, player.overallRating * player.overallRating * 500);
+
+  // All 23 NPC clubs (excluding player's own club)
+  const npcClubs = LEAGUE_TWO_TEAMS.filter(t => t.id !== clubId);
+  const selectedClub = npcClubs.find(t => t.id === selectedClubId);
 
   function contractBadge() {
     if (isFreeAgent) {
@@ -215,15 +229,21 @@ function SquadPlayerCard({ player, currentWeek, onRelease }: SquadPlayerCardProp
     return <span className="text-[10px] text-txt-muted">Wk {player.contractExpiresWeek} ({weeksLeft}wk left)</span>;
   }
 
-  function releaseLabel() {
-    if (releaseFee > 0) return `Release (${formatMoney(releaseFee)} fee)`;
-    return 'Release (free)';
+  function handleConfirmRelease() {
+    onRelease();
+    setDone('released');
+    setAction('idle');
   }
 
-  function handleConfirm() {
-    onRelease();
-    setReleased(true);
-    setConfirming(false);
+  function handleConfirmSell() {
+    onSellToNpc(selectedClubId);
+    setDone('sold');
+    setAction('idle');
+  }
+
+  function cancel() {
+    setAction('idle');
+    setSelectedClubId('');
   }
 
   return (
@@ -257,34 +277,57 @@ function SquadPlayerCard({ player, currentWeek, onRelease }: SquadPlayerCardProp
         <AttrBar label="POT" value={player.attributes.publicPotential} colour="bg-purple-400" />
       </div>
 
-      {/* Release action */}
-      {released ? (
+      {/* Actions */}
+      {done === 'released' ? (
         <div className="text-xs text-warn-amber font-semibold">Released</div>
-      ) : confirming ? (
+      ) : done === 'sold' ? (
+        <div className="text-xs text-pitch-green font-semibold">Sold for {formatMoney(sellFee)}</div>
+      ) : action === 'confirm-release' ? (
         <div className="flex items-center gap-2 flex-wrap text-xs">
           <span className="text-txt-muted">
-            Release {player.name}{releaseFee > 0 ? ` (${formatMoney(releaseFee)} compensation)` : ' for free'}?
+            Release {player.name}{releaseFee > 0 ? ` (${formatMoney(releaseFee)} fee)` : ' for free'}?
           </span>
-          <button
-            onClick={handleConfirm}
-            className="px-2 py-0.5 bg-alert-red/20 text-alert-red border border-alert-red/40 rounded hover:bg-alert-red/30 transition-colors"
+          <button onClick={handleConfirmRelease} className="px-2 py-0.5 bg-alert-red/20 text-alert-red border border-alert-red/40 rounded hover:bg-alert-red/30 transition-colors">Yes</button>
+          <button onClick={cancel} className="px-2 py-0.5 bg-white/5 text-txt-muted border border-white/10 rounded hover:bg-white/10 transition-colors">Cancel</button>
+        </div>
+      ) : action === 'pick-club' ? (
+        <div className="flex flex-col gap-1.5 text-xs">
+          <span className="text-txt-muted">Sell to club for <span className="text-pitch-green font-semibold">{formatMoney(sellFee)}</span>:</span>
+          <select
+            value={selectedClubId}
+            onChange={e => { setSelectedClubId(e.target.value); setAction('confirm-sell'); }}
+            className="bg-bg-raised text-txt-primary text-xs border border-white/10 rounded px-2 py-1 focus:outline-none"
           >
-            Yes
-          </button>
-          <button
-            onClick={() => setConfirming(false)}
-            className="px-2 py-0.5 bg-white/5 text-txt-muted border border-white/10 rounded hover:bg-white/10 transition-colors"
-          >
-            Cancel
-          </button>
+            <option value="">— pick a club —</option>
+            {npcClubs.map(t => (
+              <option key={t.id} value={t.id}>{t.name}</option>
+            ))}
+          </select>
+          <button onClick={cancel} className="text-txt-muted hover:text-txt-primary transition-colors text-left">Cancel</button>
+        </div>
+      ) : action === 'confirm-sell' ? (
+        <div className="flex items-center gap-2 flex-wrap text-xs">
+          <span className="text-txt-muted">
+            Sell {player.name} to {selectedClub?.name} for <span className="text-pitch-green font-semibold">{formatMoney(sellFee)}</span>?
+          </span>
+          <button onClick={handleConfirmSell} className="px-2 py-0.5 bg-pitch-green/20 text-pitch-green border border-pitch-green/40 rounded hover:bg-pitch-green/30 transition-colors">Confirm</button>
+          <button onClick={() => setAction('pick-club')} className="px-2 py-0.5 bg-white/5 text-txt-muted border border-white/10 rounded hover:bg-white/10 transition-colors">Back</button>
         </div>
       ) : (
-        <button
-          onClick={() => setConfirming(true)}
-          className="w-full text-xs py-1.5 rounded bg-alert-red/10 text-alert-red border border-alert-red/30 hover:bg-alert-red/20 transition-colors"
-        >
-          {releaseLabel()}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setAction('pick-club')}
+            className="flex-1 text-xs py-1.5 rounded bg-pitch-green/10 text-pitch-green border border-pitch-green/30 hover:bg-pitch-green/20 transition-colors"
+          >
+            Sell ({formatMoney(sellFee)})
+          </button>
+          <button
+            onClick={() => setAction('confirm-release')}
+            className="flex-1 text-xs py-1.5 rounded bg-alert-red/10 text-alert-red border border-alert-red/30 hover:bg-alert-red/20 transition-colors"
+          >
+            {releaseFee > 0 ? `Release (${formatMoney(releaseFee)} fee)` : 'Release (free)'}
+          </button>
+        </div>
       )}
     </div>
   );
@@ -330,6 +373,11 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
 
   function handleRelease(playerId: string) {
     const result = dispatch({ type: 'RELEASE_PLAYER', playerId });
+    if (result.error) onError(result.error);
+  }
+
+  function handleSellToNpc(playerId: string, npcClubId: string) {
+    const result = dispatch({ type: 'SELL_PLAYER_TO_NPC', playerId, npcClubId });
     if (result.error) onError(result.error);
   }
 
@@ -433,7 +481,9 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
                 key={player.id}
                 player={player}
                 currentWeek={state.currentWeek}
+                clubId={state.club.id}
                 onRelease={() => handleRelease(player.id)}
+                onSellToNpc={npcClubId => handleSellToNpc(player.id, npcClubId)}
               />
             ))
           )
