@@ -4,7 +4,7 @@
  * Pure functions that apply events to state.
  */
 
-import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent } from '../events/types';
+import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent, ManagerHiredEvent, ManagerSackedEvent } from '../events/types';
 import { GameState } from '../types/game-state-updated';
 import { Club } from '../types/club';
 import { LeagueTable, LeagueTableEntry, sortLeagueTable } from '../types/league';
@@ -13,6 +13,7 @@ import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
 import { getDefaultFacilities, getUpgradeCost } from '../types/facility';
 import { generateStartingSquad } from '../data/squad-generator';
 import { generateFreeAgentPool } from '../data/free-agent-generator';
+import { generateManagerPool } from '../data/manager-generator';
 
 /**
  * Reduce an event into state
@@ -57,6 +58,10 @@ export function reduceEvent(state: GameState, event: GameEvent): GameState {
       return handlePlayerReleased(state, event);
     case 'NPC_PLAYER_SIGNED':
       return handleNpcPlayerSigned(state, event);
+    case 'MANAGER_HIRED':
+      return handleManagerHired(state, event);
+    case 'MANAGER_SACKED':
+      return handleManagerSacked(state, event);
     default:
       return state;
   }
@@ -94,6 +99,7 @@ export function buildState(events: GameEvent[]): GameState {
     resolvedEventHistory: [],
     season: 1,
     freeAgentPool: [],
+    managerPool: [],
   };
 
   return events.reduce(reduceEvent, initialState);
@@ -149,6 +155,9 @@ function handleGameStarted(state: GameState, event: GameStartedEvent): GameState
   // Generate the free agent pool for the season
   const freeAgentPool = generateFreeAgentPool(event.seed);
 
+  // Generate the manager pool for the season
+  const managerPool = generateManagerPool(event.seed);
+
   return {
     ...state,
     phase: 'PRE_SEASON',
@@ -161,12 +170,14 @@ function handleGameStarted(state: GameState, event: GameStartedEvent): GameState
       facilities: getDefaultFacilities(),
       squad: inheritedSquad,
       squadCapacity: 24,
+      manager: null,
     },
     league: {
       ...state.league,
       entries: sortedEntries
     },
     freeAgentPool,
+    managerPool,
   };
 }
 
@@ -388,12 +399,27 @@ function handleWeekAdvanced(state: GameState, event: any): GameState {
     phase = 'LATE_SEASON';
   }
 
+  // Manager motivation nudges squad morale each week.
+  // motivation=50 → 0/wk  |  motivation=100 → +2/wk  |  motivation=0 → −2/wk
+  // Rounds to integer: steps of 1 at 25/75, steps of 2 at 0/100.
+  let squad = state.club.squad;
+  if (state.club.manager && state.club.squad.length > 0) {
+    const moraleDelta = Math.round((state.club.manager.attributes.motivation - 50) / 25);
+    if (moraleDelta !== 0) {
+      squad = squad.map(p => ({
+        ...p,
+        morale: Math.max(0, Math.min(100, p.morale + moraleDelta)),
+      }));
+    }
+  }
+
   return {
     ...state,
     currentWeek: week,
     phase,
     club: {
       ...state.club,
+      squad,
       transferBudget: state.club.transferBudget + weeklyRevenue,
     }
   };
@@ -518,6 +544,30 @@ function handleNpcPlayerSigned(state: GameState, event: NpcPlayerSignedEvent): G
   };
 }
 
+function handleManagerHired(state: GameState, event: ManagerHiredEvent): GameState {
+  return {
+    ...state,
+    // Remove from pool once hired
+    managerPool: state.managerPool.filter(m => m.id !== event.manager.id),
+    club: {
+      ...state.club,
+      manager: { ...event.manager, contractExpiresWeek: event.contractExpiresWeek },
+    },
+  };
+}
+
+function handleManagerSacked(state: GameState, event: ManagerSackedEvent): GameState {
+  return {
+    ...state,
+    club: {
+      ...state.club,
+      manager: null,
+      // Compensation comes out of transfer budget
+      transferBudget: state.club.transferBudget - event.compensationPaid,
+    },
+  };
+}
+
 // Utility functions
 
 function createEmptyClub(): Club {
@@ -540,6 +590,7 @@ function createEmptyClub(): Club {
     trainingFocus: null,
     preferredFormation: null,
     squadCapacity: 24,
+    manager: null,
   };
 }
 

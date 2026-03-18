@@ -21,7 +21,9 @@ export type GameCommand =
   | SetTrainingFocusCommand
   | SetFormationCommand
   | SignFreeAgentCommand
-  | ReleasePlayerCommand;
+  | ReleasePlayerCommand
+  | HireManagerCommand
+  | SackManagerCommand;
 
 export interface MakeTransferCommand {
   type: 'MAKE_TRANSFER';
@@ -91,6 +93,15 @@ export interface SignFreeAgentCommand {
 export interface ReleasePlayerCommand {
   type: 'RELEASE_PLAYER';
   playerId: string;
+}
+
+export interface HireManagerCommand {
+  type: 'HIRE_MANAGER';
+  managerId: string;
+}
+
+export interface SackManagerCommand {
+  type: 'SACK_MANAGER';
 }
 
 export interface CommandResult {

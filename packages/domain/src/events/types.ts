@@ -6,7 +6,7 @@
  */
 
 import { Player } from '../types/player';
-import { Staff } from '../types/staff';
+import { Staff, Manager } from '../types/staff';
 import { PendingClubEvent } from '../types/game-state-updated';
 import { TrainingFocus } from '../types/facility';
 import { Formation } from '../types/formation';
@@ -30,7 +30,9 @@ export type GameEvent =
   | FormationSetEvent
   | FreeAgentSignedEvent
   | PlayerReleasedEvent
-  | NpcPlayerSignedEvent;
+  | NpcPlayerSignedEvent
+  | ManagerHiredEvent
+  | ManagerSackedEvent;
 
 export interface TransferCompletedEvent {
   type: 'TRANSFER_COMPLETED';
@@ -203,4 +205,22 @@ export interface NpcPlayerSignedEvent {
   npcClubId: string;
   npcClubName: string;
   player: Player;
+}
+
+export interface ManagerHiredEvent {
+  type: 'MANAGER_HIRED';
+  timestamp: number;
+  clubId: string;
+  manager: Manager;
+  /** Week the contract expires */
+  contractExpiresWeek: number;
+}
+
+export interface ManagerSackedEvent {
+  type: 'MANAGER_SACKED';
+  timestamp: number;
+  clubId: string;
+  managerId: string;
+  /** Compensation paid in pence */
+  compensationPaid: number;
 }
