@@ -4,6 +4,7 @@ import { CommandCentre } from './components/command-centre/CommandCentre';
 import { StadiumView } from './components/stadium-view/StadiumView';
 import { ViewToggle, ActiveView } from './components/shared/ViewToggle';
 import { PreSeasonScreen } from './components/pre-season/PreSeasonScreen';
+import { SeasonEndScreen } from './components/season-end/SeasonEndScreen';
 
 export default function App() {
   const { state, events, dispatch, isLoading } = useGameState();
@@ -12,6 +13,10 @@ export default function App() {
 
   if (state.phase === 'PRE_SEASON') {
     return <PreSeasonScreen state={state} dispatch={dispatch} />;
+  }
+
+  if (state.phase === 'SEASON_END') {
+    return <SeasonEndScreen state={state} dispatch={dispatch} />;
   }
 
   return (

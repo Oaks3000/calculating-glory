@@ -4,7 +4,7 @@
  * Pure functions that apply events to state.
  */
 
-import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent, ManagerHiredEvent, ManagerSackedEvent } from '../events/types';
+import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent, ManagerHiredEvent, ManagerSackedEvent, PreSeasonStartedEvent } from '../events/types';
 import { GameState } from '../types/game-state-updated';
 import { Club } from '../types/club';
 import { LeagueTable, LeagueTableEntry, sortLeagueTable } from '../types/league';
@@ -62,6 +62,8 @@ export function reduceEvent(state: GameState, event: GameEvent): GameState {
       return handleManagerHired(state, event);
     case 'MANAGER_SACKED':
       return handleManagerSacked(state, event);
+    case 'PRE_SEASON_STARTED':
+      return handlePreSeasonStarted(state, event);
     default:
       return state;
   }
@@ -564,6 +566,22 @@ function handleManagerSacked(state: GameState, event: ManagerSackedEvent): GameS
       manager: null,
       // Compensation comes out of transfer budget
       transferBudget: state.club.transferBudget - event.compensationPaid,
+    },
+  };
+}
+
+function handlePreSeasonStarted(state: GameState, event: PreSeasonStartedEvent): GameState {
+  return {
+    ...state,
+    phase: 'PRE_SEASON',
+    season: event.season,
+    currentWeek: 0,
+    // Reset form so pre-season starts fresh
+    club: {
+      ...state.club,
+      form: [],
+      trainingFocus: null,
+      preferredFormation: null,
     },
   };
 }

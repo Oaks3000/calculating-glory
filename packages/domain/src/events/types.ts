@@ -32,7 +32,8 @@ export type GameEvent =
   | PlayerReleasedEvent
   | NpcPlayerSignedEvent
   | ManagerHiredEvent
-  | ManagerSackedEvent;
+  | ManagerSackedEvent
+  | PreSeasonStartedEvent;
 
 export interface TransferCompletedEvent {
   type: 'TRANSFER_COMPLETED';
@@ -229,4 +230,11 @@ export interface ManagerSackedEvent {
   managerId: string;
   /** Compensation paid in pence */
   compensationPaid: number;
+}
+
+export interface PreSeasonStartedEvent {
+  type: 'PRE_SEASON_STARTED';
+  timestamp: number;
+  /** The new season number (previous season + 1) */
+  season: number;
 }
