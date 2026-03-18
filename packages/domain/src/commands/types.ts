@@ -24,7 +24,8 @@ export type GameCommand =
   | ReleasePlayerCommand
   | HireManagerCommand
   | SackManagerCommand
-  | SellPlayerToNpcCommand;
+  | SellPlayerToNpcCommand
+  | BeginNextSeasonCommand;
 
 export interface MakeTransferCommand {
   type: 'MAKE_TRANSFER';
@@ -110,6 +111,10 @@ export interface SellPlayerToNpcCommand {
   playerId: string;
   /** ID of the buying NPC club (from LEAGUE_TWO_TEAMS) */
   npcClubId: string;
+}
+
+export interface BeginNextSeasonCommand {
+  type: 'BEGIN_NEXT_SEASON';
 }
 
 export interface CommandResult {

@@ -207,3 +207,84 @@ describe('Season Flow: week 46 produces SeasonEndedEvent', () => {
     expect(state.phase).toBe('SEASON_END');
   }, 30000);
 });
+
+describe('Season Flow: BEGIN_NEXT_SEASON command', () => {
+  // Helper: build a state that is in SEASON_END phase
+  function makeSeasonEndState() {
+    const gameStarted = makeGameStarted();
+    const seasonEndedEvent: GameEvent = {
+      type: 'SEASON_ENDED',
+      timestamp: Date.now(),
+      season: 1,
+      finalPosition: 12,
+      promoted: false,
+      relegated: false,
+    };
+    // Manually apply via reducer to land in SEASON_END
+    let state = buildState([gameStarted]);
+    // Inject a WEEK_ADVANCED for week 46 to ensure correct phase (or just directly set via events)
+    state = reduceEvent(state, { type: 'SEASON_STARTED', timestamp: Date.now(), season: 1 });
+    state = reduceEvent(state, seasonEndedEvent);
+    return state;
+  }
+
+  it('emits PRE_SEASON_STARTED with season incremented by 1', () => {
+    const state = makeSeasonEndState();
+    expect(state.phase).toBe('SEASON_END');
+    expect(state.season).toBe(1);
+
+    const result = handleCommand({ type: 'BEGIN_NEXT_SEASON' }, state);
+    expect(result.error).toBeUndefined();
+    expect(result.events).toHaveLength(1);
+    expect(result.events![0].type).toBe('PRE_SEASON_STARTED');
+    const evt = result.events![0] as { type: 'PRE_SEASON_STARTED'; season: number };
+    expect(evt.season).toBe(2);
+  });
+
+  it('fails when phase is not SEASON_END', () => {
+    const gameStarted = makeGameStarted();
+    const state = buildState([gameStarted]);
+    expect(state.phase).toBe('PRE_SEASON');
+
+    const result = handleCommand({ type: 'BEGIN_NEXT_SEASON' }, state);
+    expect(result.error).toBeDefined();
+    expect(result.error!.code).toBe('INVALID_PHASE');
+  });
+
+  it('reducer transitions phase to PRE_SEASON and increments season', () => {
+    const state = makeSeasonEndState();
+    const result = handleCommand({ type: 'BEGIN_NEXT_SEASON' }, state);
+    const newState = reduceEvent(state, result.events![0]);
+
+    expect(newState.phase).toBe('PRE_SEASON');
+    expect(newState.season).toBe(2);
+  });
+
+  it('reducer resets currentWeek to 0', () => {
+    let state = makeSeasonEndState();
+    state = { ...state, currentWeek: 46 };
+    const result = handleCommand({ type: 'BEGIN_NEXT_SEASON' }, state);
+    const newState = reduceEvent(state, result.events![0]);
+
+    expect(newState.currentWeek).toBe(0);
+  });
+
+  it('reducer clears form, trainingFocus, and preferredFormation', () => {
+    let state = makeSeasonEndState();
+    state = {
+      ...state,
+      club: {
+        ...state.club,
+        form: ['W', 'L', 'D'],
+        trainingFocus: 'ATTACKING',
+        preferredFormation: '4-4-2',
+      },
+    };
+    const result = handleCommand({ type: 'BEGIN_NEXT_SEASON' }, state);
+    const newState = reduceEvent(state, result.events![0]);
+
+    expect(newState.club.form).toEqual([]);
+    expect(newState.club.trainingFocus).toBeNull();
+    expect(newState.club.preferredFormation).toBeNull();
+  });
+});

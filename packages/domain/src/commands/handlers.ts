@@ -48,6 +48,8 @@ export function handleCommand(command: GameCommand, state: GameState): CommandRe
       return handleSackManager(command, state);
     case 'SELL_PLAYER_TO_NPC':
       return handleSellPlayerToNpc(command, state);
+    case 'BEGIN_NEXT_SEASON':
+      return handleBeginNextSeason(command, state);
     default:
       return {
         error: {
@@ -744,6 +746,25 @@ function handleSellPlayerToNpc(command: any, state: GameState): CommandResult {
   ];
 
   return { events };
+}
+
+function handleBeginNextSeason(_command: any, state: GameState): CommandResult {
+  if (state.phase !== 'SEASON_END') {
+    return {
+      error: {
+        code: 'INVALID_PHASE',
+        message: `Cannot begin next season from phase '${state.phase}' — must be SEASON_END`,
+      },
+    };
+  }
+
+  return {
+    events: [{
+      type: 'PRE_SEASON_STARTED',
+      timestamp: Date.now(),
+      season: state.season + 1,
+    }],
+  };
 }
 
 function handleRecordMathAttempt(command: any, _state: GameState): CommandResult {
