@@ -9,7 +9,8 @@
  *   ─────────────────────────────────────────────────────
  *   Training (1,1)      The Pitch (7,2)      Club Office (15,1)
  *   Medical  (1,5)                           Commercial  (15,5)
- *   Youth    (1,9)                           Food & Bev  (15,9)
+ *   Scout    (1,7)                           Food & Bev  (15,9)
+ *   Youth    (1,9)
  *                   Fan Zone (6,11)  Security (11,11)
  *
  * Every facility is represented by exactly one CoreUnitDef.  The STADIUM
@@ -128,6 +129,19 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
       base:      '#ECEFF1',
       swPattern: 'url(#pat-concrete)',
       label:     '#263238',
+    },
+  },
+  {
+    id:           'scout',
+    facilityType: 'SCOUT_NETWORK',
+    label:        'Scout Network',
+    icon:         '🔭',
+    gc: 1, gr: 7, cols: 2, rows: 2,
+    blockHeights: [0, 16, 24, 34, 44, 56],
+    colors: {
+      ground: '#0A1A2A',
+      base:   '#1565C0',
+      label:  '#FFFFFF',
     },
   },
   {

@@ -7,6 +7,9 @@ import {
   formatMoney,
   FORMATION_CONFIG,
   LEAGUE_TWO_TEAMS,
+  getScoutedPotential,
+  scoutNoiseRange,
+  getScoutLevel,
 } from '@calculating-glory/domain';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -100,16 +103,42 @@ function AttrBar({ label, value, colour }: AttrBarProps) {
   );
 }
 
+// ─── Scouted Potential Bar ──────────────────────────────────────────────────────
+
+function PotBar({ player, scoutLevel }: { player: Player; scoutLevel: number }) {
+  const noise = scoutNoiseRange(scoutLevel);
+  const value = getScoutedPotential(player, scoutLevel);
+
+  // Label prefix signals confidence: ~ = rough, ≈ = close, no prefix = exact
+  const prefix = noise >= 9 ? '~' : noise >= 3 ? '≈' : '';
+  const label  = `${prefix}POT`;
+  const colour = noise === 0 ? 'text-purple-400' : noise <= 6 ? 'text-purple-400/70' : 'text-purple-400/40';
+
+  return (
+    <div className="flex items-center gap-1">
+      <span className={`text-[10px] w-7 shrink-0 ${colour}`}>{label}</span>
+      <div className="h-1.5 bg-white/5 rounded-full overflow-hidden" style={{ width: 80 }}>
+        <div
+          className={`h-full rounded-full bg-purple-400 ${noise > 0 ? 'opacity-50' : 'opacity-100'}`}
+          style={{ width: `${value}%` }}
+        />
+      </div>
+      <span className={`text-[10px] w-5 text-right ${colour}`}>{value}</span>
+    </div>
+  );
+}
+
 // ─── Free Agent Card ───────────────────────────────────────────────────────────
 
 interface FreeAgentCardProps {
   player: Player;
   canAfford: boolean;
   hasSquadRoom: boolean;
+  scoutLevel: number;
   onSign: (wage: number) => void;
 }
 
-function FreeAgentCard({ player, canAfford, hasSquadRoom, onSign }: FreeAgentCardProps) {
+function FreeAgentCard({ player, canAfford, hasSquadRoom, scoutLevel, onSign }: FreeAgentCardProps) {
   const [confirming, setConfirming] = useState(false);
   const [signed, setSigned] = useState(false);
 
@@ -146,7 +175,7 @@ function FreeAgentCard({ player, canAfford, hasSquadRoom, onSign }: FreeAgentCar
         <AttrBar label="DEF" value={player.attributes.defence}  colour="bg-data-blue" />
         <AttrBar label="TMW" value={player.attributes.teamwork} colour="bg-pitch-green" />
         <AttrBar label="CHA" value={player.attributes.charisma} colour="bg-warn-amber" />
-        <AttrBar label="POT" value={player.attributes.publicPotential} colour="bg-purple-400" />
+        <PotBar player={player} scoutLevel={scoutLevel} />
       </div>
 
       {/* Action row */}
@@ -193,13 +222,14 @@ interface SquadPlayerCardProps {
   player: Player;
   currentWeek: number;
   clubId: string;
+  scoutLevel: number;
   onRelease: () => void;
   onSellToNpc: (npcClubId: string) => void;
 }
 
 type SquadAction = 'idle' | 'confirm-release' | 'pick-club' | 'confirm-sell';
 
-function SquadPlayerCard({ player, currentWeek, clubId, onRelease, onSellToNpc }: SquadPlayerCardProps) {
+function SquadPlayerCard({ player, currentWeek, clubId, scoutLevel, onRelease, onSellToNpc }: SquadPlayerCardProps) {
   const [action, setAction] = useState<SquadAction>('idle');
   const [selectedClubId, setSelectedClubId] = useState('');
   const [done, setDone] = useState<'released' | 'sold' | null>(null);
@@ -274,7 +304,7 @@ function SquadPlayerCard({ player, currentWeek, clubId, onRelease, onSellToNpc }
         <AttrBar label="DEF" value={player.attributes.defence}  colour="bg-data-blue" />
         <AttrBar label="TMW" value={player.attributes.teamwork} colour="bg-pitch-green" />
         <AttrBar label="CHA" value={player.attributes.charisma} colour="bg-warn-amber" />
-        <AttrBar label="POT" value={player.attributes.publicPotential} colour="bg-purple-400" />
+        <PotBar player={player} scoutLevel={scoutLevel} />
       </div>
 
       {/* Actions */}
@@ -344,6 +374,7 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
   const remainingWageBudget = state.club.wageBudget - currentTotalWages;
   const squadCount = state.club.squad.length;
   const squadCapacity = state.club.squadCapacity;
+  const scoutLevel = getScoutLevel(state.club.facilities);
 
   // ── Filter + sort free agents ──────────────────────────────────────────────
 
@@ -468,6 +499,7 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
                 player={player}
                 canAfford={player.wage <= remainingWageBudget}
                 hasSquadRoom={squadCount < squadCapacity}
+                scoutLevel={scoutLevel}
                 onSign={wage => handleSign(player.id, wage)}
               />
             ))
@@ -482,6 +514,7 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
                 player={player}
                 currentWeek={state.currentWeek}
                 clubId={state.club.id}
+                scoutLevel={scoutLevel}
                 onRelease={() => handleRelease(player.id)}
                 onSellToNpc={npcClubId => handleSellToNpc(player.id, npcClubId)}
               />

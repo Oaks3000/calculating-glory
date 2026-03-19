@@ -2,6 +2,8 @@
  * Facility-related types
  */
 
+import { Player } from './player';
+
 // ── Training Focus ────────────────────────────────────────────────────────────
 
 export type TrainingFocus =
@@ -63,7 +65,8 @@ export type FacilityType =
   | 'CLUB_COMMERCIAL'
   | 'FOOD_AND_BEVERAGE'
   | 'FAN_ZONE'
-  | 'GROUNDS_SECURITY';
+  | 'GROUNDS_SECURITY'
+  | 'SCOUT_NETWORK';
 
 export interface Facility {
   type: FacilityType;
@@ -80,7 +83,7 @@ export interface Facility {
 
 export interface FacilityBenefit {
   /** What this facility improves */
-  type: 'performance' | 'injury_reduction' | 'youth_quality' | 'revenue' | 'board_confidence' | 'reputation' | 'attendance';
+  type: 'performance' | 'injury_reduction' | 'youth_quality' | 'revenue' | 'board_confidence' | 'reputation' | 'attendance' | 'scouting';
 
   /** Percentage improvement per level */
   improvement: number;
@@ -181,6 +184,15 @@ export const FACILITY_CONFIG: Record<FacilityType, {
     startingLevel: 0,
     upgradeCosts: [15_000_00, 50_000_00, 120_000_00, 300_000_00, 700_000_00],
   },
+  SCOUT_NETWORK: {
+    label: 'Scout Network',
+    icon: '🔭',
+    description: 'Reduces noise on player potential readings. At level 5 you see true potential exactly.',
+    benefitType: 'scouting',
+    improvementPerLevel: 3,
+    startingLevel: 0,
+    upgradeCosts: [15_000_00, 45_000_00, 120_000_00, 300_000_00, 600_000_00],
+  },
 };
 
 /**
@@ -244,4 +256,64 @@ export function calculateFacilityROI(
     benefit: equivalentValue,
     breakEven: 1 // Immediate for performance
   };
+}
+
+// ── Scout Network — potential visibility ──────────────────────────────────────
+
+/**
+ * Maximum noise applied to potential at scout level 0 (±15 points).
+ * Scales linearly to 0 at level 5.
+ */
+const SCOUT_MAX_NOISE = 15;
+
+/**
+ * Deterministic noise offset for a player given the current scout level.
+ *
+ * Uses a simple hash of the player's ID so the same player always shows the
+ * same (wrong) value at a given scout level — upgrading the scout network
+ * sharpens the reading rather than re-rolling it.
+ *
+ * Returns an integer in [-noiseRange, +noiseRange].
+ */
+function scoutNoise(playerId: string, noiseRange: number): number {
+  if (noiseRange === 0) return 0;
+  // Simple deterministic hash: sum char codes mod (2*noiseRange+1), shift to centre
+  let hash = 0;
+  for (let i = 0; i < playerId.length; i++) {
+    hash = (hash * 31 + playerId.charCodeAt(i)) >>> 0;
+  }
+  const span = noiseRange * 2 + 1; // e.g. 31 values for noiseRange=15
+  return (hash % span) - noiseRange;
+}
+
+/**
+ * Returns the displayed potential for a player given the current scout network level (0–5).
+ *
+ * - Level 0: truePotential ± up to 15 (deterministic per player)
+ * - Level 5: truePotential exactly
+ *
+ * Always clamped to [1, 100].
+ */
+export function getScoutedPotential(player: Player, scoutLevel: number): number {
+  const level = Math.max(0, Math.min(5, scoutLevel));
+  const noiseRange = Math.round(SCOUT_MAX_NOISE * (1 - level / 5));
+  const noise = scoutNoise(player.id, noiseRange);
+  return Math.max(1, Math.min(100, player.truePotential + noise));
+}
+
+/**
+ * Returns the noise range (±N) for a given scout level.
+ * Used by the UI to decide how to label the potential display.
+ */
+export function scoutNoiseRange(scoutLevel: number): number {
+  const level = Math.max(0, Math.min(5, scoutLevel));
+  return Math.round(SCOUT_MAX_NOISE * (1 - level / 5));
+}
+
+/**
+ * Returns the scout network level from a club's facilities array.
+ * 0 if the facility is not present or not yet built.
+ */
+export function getScoutLevel(facilities: Facility[]): number {
+  return facilities.find(f => f.type === 'SCOUT_NETWORK')?.level ?? 0;
 }

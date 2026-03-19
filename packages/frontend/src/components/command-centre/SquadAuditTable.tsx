@@ -1,5 +1,4 @@
-import { GameState, formatMoney } from '@calculating-glory/domain';
-import { Player } from '@calculating-glory/domain';
+import { GameState, formatMoney, Player, getScoutedPotential, scoutNoiseRange, getScoutLevel } from '@calculating-glory/domain';
 
 interface SquadAuditTableProps {
   state: GameState;
@@ -24,7 +23,7 @@ function MoraleBar({ morale }: { morale: number }) {
   );
 }
 
-function PlayerRow({ player }: { player: Player }) {
+function PlayerRow({ player, scoutLevel }: { player: Player; scoutLevel: number }) {
   const statCol =
     player.position === 'FWD' || player.position === 'MID'
       ? player.stats.goals
@@ -32,11 +31,19 @@ function PlayerRow({ player }: { player: Player }) {
   const statLabel =
     player.position === 'FWD' || player.position === 'MID' ? 'G' : 'CS';
 
+  const noise = scoutNoiseRange(scoutLevel);
+  const scoutedPot = getScoutedPotential(player, scoutLevel);
+  const potPrefix = noise >= 9 ? '~' : noise >= 3 ? '≈' : '';
+  const potClass = noise === 0 ? 'text-purple-400' : noise <= 6 ? 'text-purple-400/60' : 'text-purple-400/35';
+
   return (
     <tr className="border-b border-bg-raised/50 hover:bg-bg-raised/30 transition-colors text-txt-muted">
       <td className="py-1 pr-2 truncate max-w-[130px] text-txt-primary">{player.name}</td>
       <td className={`pr-2 py-1 font-bold ${POS_COLORS[player.position]}`}>{player.position}</td>
       <td className="text-right pr-2 py-1 text-txt-primary font-semibold">{player.overallRating}</td>
+      <td className={`text-right pr-2 py-1 font-semibold ${potClass}`} title={`Scout accuracy: ±${noise}`}>
+        {potPrefix}{scoutedPot}
+      </td>
       <td className="text-right pr-2 py-1">{player.age}</td>
       <td className="text-right pr-2 py-1">{player.stats.appearances}</td>
       <td className="text-right pr-2 py-1">
@@ -58,6 +65,7 @@ function PlayerRow({ player }: { player: Player }) {
 
 export function SquadAuditTable({ state }: SquadAuditTableProps) {
   const { club } = state;
+  const scoutLevel = getScoutLevel(club.facilities);
 
   const sorted = [...club.squad].sort((a, b) => {
     const pa = POSITION_ORDER.indexOf(a.position);
@@ -93,6 +101,7 @@ export function SquadAuditTable({ state }: SquadAuditTableProps) {
               <th className="pb-1 pr-2">Name</th>
               <th className="pb-1 pr-2">Pos</th>
               <th className="text-right pb-1 pr-2 w-8">OVR</th>
+              <th className="text-right pb-1 pr-2 w-8 text-purple-400/60">POT</th>
               <th className="text-right pb-1 pr-2 w-8">Age</th>
               <th className="text-right pb-1 pr-2 w-8">App</th>
               <th className="text-right pb-1 pr-2 w-10">G/CS</th>
@@ -103,7 +112,7 @@ export function SquadAuditTable({ state }: SquadAuditTableProps) {
           </thead>
           <tbody>
             {sorted.map(player => (
-              <PlayerRow key={player.id} player={player} />
+              <PlayerRow key={player.id} player={player} scoutLevel={scoutLevel} />
             ))}
           </tbody>
         </table>
