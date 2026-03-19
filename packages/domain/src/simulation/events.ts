@@ -15,6 +15,7 @@ import { GameState, PendingClubEvent } from '../types/game-state-updated';
 import { CLUB_EVENT_TEMPLATES, ClubEventTemplate } from '../data/club-events';
 import { createRng } from './rng';
 import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
+import { avgSquadMorale, isUnsettled } from './morale';
 
 /**
  * Check whether a template's prerequisite has been met in the resolved history.
@@ -260,11 +261,15 @@ export function generatePoachAttempts(
   );
   if (poachPending) return [];
 
-  // Pick a random target, weighted by overallRating
-  const totalWeight = targets.reduce((sum, p) => sum + p.overallRating, 0);
+  // Pick a random target, weighted by overallRating × unsettled multiplier.
+  // Unsettled players (morale < 20) are 3× more likely to be approached.
+  const UNSETTLED_POACH_MULT = 3;
+  const weightOf = (p: typeof targets[0]) =>
+    p.overallRating * (isUnsettled(p) ? UNSETTLED_POACH_MULT : 1);
+  const totalWeight = targets.reduce((sum, p) => sum + weightOf(p), 0);
   let pick = rng.next() * totalWeight;
   const target = targets.find(p => {
-    pick -= p.overallRating;
+    pick -= weightOf(p);
     return pick <= 0;
   }) ?? targets[targets.length - 1];
 
@@ -336,4 +341,158 @@ export function generatePoachAttempts(
   };
 
   return [poachEvent];
+}
+
+// ── Morale threshold events ────────────────────────────────────────────────────
+
+const MORALE_TEMPLATE_IDS = {
+  UNREST:         'morale-unrest',
+  LOSING_FAITH:   'morale-losing-faith',
+  UNSETTLED:      'morale-unsettled-player',
+} as const;
+
+/**
+ * Generate 0–1 morale-based threshold events for the current week.
+ * Uses `state.moraleEventCooldowns` for precise week-based cooldowns.
+ *
+ * Priority order (only one fires per week):
+ *   1. Individual unsettled player (morale < 20) — minor
+ *   2. Squad avg morale < 30 — "Dressing Room Unrest"  — major
+ *   3. Squad avg morale < 40 for 3+ consecutive weeks  — "Losing Faith" — major
+ */
+export function generateMoraleThresholdEvents(
+  state: GameState,
+  week: number,
+  season: number
+): PendingClubEvent[] {
+  if (state.phase === 'PRE_SEASON' || state.phase === 'SEASON_END') return [];
+  if (state.club.squad.length === 0) return [];
+
+  const cooldowns = state.moraleEventCooldowns ?? {};
+
+  function onCooldown(templateId: string): boolean {
+    if (state.pendingEvents.some(e => e.templateId === templateId && !e.resolved)) return true;
+    const expires = cooldowns[templateId] ?? 0;
+    return week < expires;
+  }
+
+  const avg = avgSquadMorale(state.club.squad);
+
+  // ── 1. Individual unsettled player ────────────────────────────────────────
+  if (!onCooldown(MORALE_TEMPLATE_IDS.UNSETTLED)) {
+    const unsettledPlayers = state.club.squad.filter(p => isUnsettled(p));
+    if (unsettledPlayers.length > 0) {
+      // Pick the most unsettled player
+      const target = unsettledPlayers.reduce((a, b) => a.morale < b.morale ? a : b);
+      const event: PendingClubEvent = {
+        id: `evt-S${season}-W${week}-morale-unsettled`,
+        templateId: MORALE_TEMPLATE_IDS.UNSETTLED,
+        week,
+        title: `${target.name} is unsettled`,
+        description: `${target.name}'s morale has dropped to ${target.morale} — they're visibly disengaged in training. You need to act before it infects the rest of the dressing room.`,
+        severity: 'minor',
+        choices: [
+          {
+            id: 'team-talk',
+            label: 'Pull them aside for a talk',
+            description: `Spend time with ${target.name} one-on-one. Morale boost of +15, but it takes up coaching time.`,
+            moraleEffect: 15,
+          },
+          {
+            id: 'pay-rise',
+            label: 'Offer a pay rise',
+            description: `Bump ${target.name}'s weekly wage. Costs more but secures their commitment.`,
+            moraleEffect: 20,
+            budgetEffect: -Math.round(target.wage * 0.15 * 10), // 10 weeks' uplift upfront
+          },
+          {
+            id: 'list',
+            label: 'Put them on the transfer list',
+            description: `Signal to the market that ${target.name} is available. Morale stays low but a sale may be coming.`,
+            moraleEffect: -5,
+          },
+        ],
+        resolved: false,
+        metadata: { poachTargetPlayerId: target.id },
+      };
+      return [event];
+    }
+  }
+
+  // ── 2. Dressing room unrest (avg < 30) ────────────────────────────────────
+  if (!onCooldown(MORALE_TEMPLATE_IDS.UNREST) && avg < 30) {
+    const event: PendingClubEvent = {
+      id: `evt-S${season}-W${week}-morale-unrest`,
+      templateId: MORALE_TEMPLATE_IDS.UNREST,
+      week,
+      title: 'Dressing room unrest',
+      description: `Squad morale has collapsed to ${Math.round(avg)}. Players are openly questioning the direction of the club. You need to act immediately.`,
+      severity: 'major',
+      choices: [
+        {
+          id: 'emergency-talk',
+          label: 'Emergency team meeting',
+          description: 'Address the squad directly. Costs £3,000 in bonuses and extra sessions, but lifts morale by +15 across the board.',
+          budgetEffect: -300000,
+          moraleEffect: 15,
+        },
+        {
+          id: 'reshuffle-training',
+          label: 'Reshuffle training schedule',
+          description: 'Change the training focus and inject some variety. Morale nudged up by +8, no cost.',
+          moraleEffect: 8,
+        },
+        {
+          id: 'do-nothing',
+          label: 'Hold firm — results will turn it around',
+          description: "Say nothing publicly. The squad interprets silence as indifference.",
+          reputationEffect: -5,
+        },
+      ],
+      resolved: false,
+    };
+    return [event];
+  }
+
+  // ── 3. Losing faith (avg < 40 for 3+ consecutive weeks) ──────────────────
+  if (
+    !onCooldown(MORALE_TEMPLATE_IDS.LOSING_FAITH) &&
+    avg < 40 &&
+    (state.lowMoraleWeeks ?? 0) >= 3
+  ) {
+    const event: PendingClubEvent = {
+      id: `evt-S${season}-W${week}-morale-losing-faith`,
+      templateId: MORALE_TEMPLATE_IDS.LOSING_FAITH,
+      week,
+      title: 'Players are losing faith in the manager',
+      description: `Squad morale has been below 40 for ${state.lowMoraleWeeks} consecutive weeks. Senior players have been seen talking to their agents. The board is watching.`,
+      severity: 'major',
+      choices: [
+        {
+          id: 'vote-confidence',
+          label: 'Issue a public vote of confidence',
+          description: 'The board publicly backs the manager. Morale edges up +10, but if results don\'t improve the next board review will be brutal.',
+          moraleEffect: 10,
+          reputationEffect: 3,
+        },
+        {
+          id: 'change-emphasis',
+          label: 'Change the team\'s training emphasis',
+          description: 'Visibly change approach — different formations, fresh drills. Morale +6 across the squad.',
+          moraleEffect: 6,
+        },
+        {
+          id: 'sack-hint',
+          label: 'Hint that changes may be coming',
+          description: 'Signal the manager is under pressure. Players respond positively to accountability (+8 morale) but the manager\'s authority is damaged.',
+          moraleEffect: 8,
+          reputationEffect: -3,
+        },
+      ],
+      resolved: false,
+    };
+    return [event];
+  }
+
+  return [];
 }

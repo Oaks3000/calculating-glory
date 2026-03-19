@@ -14,6 +14,13 @@ import { getDefaultFacilities, getUpgradeCost } from '../types/facility';
 import { generateStartingSquad } from '../data/squad-generator';
 import { generateFreeAgentPool } from '../data/free-agent-generator';
 import { generateManagerPool } from '../data/manager-generator';
+import {
+  applyResultMoraleDelta,
+  applyContractAnxiety,
+  applyContagion,
+  applyManagerChangeMorale,
+  avgSquadMorale,
+} from '../simulation/morale';
 
 /**
  * Reduce an event into state
@@ -102,6 +109,8 @@ export function buildState(events: GameEvent[]): GameState {
     season: 1,
     freeAgentPool: [],
     managerPool: [],
+    lowMoraleWeeks: 0,
+    moraleEventCooldowns: {},
   };
 
   return events.reduce(reduceEvent, initialState);
@@ -243,16 +252,30 @@ function handleMatchSimulated(state: GameState, event: MatchSimulatedEvent): Gam
 
   // Update player's club form if they played
   let clubForm = state.club.form;
+  let clubResult: 'W' | 'D' | 'L' | null = null;
   if (state.club.id === homeTeamId) {
+    clubResult = homeResult;
     clubForm = [...clubForm, homeResult].slice(-5);
   } else if (state.club.id === awayTeamId) {
+    clubResult = awayResult;
     clubForm = [...clubForm, awayResult].slice(-5);
+  }
+
+  // Layer 1: result morale delta — applied when the player's club played this fixture
+  let squad = state.club.squad;
+  if (clubResult && squad.length > 0) {
+    const playerEntry   = sorted.find(e => e.clubId === state.club.id);
+    const opponentId    = state.club.id === homeTeamId ? awayTeamId : homeTeamId;
+    const opponentEntry = sorted.find(e => e.clubId === opponentId);
+    const playerPos     = playerEntry?.position   ?? 12;
+    const opponentPos   = opponentEntry?.position ?? 12;
+    squad = applyResultMoraleDelta(squad, clubResult, playerPos, opponentPos, clubForm);
   }
 
   return {
     ...state,
     league: { ...state.league, entries: sorted },
-    club: { ...state.club, form: clubForm }
+    club: { ...state.club, form: clubForm, squad }
   };
 }
 
@@ -405,7 +428,7 @@ function handleWeekAdvanced(state: GameState, event: any): GameState {
   // motivation=50 → 0/wk  |  motivation=100 → +2/wk  |  motivation=0 → −2/wk
   // Rounds to integer: steps of 1 at 25/75, steps of 2 at 0/100.
   let squad = state.club.squad;
-  if (state.club.manager && state.club.squad.length > 0) {
+  if (state.club.manager && squad.length > 0) {
     const moraleDelta = Math.round((state.club.manager.attributes.motivation - 50) / 25);
     if (moraleDelta !== 0) {
       squad = squad.map(p => ({
@@ -415,10 +438,25 @@ function handleWeekAdvanced(state: GameState, event: any): GameState {
     }
   }
 
+  // Layer 2: contract anxiety drain (individual, bypasses manager nudge)
+  if (squad.length > 0) {
+    squad = applyContractAnxiety(squad, week);
+  }
+
+  // Layer 4: contagion — morale-0 players drain their position group
+  if (squad.length > 0) {
+    squad = applyContagion(squad);
+  }
+
+  // Track consecutive low-morale weeks (< 40 avg) for "Losing Faith" threshold
+  const avg = avgSquadMorale(squad);
+  const lowMoraleWeeks = avg < 40 ? (state.lowMoraleWeeks ?? 0) + 1 : 0;
+
   return {
     ...state,
     currentWeek: week,
     phase,
+    lowMoraleWeeks,
     club: {
       ...state.club,
       squad,
@@ -434,9 +472,22 @@ function handleSeasonEnded(state: GameState, _event: any): GameState {
   };
 }
 
+const MORALE_THRESHOLD_TEMPLATE_IDS = new Set([
+  'morale-unrest',
+  'morale-losing-faith',
+  'morale-unsettled-player',
+]);
+
 function handleClubEventOccurred(state: GameState, event: ClubEventOccurredEvent): GameState {
+  // Set a 6-week cooldown for morale threshold events when they fire
+  const templateId = event.pendingEvent.templateId;
+  const moraleEventCooldowns = MORALE_THRESHOLD_TEMPLATE_IDS.has(templateId)
+    ? { ...state.moraleEventCooldowns, [templateId]: event.week + 6 }
+    : state.moraleEventCooldowns;
+
   return {
     ...state,
+    moraleEventCooldowns,
     pendingEvents: [...state.pendingEvents, event.pendingEvent]
   };
 }
@@ -467,13 +518,33 @@ function handleClubEventResolved(state: GameState, event: ClubEventResolvedEvent
     squad = squad.filter(p => p.id !== event.playerRemovedId);
   }
 
-  // Poaching: apply morale delta to target player (clamped 0-100)
+  // Poaching: apply morale delta to specific target player (clamped 0-100)
   if (event.moraleTargetId && event.moraleEffect !== undefined) {
     squad = squad.map(p =>
       p.id === event.moraleTargetId
         ? { ...p, morale: Math.max(0, Math.min(100, p.morale + event.moraleEffect!)) }
         : p
     );
+  }
+
+  // Morale threshold events: apply moraleEffect squad-wide (no target = all players)
+  // Also handles the unsettled-player event's targeted talk/pay-rise (metadata.poachTargetPlayerId)
+  if (!event.moraleTargetId && event.moraleEffect !== undefined) {
+    const targetPlayerId = pendingEvent.metadata?.poachTargetPlayerId;
+    if (targetPlayerId) {
+      // Unsettled player event — apply only to that player
+      squad = squad.map(p =>
+        p.id === targetPlayerId
+          ? { ...p, morale: Math.max(0, Math.min(100, p.morale + event.moraleEffect!)) }
+          : p
+      );
+    } else {
+      // Squad-wide morale events (unrest, losing faith)
+      squad = squad.map(p => ({
+        ...p,
+        morale: Math.max(0, Math.min(100, p.morale + event.moraleEffect!)),
+      }));
+    }
   }
 
   return {
@@ -547,12 +618,17 @@ function handleNpcPlayerSigned(state: GameState, event: NpcPlayerSignedEvent): G
 }
 
 function handleManagerHired(state: GameState, event: ManagerHiredEvent): GameState {
+  // Manager change morale: gravitational pull toward 55 (independent of new manager's attributes)
+  const squad = state.club.squad.length > 0
+    ? applyManagerChangeMorale(state.club.squad)
+    : state.club.squad;
+
   return {
     ...state,
-    // Remove from pool once hired
     managerPool: state.managerPool.filter(m => m.id !== event.manager.id),
     club: {
       ...state.club,
+      squad,
       manager: { ...event.manager, contractExpiresWeek: event.contractExpiresWeek },
     },
   };
