@@ -2,7 +2,7 @@
 project: "Calculating Glory"
 type: "build"
 createdAt: "2026-03-03"
-lastUpdated: "2026-03-17"
+lastUpdated: "2026-03-18"
 ---
 
 # Calculating Glory - Roadmap
@@ -40,20 +40,52 @@ An educational football club management game for Year 7 maths, built on event-so
 - NPC season-start transfers: tier-based, strongest clubs pick first
 - Pro-Evo analogue team names (24 clubs)
 
+### Phase 5.4: NPC Poaching ✅ (PR #43)
+- NPCs approach your players mid-season with bid events
+- 4 response options: accept / reject / counter / ignore
+- Teamwork cascade on unhappy ignored player → squad performance hit → forced sale
+
+### Phase 5.5: Manager Hire & Impact ✅ (PR #44)
+- Manager type: tactical, motivation, experience attributes
+- 8-manager seeded pool in 3 tiers (elite/mid/budget)
+- HIRE_MANAGER / SACK_MANAGER commands with budget guards + sack compensation
+- Tactical amplifier on training focus; experience feeds team modifier; motivation = weekly morale nudge
+- Pre-season 3-step flow: Formation → Appoint Manager → Your Squad
+
 ---
 
-## Current Phase: Phase 5.4 — Squad Dynamics
+### Phase 5.6: Club-Owned Transfers ✅ (PR #45)
+- `SELL_PLAYER_TO_NPC` command — sell squad players to NPC clubs for a fee
+- Fee: `transferValue` if set, else `OVR² × 500` (min £100)
+- News ticker: "{name} joins {club} for £X"
 
-### Phase 5.4 candidates (pick one to start)
-- 5.4a NPC poaching (#36) — NPCs approach your players; response options; teamwork/morale cascade
-- 5.4b Manager creation (#29) — manager attributes translate owner directives into results
-- 5.4c Scout facility (#31) — truePotential visibility unlocked by facility level
+### Phase 5.7: Season End Screen ✅ (PR #46)
+- `SeasonEndScreen` — outcome banner, season stats grid, club snapshot, final league table
+- `BEGIN_NEXT_SEASON` command → `PRE_SEASON_STARTED` event; resets to pre-season, increments season
 
-### Phase 5.5 (follows 5.4)
-- Club-owned player transfers (#32) — sell to NPCs for transfer fee
-- Owner forced out + cascade re-entry (#34)
-- Revenue system — charisma → matchday/commercial revenue
-- Season end screen — promotion/relegation handling
+### Scout Network Facility ✅ (PR #47)
+- `SCOUT_NETWORK` facility (10th type) — upgrades 0→5, £15k–£600k
+- `getScoutedPotential(player, scoutLevel)` — truePotential ± seeded noise (±15 at level 0, exact at level 5)
+- `~POT` / `≈POT` / `POT` confidence prefix in TransferMarketSlideOver and SquadAuditTable
+- Isometric stadium unit at grid (1,7), deep blue, between Medical Centre and Youth Academy
+
+### Morale System ✅ (PR #48)
+- `simulation/morale.ts` — pure morale helpers (charismaFactor, applyResultMoraleDelta, applyContractAnxiety, applyContagion, applyManagerChangeMorale, isUnsettled)
+- Layer 1: result delta per player (W+3/D+1/L−4, ×1.5 upset/shock, ±streak bonus, charisma-shaped)
+- Layer 2: contract anxiety drain (−1/wk <8 weeks, −2/wk <4 weeks)
+- Layer 3: threshold events — "Unsettled player" (<20), "Dressing Room Unrest" (<30 avg), "Losing Faith" (<40 × 3wks); 6-week cooldowns
+- Layer 4: contagion — morale-0 players drain position group −1/wk
+- Manager change: gravitational pull toward 55 on HIRE_MANAGER (charisma-shaped)
+- Match sim: unsettled players contribute 85% attributes; poach targeting weights unsettled 3×
+- SquadAuditTable: red ! badge on morale bar for unsettled players
+
+## Current Phase: Phase 5.8 — Owner Forced Out + Cascade Re-entry (#34)
+
+- Your club collapses → bottom NPC club also fails → you parachute in mid-season
+- Trigger: bottom 3 AND budget < £10,000 AND week ≥ 30
+- Always the last-place NPC club; inherit their current squad + budget exactly
+- Business Acumen score persists across the transition; reputation malus applied
+- Win condition: survive (finish outside relegation zone by week 46)
 
 ---
 

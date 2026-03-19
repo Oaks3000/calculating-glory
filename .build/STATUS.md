@@ -3,75 +3,58 @@ project: "Calculating Glory"
 type: "build"
 priority: 2
 phase: "Phase 5 — Full Season Flow"
-progress: 78
-lastUpdated: "2026-03-17"
-lastTouched: "2026-03-17"
+progress: 99
+lastUpdated: "2026-03-19"
+lastTouched: "2026-03-19"
 status: "in-progress"
 ---
 
 # Calculating Glory - Current Status
 
-**Phase:** Phase 5 — Full Season Flow (78% — 5.1 + 5.2 + 5.3 all merged to main)
-**Last Updated:** 2026-03-17
+**Phase:** Phase 5 — Full Season Flow (99% — 5.1 through 5.7 merged + Scout Network + Morale System)
+**Last Updated:** 2026-03-19
 
 ## What's Done
 
 - Full TypeScript monorepo workspace (domain + frontend packages)
 - Event sourcing architecture: all event types, reducers, command handlers
-- 269 domain tests passing across 16 suites
+- 320 domain tests passing across 19 suites
 - Deterministic match simulation (Poisson, seeded RNG, attack/defence split)
 - Season fixtures: circle method round-robin, 24 teams, 46 weeks
 - Weekly club events: 15 templates, branching chains, pending resolution
 - Business acumen tracking, curriculum progression (5 levels, feature gating)
-- Full Command Centre hub + Stadium View (isometric SVG renderer, 9 facility types)
-- Navigation wiring — all 9 core units route to correct slide-overs
+- Full Command Centre hub + Stadium View (isometric SVG renderer, 10 facility types)
+- Navigation wiring — all core units route to correct slide-overs
 - Weekly Training Focus (`SET_TRAINING_FOCUS` command, training drill challenges)
-- **Phase 5.1 — Pre-season flow** (PR #33 + #38 ✅)
-  - Pre-season screen: narrative intro → formation picker → inherited squad → enter season
-  - `SET_PREFERRED_FORMATION` command + reducer; `FORMATION_CONFIG` with `slots` + `recruitmentPriority`
-  - `formationCoverage()` helper; `InheritedSquad.tsx` position-grouped grid with contract badges
-  - 16 auto-generated inherited players (weak, ~45–55 OVR, Pro-Evo names, varied contracts)
-- **Phase 5.2 — Transfer window** (PR #37 ✅)
-  - All 5 player attributes wired: `attack`, `defence`, `teamwork`, `charisma`, `publicPotential` (visible); `truePotential` (hidden)
-  - Free agent pool: 60 seeded players, attribute variance by position tier
-  - `TransferMarketSlideOver.tsx`: 2 tabs (Free Agents / My Squad), position filter, sort by rating/attack/defence/wage
-  - Sign + release flows with wage budget guard, 24-slot cap, contract fee logic
-  - Formation recruitment gap panel — position-by-position target vs. actual, red/amber/green
-- **Phase 5.3 — Match sim + NPC transfers** (PRs #39 + #42 ✅)
-  - Match sim rewritten: player attributes (not overallRating) weighted by position
-    - Attack: FWD 3× · MID 2× · DEF 1× · GK 0×
-    - Defence: FWD 1× · MID 2× · DEF 3× · GK 3.5×
-  - Team modifier fully wired: teamwork (+0.08), TRAINING_GROUND (+0.50), staff (+0.12), reputation (+0.08), form (±0.02 each), morale (±0.05)
-  - FAN_ZONE extracted as home-only atmosphere bonus (not blended with other facilities)
-  - Training focus applied post-strength-calc (ATTACKING ×1.05 atk, DEFENSIVE ×1.05 def, FITNESS +0.03 modifier, SET_PIECES ×1.03 atk)
-  - NPC season-start transfers: strongest clubs pick first, tier-based wage limits, 30% skip chance for small clubs
-  - Pro-Evo analogue team names in `league-two-teams.ts` (24 clubs, #41 filed for review)
+- **Phase 5.1–5.3** — pre-season flow, transfer window, match sim rewrite (PRs #33 #37 #38 #39 #42 ✅)
+- **Phase 5.4 — NPC poaching** (PR #43 ✅) — mid-season bid events, 4 response options, teamwork cascade
+- **Phase 5.5 — Manager hire & impact** (PR #44 ✅) — Manager type, 3-tier pool, tactical/motivation/experience wired
+- **Phase 5.6 — Club-owned transfers** (PR #45 ✅) — `SELL_PLAYER_TO_NPC` command, fee calculation, news ticker
+- **Phase 5.7 — Season end screen** (PR #46 ✅) — outcome banner, stats grid, final table, `BEGIN_NEXT_SEASON` → `PRE_SEASON_STARTED`
+- **Scout Network facility** (PR #47 ✅) — `SCOUT_NETWORK` facility; `getScoutedPotential` with ±15 noise at level 0 → exact at level 5; ~POT/≈POT/POT UI in TransferMarket + SquadAuditTable; isometric renderer unit
+- **Morale system** (PR #48 ✅) — result deltas (charisma-shaped), contract anxiety, threshold events (unrest/losing faith/unsettled player), contagion, manager change gravitational pull, unsettled debuff in match sim, poach weighting
 
 ## What's In Progress
 
-- Nothing — main is clean, no open PRs
+- **Phase 5.8 — Owner forced out + cascade re-entry (#34)** — worktree ready (`feat/phase-5-8-collapse`), design locked
 
 ## Blockers
 
 - None
 
-## Open Issues (Phase 5.4+)
+## Open Issues
 
 | # | Title | Priority |
 |---|-------|----------|
-| #29 | Manager creation — strengths, weaknesses, man-management | High |
-| #31 | Scout facility — unlocks truePotential visibility | Medium |
-| #32 | Club-owned players in transfer market (v2 transfers) | Medium |
-| #34 | Owner forced out + cascade re-entry mechanic | Medium |
-| #36 | NPC clubs poaching players from player's squad | Medium |
-| #41 | Review team and player name analogues | Non-critical |
-
-Closed this session: #30 (attribute wiring), #35 (NPC season-start transfers)
+| #34 | Owner forced out + cascade re-entry mechanic | High — next |
+| #30 | Player attributes → charisma revenue + overallRating derivation | Medium |
+| #27 | Hub tile action flags rerouting | Medium |
+| #28 | Construction lag time + staged build visuals | Low |
 
 ## Notes
 
 - Target device: Chromebook 1366×768 (keyboard + trackpad)
-- Dev server: `cd packages/frontend && npx vite`
+- Dev server: `npm run dev --workspace=@calculating-glory/frontend`
 - Domain tests: `cd packages/domain && npm test`
 - Domain dist is a symlink to main project — always rebuild from `/packages/domain && npm run build`
-- Stale worktrees still registered: `cool-kalam`, `phase5-transfers`, `thirsty-archimedes`, `zealous-sutherland` — safe to prune
+- Active worktrees: `gifted-dijkstra` (current session) only — all others pruned
