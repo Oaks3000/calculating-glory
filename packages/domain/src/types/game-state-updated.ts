@@ -102,6 +102,20 @@ export interface GameState {
 
   /** Available managers to hire (generated at game start, removed on hire) */
   managerPool: Manager[];
+
+  /**
+   * Consecutive weeks the squad average morale has been below 40.
+   * Resets to 0 when avg morale rises back above 40.
+   * Used to trigger the "Players Losing Faith" event at 3+ weeks.
+   */
+  lowMoraleWeeks: number;
+
+  /**
+   * Cooldown tracker for threshold morale events.
+   * Maps event templateId → week the cooldown expires.
+   * Prevents the same event firing more than once per 6 weeks.
+   */
+  moraleEventCooldowns: Record<string, number>;
 }
 
 /**

@@ -38,6 +38,9 @@ export * from './data/squad-generator';
 export * from './data/free-agent-generator';
 export * from './data/manager-generator';
 
+// Morale system
+export { isUnsettled, avgSquadMorale, UNSETTLED_THRESHOLD } from './simulation/morale';
+
 // Core state types
 export * from './types/game-state-updated';
 export * from './types/club';

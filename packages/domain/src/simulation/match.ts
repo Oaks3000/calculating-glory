@@ -12,6 +12,7 @@
 import { createRng, Rng } from './rng';
 import { Club } from '../types/club';
 import { Player } from '../types/player';
+import { isUnsettled } from './morale';
 
 /** Base expected goals for an average-vs-average matchup (League Two realistic) */
 const BASE_EXPECTED_GOALS = 1.2;
@@ -236,9 +237,13 @@ function calculatePositionalStrengths(squad: Player[]): {
   let defenceWeightedSum = 0;
   let defenceWeightTotal = 0;
 
+  // Unsettled players (morale < 20) contribute 85% of their normal attributes
+  const UNSETTLED_DEBUFF = 0.85;
+
   for (const player of squad) {
-    const atk = player.attributes.attack;
-    const def = player.attributes.defence;
+    const debuff = isUnsettled(player) ? UNSETTLED_DEBUFF : 1.0;
+    const atk = player.attributes.attack  * debuff;
+    const def = player.attributes.defence * debuff;
 
     switch (player.position) {
       case 'FWD':

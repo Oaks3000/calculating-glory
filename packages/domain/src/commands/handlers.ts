@@ -11,7 +11,7 @@ import { validateTransfer, validateFacilityUpgrade, validateStaffHire } from '..
 import { simulateMatch, clubToTeam, generateAITeam, Team } from '../simulation/match';
 import { generateSeasonFixtures, getWeekFixtures, matchSeed } from '../simulation/season';
 import { createRng } from '../simulation/rng';
-import { generateWeekEvents, generatePoachAttempts } from '../simulation/events';
+import { generateWeekEvents, generatePoachAttempts, generateMoraleThresholdEvents } from '../simulation/events';
 import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
 import { Player } from '../types/player';
 
@@ -293,6 +293,24 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
       clubId: state.club.id,
       pendingEvent
     });
+  }
+
+  // Generate morale threshold events (0 or 1 per week — only if no other events fired)
+  // Only fires when the inbox would otherwise be clear to avoid stacking.
+  const hasNewEvents = clubEvents.length > 0 || poachEvents.length > 0;
+  if (!hasNewEvents) {
+    const moraleEvents = generateMoraleThresholdEvents(state, week, season);
+    for (const pendingEvent of moraleEvents) {
+      events.push({
+        type: 'CLUB_EVENT_OCCURRED',
+        timestamp: now,
+        eventId: pendingEvent.id,
+        templateId: pendingEvent.templateId,
+        week,
+        clubId: state.club.id,
+        pendingEvent
+      });
+    }
   }
 
   // Advance the week after all matches and events

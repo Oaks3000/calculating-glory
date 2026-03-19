@@ -1,4 +1,4 @@
-import { GameState, formatMoney, Player, getScoutedPotential, scoutNoiseRange, getScoutLevel } from '@calculating-glory/domain';
+import { GameState, formatMoney, Player, getScoutedPotential, scoutNoiseRange, getScoutLevel, isUnsettled } from '@calculating-glory/domain';
 
 interface SquadAuditTableProps {
   state: GameState;
@@ -13,12 +13,24 @@ const POS_COLORS: Record<string, string> = {
   FWD: 'text-alert-red',
 };
 
-function MoraleBar({ morale }: { morale: number }) {
+function MoraleBar({ player }: { player: Player }) {
+  const { morale } = player;
   const color =
     morale >= 70 ? 'bg-pitch-green' : morale >= 40 ? 'bg-warn-amber' : 'bg-alert-red';
+  const unsettled = isUnsettled(player);
   return (
-    <div className="w-10 h-1.5 bg-bg-raised rounded-full overflow-hidden">
-      <div className={`h-full ${color} rounded-full`} style={{ width: `${morale}%` }} />
+    <div className="flex items-center gap-1">
+      <div className="w-10 h-1.5 bg-bg-raised rounded-full overflow-hidden">
+        <div className={`h-full ${color} rounded-full`} style={{ width: `${morale}%` }} />
+      </div>
+      {unsettled && (
+        <span
+          className="text-[9px] text-alert-red font-bold leading-none"
+          title="Unsettled — performance debuffed"
+        >
+          !
+        </span>
+      )}
     </div>
   );
 }
@@ -57,7 +69,7 @@ function PlayerRow({ player, scoutLevel }: { player: Player; scoutLevel: number 
       </td>
       <td className="text-right pr-3 py-1">{formatMoney(player.wage)}<span className="text-xs2 text-txt-muted">/wk</span></td>
       <td className="py-1">
-        <MoraleBar morale={player.morale} />
+        <MoraleBar player={player} />
       </td>
     </tr>
   );
