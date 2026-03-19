@@ -37,6 +37,7 @@ export * from './data/club-events';
 export * from './data/squad-generator';
 export * from './data/free-agent-generator';
 export * from './data/manager-generator';
+export * from './data/scout-target-generator';
 
 // Morale system
 export { isUnsettled, avgSquadMorale, UNSETTLED_THRESHOLD } from './simulation/morale';

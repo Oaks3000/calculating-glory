@@ -14,6 +14,9 @@ import { createRng } from '../simulation/rng';
 import { generateWeekEvents, generatePoachAttempts, generateMoraleThresholdEvents } from '../simulation/events';
 import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
 import { Player } from '../types/player';
+import { getScoutLevel, isTransferWindowOpen } from '../types/facility';
+import { generateScoutTarget, getScoutFee } from '../data/scout-target-generator';
+import { ScoutTargetFoundEvent, ScoutTransferCompletedEvent } from '../events/types';
 
 /**
  * Handle a game command
@@ -50,6 +53,12 @@ export function handleCommand(command: GameCommand, state: GameState): CommandRe
       return handleSellPlayerToNpc(command, state);
     case 'BEGIN_NEXT_SEASON':
       return handleBeginNextSeason(command, state);
+    case 'START_SCOUT_MISSION':
+      return handleStartScoutMission(command, state);
+    case 'PLACE_SCOUT_BID':
+      return handlePlaceScoutBid(command, state);
+    case 'CANCEL_SCOUT_MISSION':
+      return handleCancelScoutMission(command, state);
     default:
       return {
         error: {
@@ -311,6 +320,57 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
         pendingEvent
       });
     }
+  }
+
+  // ── Scout mission resolution ─────────────────────────────────────────────────
+
+  // Complete a pending bid when the transfer window opens this week
+  if (isTransferWindowOpen(week, state.phase) && state.scoutMission?.status === 'BID_PENDING') {
+    const mission = state.scoutMission;
+    const contractExpiresWeek = week + 46;
+    const updatedPlayer: Player = {
+      ...mission.target!,
+      wage:                mission.offeredWage!,
+      contractExpiresWeek,
+    };
+    const completionEvent: ScoutTransferCompletedEvent = {
+      type:              'SCOUT_TRANSFER_COMPLETED',
+      timestamp:         now,
+      clubId:            state.club.id,
+      player:            updatedPlayer,
+      fee:               mission.askingPrice!,
+      targetNpcClubId:   mission.targetNpcClubId!,
+      targetNpcClubName: mission.targetNpcClubName!,
+    };
+    events.push(completionEvent);
+  }
+
+  // Resolve a SEARCHING mission into TARGET_FOUND (fires once per week tick)
+  if (state.scoutMission?.status === 'SEARCHING') {
+    const mission    = state.scoutMission;
+    const scoutLevel = getScoutLevel(state.club.facilities);
+    const gameStartEvent = state.events.find(e => e.type === 'GAME_STARTED') as
+      { type: 'GAME_STARTED'; seed: string } | undefined;
+    const seedStr = gameStartEvent?.seed ?? 'default-seed';
+    const { player, npcClubId, npcClubName, askingPrice } = generateScoutTarget(
+      mission.position,
+      mission.attributePriority,
+      scoutLevel,
+      seedStr,
+      season,
+      week,
+      state.club.id,
+    );
+    const foundEvent: ScoutTargetFoundEvent = {
+      type:              'SCOUT_TARGET_FOUND',
+      timestamp:         now,
+      clubId:            state.club.id,
+      target:            player,
+      targetNpcClubId:   npcClubId,
+      targetNpcClubName: npcClubName,
+      askingPrice,
+    };
+    events.push(foundEvent);
   }
 
   // Advance the week after all matches and events
@@ -781,6 +841,117 @@ function handleBeginNextSeason(_command: any, state: GameState): CommandResult {
       type: 'PRE_SEASON_STARTED',
       timestamp: Date.now(),
       season: state.season + 1,
+    }],
+  };
+}
+
+function handleStartScoutMission(command: any, state: GameState): CommandResult {
+  // Only one mission at a time
+  if (state.scoutMission !== null) {
+    return {
+      error: {
+        code: 'VALIDATION_FAILED',
+        message: 'A scout mission is already active — cancel it before starting a new one',
+      },
+    };
+  }
+
+  // Need squad room for the eventual signing
+  if (state.club.squad.length >= state.club.squadCapacity) {
+    return {
+      error: {
+        code: 'SQUAD_LIMIT_EXCEEDED',
+        message: 'Squad is at capacity — release a player before scouting',
+      },
+    };
+  }
+
+  const scoutLevel = getScoutLevel(state.club.facilities);
+  const scoutFee   = getScoutFee(scoutLevel);
+
+  if (scoutFee > state.club.transferBudget) {
+    return {
+      error: {
+        code: 'INSUFFICIENT_BUDGET',
+        message: `Scout fee of ${scoutFee} pence exceeds available transfer budget`,
+      },
+    };
+  }
+
+  return {
+    events: [{
+      type:             'SCOUT_MISSION_STARTED',
+      timestamp:        Date.now(),
+      clubId:           state.club.id,
+      position:         command.position,
+      attributePriority: command.attributePriority,
+      budgetCeiling:    command.budgetCeiling,
+      scoutFee,
+      weekStarted:      state.currentWeek,
+    }],
+  };
+}
+
+function handlePlaceScoutBid(command: any, state: GameState): CommandResult {
+  const bidAllowed = state.scoutMission?.status === 'TARGET_FOUND' ||
+                     state.scoutMission?.status === 'BID_REJECTED';
+  if (!bidAllowed || !state.scoutMission) {
+    return {
+      error: {
+        code: 'VALIDATION_FAILED',
+        message: 'No target available to bid on',
+      },
+    };
+  }
+
+  const mission = state.scoutMission;
+
+  // Check we can afford the asking price + offered wage
+  if (mission.askingPrice! > state.club.transferBudget) {
+    return {
+      error: {
+        code: 'INSUFFICIENT_BUDGET',
+        message: 'Transfer budget is insufficient to cover the asking price',
+      },
+    };
+  }
+
+  const currentTotalWages = state.club.squad.reduce((sum, p) => sum + p.wage, 0);
+  if (command.offeredWage > state.club.wageBudget - currentTotalWages) {
+    return {
+      error: {
+        code: 'INSUFFICIENT_BUDGET',
+        message: 'Offered wage exceeds remaining weekly wage budget',
+      },
+    };
+  }
+
+  return {
+    events: [{
+      type:              'SCOUT_BID_PLACED',
+      timestamp:         Date.now(),
+      clubId:            state.club.id,
+      negotiationPassed: command.negotiationPassed,
+      offeredWage:       command.offeredWage,
+    }],
+  };
+}
+
+function handleCancelScoutMission(_command: any, state: GameState): CommandResult {
+  if (!state.scoutMission) {
+    return {
+      error: {
+        code: 'VALIDATION_FAILED',
+        message: 'No active scout mission to cancel',
+      },
+    };
+  }
+
+  return {
+    events: [{
+      type:      'SCOUT_MISSION_CANCELLED',
+      timestamp: Date.now(),
+      clubId:    state.club.id,
     }],
   };
 }

@@ -4,7 +4,7 @@
  * Pure functions that apply events to state.
  */
 
-import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent, ManagerHiredEvent, ManagerSackedEvent, PreSeasonStartedEvent } from '../events/types';
+import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent, ManagerHiredEvent, ManagerSackedEvent, PreSeasonStartedEvent, ScoutMissionStartedEvent, ScoutTargetFoundEvent, ScoutBidPlacedEvent, ScoutTransferCompletedEvent } from '../events/types';
 import { GameState } from '../types/game-state-updated';
 import { Club } from '../types/club';
 import { LeagueTable, LeagueTableEntry, sortLeagueTable } from '../types/league';
@@ -71,6 +71,16 @@ export function reduceEvent(state: GameState, event: GameEvent): GameState {
       return handleManagerSacked(state, event);
     case 'PRE_SEASON_STARTED':
       return handlePreSeasonStarted(state, event);
+    case 'SCOUT_MISSION_STARTED':
+      return handleScoutMissionStarted(state, event);
+    case 'SCOUT_TARGET_FOUND':
+      return handleScoutTargetFound(state, event);
+    case 'SCOUT_BID_PLACED':
+      return handleScoutBidPlaced(state, event);
+    case 'SCOUT_TRANSFER_COMPLETED':
+      return handleScoutTransferCompleted(state, event);
+    case 'SCOUT_MISSION_CANCELLED':
+      return handleScoutMissionCancelled(state);
     default:
       return state;
   }
@@ -111,6 +121,7 @@ export function buildState(events: GameEvent[]): GameState {
     managerPool: [],
     lowMoraleWeeks: 0,
     moraleEventCooldowns: {},
+    scoutMission: null,
   };
 
   return events.reduce(reduceEvent, initialState);
@@ -659,6 +670,72 @@ function handlePreSeasonStarted(state: GameState, event: PreSeasonStartedEvent):
       trainingFocus: null,
       preferredFormation: null,
     },
+  };
+}
+
+// ── Scout Mission Reducers ────────────────────────────────────────────────────
+
+function handleScoutMissionStarted(state: GameState, event: ScoutMissionStartedEvent): GameState {
+  return {
+    ...state,
+    scoutMission: {
+      status:           'SEARCHING',
+      position:          event.position,
+      attributePriority: event.attributePriority,
+      budgetCeiling:     event.budgetCeiling,
+      scoutFee:          event.scoutFee,
+      weekStarted:       event.weekStarted,
+    },
+    club: {
+      ...state.club,
+      transferBudget: state.club.transferBudget - event.scoutFee,
+    },
+  };
+}
+
+function handleScoutTargetFound(state: GameState, event: ScoutTargetFoundEvent): GameState {
+  if (!state.scoutMission) return state;
+  return {
+    ...state,
+    scoutMission: {
+      ...state.scoutMission,
+      status:            'TARGET_FOUND',
+      target:             event.target,
+      targetNpcClubId:    event.targetNpcClubId,
+      targetNpcClubName:  event.targetNpcClubName,
+      askingPrice:        event.askingPrice,
+    },
+  };
+}
+
+function handleScoutBidPlaced(state: GameState, event: ScoutBidPlacedEvent): GameState {
+  if (!state.scoutMission) return state;
+  return {
+    ...state,
+    scoutMission: {
+      ...state.scoutMission,
+      status:      event.negotiationPassed ? 'BID_PENDING' : 'BID_REJECTED',
+      offeredWage: event.offeredWage,
+    },
+  };
+}
+
+function handleScoutTransferCompleted(state: GameState, event: ScoutTransferCompletedEvent): GameState {
+  return {
+    ...state,
+    scoutMission: null,
+    club: {
+      ...state.club,
+      squad: [...state.club.squad, event.player],
+      transferBudget: state.club.transferBudget - event.fee,
+    },
+  };
+}
+
+function handleScoutMissionCancelled(state: GameState): GameState {
+  return {
+    ...state,
+    scoutMission: null,
   };
 }
 
