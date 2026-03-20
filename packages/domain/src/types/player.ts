@@ -24,14 +24,25 @@ export interface PlayerAttributes {
 }
 
 /**
+ * Compute a player's overall rating from their performance attributes.
+ * Charisma is intentionally excluded — it is a social/commercial attribute,
+ * not a measure of on-pitch ability. OVR is the mean of attack, defence, and
+ * teamwork, rounded to the nearest integer.
+ *
+ * This is a pure function so it remains accurate as attributes change over time
+ * (e.g. age-based progression/decline in future seasons).
+ */
+export function computeOverallRating(player: Player): number {
+  const { attack, defence, teamwork } = player.attributes;
+  return Math.round((attack + defence + teamwork) / 3);
+}
+
+/**
  * Player representation (simplified for Year 7 level)
  */
 export interface Player {
   id: string;
   name: string;
-
-  /** Overall rating (0-100) */
-  overallRating: number;
 
   /** Primary position */
   position: Position;

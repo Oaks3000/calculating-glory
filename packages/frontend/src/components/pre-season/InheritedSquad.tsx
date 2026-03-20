@@ -1,4 +1,4 @@
-import { Player, Position, Formation, FORMATION_CONFIG, formatMoney } from '@calculating-glory/domain';
+import { Player, Position, Formation, FORMATION_CONFIG, formatMoney, computeOverallRating } from '@calculating-glory/domain';
 
 interface InheritedSquadProps {
   squad: Player[];
@@ -85,7 +85,7 @@ export function InheritedSquad({ squad, formation }: InheritedSquadProps) {
             <span className="flex-1 text-sm text-txt-primary truncate">{player.name}</span>
             <span className="text-xs text-txt-muted w-6 text-center">{player.age}</span>
             <div className="w-28">
-              <RatingBar rating={player.overallRating} />
+              <RatingBar rating={computeOverallRating(player)} />
             </div>
             <span className="text-xs text-txt-muted w-16 text-right font-mono">
               {formatMoney(player.wage)}<span className="text-xs2">/wk</span>

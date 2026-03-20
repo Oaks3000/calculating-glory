@@ -130,13 +130,9 @@ export function generateStartingSquad(seed: string, clubId: string): Player[] {
     // contractExpiresWeek: mix of 23 and 46 (half expire mid-season to create urgency)
     const contractExpiresWeek = rng.next() < 0.5 ? 23 : 46;
 
-    // overallRating derived from attributes
-    const overallRating = Math.round((attributes.attack + attributes.defence + attributes.teamwork) / 3);
-
     return {
       id: `inherited-${clubId}-${index}`,
       name,
-      overallRating,
       position,
       wage,
       transferValue,
@@ -150,7 +146,7 @@ export function generateStartingSquad(seed: string, clubId: string): Player[] {
         assists: 0,
         cleanSheets: 0,
         appearances: 0,
-        averageRating: overallRating,
+        averageRating: Math.round((attributes.attack + attributes.defence + attributes.teamwork) / 3),
       },
     };
   });

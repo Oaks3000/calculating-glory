@@ -1,4 +1,4 @@
-import { GameState } from '@calculating-glory/domain';
+import { GameState, computeOverallRating } from '@calculating-glory/domain';
 
 /** Shape of businessAcumen.recentPerformance, keyed by ChallengeTopic */
 export type TopicPerformance = {
@@ -60,9 +60,9 @@ export function generateChallenge(
 
   // Top 5 OVR for squad average question
   const top5Ratings = [...club.squad]
-    .sort((a, b) => b.overallRating - a.overallRating)
+    .sort((a, b) => computeOverallRating(b) - computeOverallRating(a))
     .slice(0, 5)
-    .map(p => p.overallRating);
+    .map(p => computeOverallRating(p));
   const top5Avg = top5Ratings.length > 0
     ? dp1(top5Ratings.reduce((s, r) => s + r, 0) / top5Ratings.length)
     : 70;

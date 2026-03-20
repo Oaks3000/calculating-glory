@@ -6,7 +6,7 @@
  * This stub teases the future feature and shows current youth prospects.
  */
 
-import { GameState } from '@calculating-glory/domain';
+import { GameState, computeOverallRating } from '@calculating-glory/domain';
 import { SlideOver } from '../shared/SlideOver';
 
 interface ScoutingSlideOverProps {
@@ -60,7 +60,7 @@ export function ScoutingSlideOver({ isOpen, onClose, state }: ScoutingSlideOverP
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold data-font text-data-blue">
-                      {player.overallRating}
+                      {computeOverallRating(player)}
                     </p>
                     <p className="text-xs2 text-txt-muted">OVR</p>
                   </div>

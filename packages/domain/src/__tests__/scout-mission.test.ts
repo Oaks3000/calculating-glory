@@ -210,7 +210,7 @@ describe('PLACE_SCOUT_BID command', () => {
       timestamp:         Date.now(),
       clubId:            'test-club',
       target: {
-        id: 'scout-target-S1-W11-FWD', name: 'Test Target', overallRating: 65,
+        id: 'scout-target-S1-W11-FWD', name: 'Test Target',
         position: 'FWD', wage: 150_000, transferValue: 3_000_000, age: 24,
         morale: 70, attributes: { attack: 70, defence: 25, teamwork: 60, charisma: 55, publicPotential: 70 },
         truePotential: 72, contractExpiresWeek: 0,
@@ -267,7 +267,7 @@ describe('SIMULATE_WEEK at transfer window open with BID_PENDING', () => {
     state = reduceEvent(state, {
       type: 'SCOUT_TARGET_FOUND', timestamp: Date.now(), clubId: 'test-club',
       target: {
-        id: 'scout-target-S1-W11-MID', name: 'Target Dude', overallRating: 60,
+        id: 'scout-target-S1-W11-MID', name: 'Target Dude',
         position: 'MID', wage: 150_000, transferValue: 2_500_000, age: 26,
         morale: 70, attributes: { attack: 55, defence: 50, teamwork: 70, charisma: 55, publicPotential: 65 },
         truePotential: 67, contractExpiresWeek: 0,

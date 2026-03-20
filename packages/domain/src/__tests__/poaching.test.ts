@@ -37,13 +37,13 @@ function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
     id: 'p1',
     name: 'Test Player',
-    overallRating: 65,
+    // Default attributes give computeOverallRating() == 62 (above poach threshold of 55)
     position: 'MID',
     wage: 100_000,
     transferValue: 1_000_000,
     age: 24,
     morale: 75,
-    stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 65 },
+    stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 62 },
     attributes: { attack: 60, defence: 55, teamwork: 70, charisma: 50, publicPotential: 65 },
     truePotential: 68,
     contractExpiresWeek: 46,
@@ -139,9 +139,10 @@ describe('generatePoachAttempts', () => {
 
   it('returns empty array when no squad player is rated >= 55', () => {
     const base = makeStartedState();
+    // Attributes give computeOverallRating() == 48 and 47 (both below threshold of 55)
     const state = withSquad(base, [
-      makePlayer({ id: 'p1', overallRating: 50 }),
-      makePlayer({ id: 'p2', overallRating: 48 }),
+      makePlayer({ id: 'p1', attributes: { attack: 45, defence: 50, teamwork: 50, charisma: 50, publicPotential: 65 } }),
+      makePlayer({ id: 'p2', attributes: { attack: 44, defence: 48, teamwork: 50, charisma: 50, publicPotential: 65 } }),
     ]);
     const result = generatePoachAttempts(state, 1, 1, 'test-seed');
     expect(result).toHaveLength(0);
@@ -149,11 +150,11 @@ describe('generatePoachAttempts', () => {
 
   it('returns at most 1 event per week', () => {
     const base = makeStartedState();
-    // Put a high-rated player to maximise poach chance
+    // Attributes give computeOverallRating() == 80 / 75 / 70 to maximise poach chance
     const state = withSquad(base, [
-      makePlayer({ id: 'p1', overallRating: 80 }),
-      makePlayer({ id: 'p2', overallRating: 75 }),
-      makePlayer({ id: 'p3', overallRating: 70 }),
+      makePlayer({ id: 'p1', attributes: { attack: 80, defence: 80, teamwork: 80, charisma: 50, publicPotential: 65 } }),
+      makePlayer({ id: 'p2', attributes: { attack: 75, defence: 75, teamwork: 75, charisma: 50, publicPotential: 65 } }),
+      makePlayer({ id: 'p3', attributes: { attack: 70, defence: 70, teamwork: 70, charisma: 50, publicPotential: 65 } }),
     ]);
     // Run across many seeds; never more than 1
     for (let w = 1; w <= 20; w++) {
@@ -164,7 +165,7 @@ describe('generatePoachAttempts', () => {
 
   it('returns empty if a poach event is already pending', () => {
     const base = makeStartedState();
-    const target = makePlayer({ id: 'p1', overallRating: 80 });
+    const target = makePlayer({ id: 'p1', attributes: { attack: 80, defence: 80, teamwork: 80, charisma: 50, publicPotential: 65 } });
     let state = withSquad(base, [target]);
     state = withPoachEvent(state, target, 800_000);
 
@@ -178,7 +179,7 @@ describe('generatePoachAttempts', () => {
 
   it('generated event has correct templateId and metadata', () => {
     const base = makeStartedState();
-    const target = makePlayer({ id: 'star', overallRating: 80, wage: 200_000 });
+    const target = makePlayer({ id: 'star', wage: 200_000, attributes: { attack: 80, defence: 80, teamwork: 80, charisma: 50, publicPotential: 65 } });
     const state = withSquad(base, [target]);
     const firingSeed = findFiringSeed(state, 3, 1);
     if (!firingSeed) return; // skip if no seed fires (probabilistic)
@@ -193,7 +194,7 @@ describe('generatePoachAttempts', () => {
 
   it('counter choice budget is 1.5× the accept choice budget', () => {
     const base = makeStartedState();
-    const target = makePlayer({ id: 'star', overallRating: 80, wage: 200_000 });
+    const target = makePlayer({ id: 'star', wage: 200_000, attributes: { attack: 80, defence: 80, teamwork: 80, charisma: 50, publicPotential: 65 } });
     const state = withSquad(base, [target]);
     const firingSeed = findFiringSeed(state, 3, 1);
     if (!firingSeed) return;
@@ -209,7 +210,7 @@ describe('generatePoachAttempts', () => {
 
 describe('resolve poach — accept', () => {
   it('removes player from squad', () => {
-    const target = makePlayer({ id: 'p1', overallRating: 65 });
+    const target = makePlayer({ id: 'p1' });
     const fee = 800_000;
     let state = withSquad(makeStartedState(), [target]);
     state = withPoachEvent(state, target, fee);
@@ -232,7 +233,7 @@ describe('resolve poach — accept', () => {
 
 describe('resolve poach — reject', () => {
   it('keeps player in squad and reduces morale by 15', () => {
-    const target = makePlayer({ id: 'p1', overallRating: 65, morale: 75 });
+    const target = makePlayer({ id: 'p1', morale: 75 });
     let state = withSquad(makeStartedState(), [target]);
     state = withPoachEvent(state, target, 800_000);
 
@@ -267,7 +268,7 @@ describe('resolve poach — reject', () => {
 
 describe('resolve poach — counter', () => {
   it('removes player and awards 1.5× fee', () => {
-    const target = makePlayer({ id: 'p1', overallRating: 65 });
+    const target = makePlayer({ id: 'p1' });
     const fee = 800_000;
     const counterFee = Math.round(fee * 1.5);
     let state = withSquad(makeStartedState(), [target]);
@@ -291,7 +292,7 @@ describe('resolve poach — counter', () => {
 
 describe('resolve poach — ignore', () => {
   it('keeps player but drops morale by 25 and rep by 5', () => {
-    const target = makePlayer({ id: 'p1', overallRating: 65, morale: 75 });
+    const target = makePlayer({ id: 'p1', morale: 75 });
     let state = withSquad(makeStartedState(), [target]);
     state = withPoachEvent(state, target, 800_000);
 

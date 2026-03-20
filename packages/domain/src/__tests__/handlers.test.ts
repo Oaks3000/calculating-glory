@@ -106,7 +106,7 @@ describe('handleCommand — MAKE_TRANSFER', () => {
   it('returns an error when squad is full (25 players)', () => {
     const s = baseState();
     const fullSquad: Player[] = Array.from({ length: 25 }, (_, i) => ({
-      id: `player-${i}`, name: `Player ${i}`, overallRating: 60, position: 'MID' as const,
+      id: `player-${i}`, name: `Player ${i}`, position: 'MID' as const,
       wage: 10000, transferValue: 1000000, age: 25, morale: 70,
       attributes: { attack: 45, defence: 40, teamwork: 50, charisma: 40, publicPotential: 50 },
       truePotential: 50,

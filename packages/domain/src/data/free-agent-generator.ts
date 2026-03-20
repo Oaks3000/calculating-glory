@@ -181,16 +181,12 @@ export function generateFreeAgentPool(seed: string): Player[] {
     const potentialDirection = rng.next() < 0.5 ? 1 : -1;
     const truePotential = Math.max(1, Math.min(100, publicPotential + potentialDirection * potentialOffset));
 
-    // overallRating: derived from attributes
-    const overallRating = Math.round((attributes.attack + attributes.defence + attributes.teamwork) / 3);
-
     // Morale: 65–85 (they're keen to get a club)
     const morale = rng.nextInt(65, 85);
 
     return {
       id: `free-agent-${index}-${seed}`,
       name,
-      overallRating,
       position,
       wage,
       transferValue: 0,
@@ -204,7 +200,7 @@ export function generateFreeAgentPool(seed: string): Player[] {
         assists: 0,
         cleanSheets: 0,
         appearances: 0,
-        averageRating: overallRating,
+        averageRating: Math.round((attributes.attack + attributes.defence + attributes.teamwork) / 3),
       },
     };
   });

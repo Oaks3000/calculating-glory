@@ -8,6 +8,7 @@ import { generateFreeAgentPool } from '../data/free-agent-generator';
 import { handleCommand } from '../commands/handlers';
 import { buildState } from '../reducers';
 import { reduceEvent } from '../reducers';
+import { computeOverallRating } from '../types/player';
 import { GameState } from '../types/game-state-updated';
 import { GameStartedEvent } from '../events/types';
 import { Player } from '../types/player';
@@ -77,7 +78,7 @@ describe('generateFreeAgentPool', () => {
     const pool1 = generateFreeAgentPool('determinism-test');
     const pool2 = generateFreeAgentPool('determinism-test');
     expect(pool1.map(p => p.name)).toEqual(pool2.map(p => p.name));
-    expect(pool1.map(p => p.overallRating)).toEqual(pool2.map(p => p.overallRating));
+    expect(pool1.map(p => computeOverallRating(p))).toEqual(pool2.map(p => computeOverallRating(p)));
   });
 
   it('different seeds produce different pools', () => {
@@ -159,7 +160,6 @@ describe('handleCommand — SIGN_FREE_AGENT', () => {
       fakeSquad.push({
         id: `fake-${i}`,
         name: `Player ${i}`,
-        overallRating: 50,
         position: 'MID',
         wage: 10000,
         transferValue: 0,
