@@ -1,19 +1,18 @@
 ---
 project: "Calculating Glory"
 type: "build"
-lastUpdated: "2026-03-19"
+lastUpdated: "2026-03-20"
 ---
 
 # Calculating Glory - Next Steps
 
 ## Immediate (Next Session)
 
-1. **#34 Owner forced out** — design fully locked (trigger: bottom 3 + budget < £10k at week 30+; always bottom NPC club; inherit current state; survival win condition). Worktree `feat/phase-5-8-collapse` ready on main. Start building.
+1. **#30 Player attribute wiring** — wire `charisma` into revenue; confirm attack/defence/teamwork in match sim; decide overallRating derivation formula.
 
 ## Short Term (Next 2–4 Weeks)
 
-1. **#30 Player attribute wiring** — wire `charisma` into revenue; confirm attack/defence/teamwork in match sim; decide overallRating derivation formula.
-2. **Frontend test suite** — component-level tests; currently no coverage of UI layer.
+1. **Frontend test suite** — component-level tests; currently no coverage of UI layer.
 3. **Second season loop** — promotion to League One / relegation experience now that the season end screen + morale system are both live.
 4. **#27 Hub tile action flags** — rerouting stale action flags on Command Centre tiles.
 
