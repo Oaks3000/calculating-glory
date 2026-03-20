@@ -1,83 +1,90 @@
-# Session Handover — 2026-03-17
+# Session Handover — 2026-03-20
 
 ## What Was Done This Session
 
-### 1. Merged all outstanding PRs
+### 1. Scout Missions — PR #49 ✅
 
-Closed out the `cool-kalam` worktree. Merged in order:
-- **PR #33** — Phase 5.1: pre-season screen, formation picker, inherited squad of 16
-- **PR #37** — Phase 5.2: transfer market, all 5 player attributes, free agent pool, sign/release with contract fee logic
-- **PR #38** — combined Phase 5.1 + 5.2 squash onto main
-- **PR #39** — Phase 5.3 prep: formation gap panel + NPC season-start transfers (already existed in branch)
-- **PR #42** — Phase 5.3: match sim full rewrite
+Full targeted-scouting flow on top of the existing Scout Network facility:
 
-### 2. Match sim redesign (PR #42)
+- `START_SCOUT_MISSION` — position picker, attribute priority, budget ceiling, upfront £1,000 scout fee deducted
+- `PLACE_SCOUT_BID` — math challenge gate; on pass → `BID_PENDING`; on fail → `BID_REJECTED` (can retry)
+- `CANCEL_SCOUT_MISSION` — refunds nothing, clears state
+- State machine: `SEARCHING` → `SCOUT_TARGET_FOUND` (next week tick) → `TARGET_FOUND` → `BID_PENDING` / `BID_REJECTED`
+- Transfer completes automatically when window opens (`isTransferWindowOpen`) while `BID_PENDING`
+- `ScoutNetworkSlideOver.tsx` — full 4-state UI (no mission, searching, target found with inline math challenge, bid submitted)
+- `scout-target-generator.ts` — seeded NPC target generation (position, attributes, asking price from NPC club)
+- 329 scout-mission tests + `reducer-match.test.ts` updated
 
-Proposal written to `.build/MATCH_SIM_PROPOSAL.md`, reviewed and edited by user on GitHub, then built from the agreed spec.
+### 2. Phase 5.8 — Owner Forced Out — PR #50 ✅
 
-**Key changes to `packages/domain/src/simulation/match.ts`:**
+Full forced-out mechanic closing issue #34:
 
-| Area | Before | After |
-|------|--------|-------|
-| Strength calc | `overallRating` × old weights | `attributes.attack` / `attributes.defence` × position weights |
-| Attack weights | FWD 3×, MID 1× (others 0) | FWD 3×, MID 2×, DEF 1×, GK 0× |
-| Defence weights | GK/DEF 3×, MID 1× | FWD 1×, MID 2×, DEF 3×, GK 3.5× |
-| Facilities | avg all 9 facilities → +0.15 | TRAINING_GROUND only → +0.50 |
-| Teamwork | not wired | avg squad teamwork → +0.08 |
-| Morale | not wired | avg squad morale → ±0.05 centred at 50 |
-| Staff | +0.15 max | +0.12 max |
-| Reputation | +0.10 max | +0.08 max |
-| Fan Zone | blended into facilities avg | separate `fanZoneBonus` — home only |
-| Training focus | stored, unused in sim | ATTACKING ×1.05 atk, DEFENSIVE ×1.05 def, FITNESS +0.03 modifier, SET_PIECES ×1.03 atk, YOUTH_INTEGRATION no match effect |
+- **Trigger**: position > 21 (bottom 3 of 24) + `transferBudget < £10,000` + `week >= 30`
+- `OWNER_FORCED_OUT` event fires from `handleSimulateWeek`, short-circuits before `SEASON_ENDED`
+- Takeover target = lowest-ranked NPC club in current league table
+- `ACCEPT_TAKEOVER` command → `TAKEOVER_ACCEPTED` event
+- On takeover: new club id/name, £50k budget, £20k/wk wages, fresh (weak) squad, reset facilities, boardConfidence = 20
+- Business Acumen carries over unchanged — "the one thing they can't take away"
+- `ForcedOutScreen.tsx` — two-step UI: ousted screen (position/week/budget stats) → offer screen (win condition, carry-over callout, Accept CTA)
+- `App.tsx` — `FORCED_OUT` phase gate before main game UI
+- 29 new forced-out tests; 374 total domain tests green
 
-269/269 tests green. TypeScript clean.
+### 3. Merge / rebase / prune
 
-### 3. Issues filed
-
-| # | Title |
-|---|-------|
-| #41 | Review: team and player name analogues (24 clubs tabulated for manual review) |
-
-Issues closed this session: #30 (attribute wiring done in match sim), #35 (NPC season-start transfers already built).
-
-### 4. Phase 5.3 items — all already present in branch
-
-- Formation recruitment gap panel: already in `TransferMarketSlideOver.tsx`
-- Pro-Evo analogue team names: already in `league-two-teams.ts`
-- NPC season-start transfers: already in `handleStartSeason()` in `commands/handlers.ts`
+- Rebased `objective-chaum` onto updated main (resolved 4 conflicts + duplicate morale export)
+- Merged PR #49 (squash)
+- Rebased `gifted-dijkstra` onto post-#49 main (resolved 6 conflicts)
+- Merged PR #50 (squash)
+- Both worktrees pruned
+- Domain dist rebuilt from final main
 
 ---
 
 ## Current State
 
 ### ✅ Working
-- Main is clean — all Phase 5.1/5.2/5.3 merged
-- 269 domain tests green
-- Match sim: all inputs wired (attributes, facilities, staff, morale, training focus, fan zone)
-- Pre-season → transfer market → enter season flow complete
-- NPC clubs consume free agents before player browses
+- Main is clean at `afdee60` — all Phase 5 features shipped (5.1–5.8 + Scout Missions)
+- 374 domain tests green across 21 suites
+- No open worktrees
+- Full season flow: PRE_SEASON → EARLY/MID/LATE_SEASON → SEASON_END → PRE_SEASON (next season) or FORCED_OUT → takeover
+- Scout Network facility + scout mission bid flow end-to-end
+- Business Acumen curriculum gating across all 5 levels
 
-### 🟡 Stale worktrees (prune when convenient)
-```bash
-git -C /Users/oakleywalters/Projects/calculating-glory worktree remove --force \
-  .claude/worktrees/cool-kalam \
-  .claude/worktrees/phase5-transfers \
-  .claude/worktrees/thirsty-archimedes
-# zealous-sutherland path uses lowercase 'projects' — check before removing
-```
+### 🟡 In Progress
+- Nothing
 
 ### 🔴 Blocked
 - Nothing
 
 ---
 
-## Phase 5.4 — What's Next
+## Phase 5 — Complete Feature List
 
-Three candidates (in recommended order):
+| PR | Feature |
+|----|---------|
+| #33 #37–#39 #42 | Pre-season, transfers, match sim rewrite (5.1–5.3) |
+| #43 | NPC poaching — 4 response options, teamwork cascade (5.4) |
+| #44 | Manager hire & impact — 3-tier pool, tactical/motivation/experience (5.5) |
+| #45 | Club-owned transfers — SELL_PLAYER_TO_NPC, fee calc, news ticker (5.6) |
+| #46 | Season end screen — outcome banner, stats grid, BEGIN_NEXT_SEASON (5.7) |
+| #47 | Scout Network facility — truePotential visibility by level |
+| #48 | Morale system — result deltas, contract anxiety, threshold events |
+| #49 | Scout missions — targeted scouting, math challenge bid gate |
+| #50 | Owner forced out — FORCED_OUT phase, takeover flow (5.8) |
 
-1. **#36 NPC poaching** — highest immediate gameplay tension; NPCs approach your players, 4 response options, teamwork cascade
-2. **#29 Manager creation** — manager attributes; how well directives translate into match results
-3. **#31 Scout facility** — YOUTH_ACADEMY/scouting level controls truePotential visibility (±15 noise → exact at max level)
+---
+
+## What's Next
+
+**Recommended: #30 Player attribute wiring**
+- Wire `charisma` into weekly revenue formula
+- Confirm `attack`/`defence`/`teamwork` weighting in match sim is balanced post-morale
+- Decide `overallRating` derivation: computed from attributes (weighted by position) vs stored independently
+
+Other candidates:
+- **Frontend test suite** — zero component-level coverage currently
+- **#27 Hub tile action flags** — stale routing on Command Centre tiles
+- **Second season loop** — promotion to League One / relegation tuning
 
 ---
 
@@ -85,7 +92,7 @@ Three candidates (in recommended order):
 
 ```bash
 # Dev server
-cd /Users/oakleywalters/Projects/calculating-glory/packages/frontend && npx vite
+npm run dev --workspace=@calculating-glory/frontend
 
 # ALWAYS rebuild domain dist in MAIN project after domain source changes
 cd /Users/oakleywalters/Projects/calculating-glory/packages/domain && npm run build
@@ -93,52 +100,53 @@ cd /Users/oakleywalters/Projects/calculating-glory/packages/domain && npm run bu
 # Tests
 cd /Users/oakleywalters/Projects/calculating-glory/packages/domain && npm test
 
-# TypeScript check (frontend)
+# TypeScript check
 cd /Users/oakleywalters/Projects/calculating-glory/packages/frontend && npx tsc --noEmit
 ```
 
 ## How to Start Next Session
 
 ```bash
-# 1. Pull main (should already be current)
+# 1. Pull main
 git -C /Users/oakleywalters/Projects/calculating-glory pull origin main
 
 # 2. Rebuild domain dist
 cd /Users/oakleywalters/Projects/calculating-glory/packages/domain && npm run build
 
-# 3. Create new worktree for Phase 5.4
+# 3. Create worktree for next feature
 git -C /Users/oakleywalters/Projects/calculating-glory worktree add \
-  .claude/worktrees/<name> -b feat/phase5-4 origin/main
+  .claude/worktrees/<name> -b feat/<name> origin/main
 
 # 4. TypeScript check before writing code
 cd /Users/oakleywalters/Projects/calculating-glory/.claude/worktrees/<name>/packages/frontend \
   && npx tsc --noEmit
 ```
 
-## Key Files (Phase 5.4 context)
+## Key Files (next session context)
 
 ```
 packages/domain/src/
   simulation/
-    match.ts                — Full match sim (all inputs wired, well-commented)
+    match.ts                — Full match sim (attack/defence/teamwork/morale/facilities wired)
+    morale.ts               — Morale deltas, contract anxiety, threshold events, contagion
   commands/
-    handlers.ts             — handleStartSeason() NPC transfer logic; handleSimulateWeek()
+    handlers.ts             — All command handlers incl. scout missions + forced-out
   types/
-    player.ts               — Player, PlayerAttributes, truePotential, morale
-    club.ts                 — Club (preferredFormation, trainingFocus, squad, wageBudget)
-    facility.ts             — FacilityType, FACILITY_CONFIG, TrainingFocus
+    player.ts               — Player, PlayerAttributes (attack/defence/teamwork/charisma/potential)
+    game-state-updated.ts   — GameState, ScoutMission, ForcedOutState, SeasonPhase
   data/
-    league-two-teams.ts     — 24 Pro-Evo analogue clubs (see #41 for name review)
-    free-agent-generator.ts — 60 seeded free agents
-    squad-generator.ts      — 16 inherited weak players
+    scout-target-generator.ts — Seeded NPC scouting targets
+    league-two-teams.ts     — 24 Pro-Evo analogue clubs
 
 packages/frontend/src/components/
-  transfer-market/
-    TransferMarketSlideOver.tsx — FormationGapPanel + sign/release flows
+  forced-out/
+    ForcedOutScreen.tsx     — Two-step ousted → takeover UI
+  stadium-view/
+    ScoutNetworkSlideOver.tsx — 4-state scout mission UI
   pre-season/
     PreSeasonScreen.tsx     — Entry flow
 ```
 
 ---
 
-**Status**: Main clean. Phase 5.1/5.2/5.3 shipped. Match sim fully wired. Ready for Phase 5.4 — recommended first pick is #36 (NPC poaching).
+**Status**: Main clean. Phase 5 fully shipped (PRs #33–#50). 374 domain tests. No open worktrees. Next: #30 player attribute wiring.
