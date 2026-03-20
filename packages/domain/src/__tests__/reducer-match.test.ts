@@ -67,6 +67,7 @@ function makeState(entries: LeagueTableEntry[], playerClubId: string = 'club-1')
     lowMoraleWeeks: 0,
     moraleEventCooldowns: {},
     scoutMission: null,
+    forcedOut: null,
   };
 }
 

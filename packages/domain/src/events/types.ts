@@ -38,7 +38,9 @@ export type GameEvent =
   | ScoutTargetFoundEvent
   | ScoutBidPlacedEvent
   | ScoutTransferCompletedEvent
-  | ScoutMissionCancelledEvent;
+  | ScoutMissionCancelledEvent
+  | OwnerForcedOutEvent
+  | TakeoverAcceptedEvent;
 
 export interface TransferCompletedEvent {
   type: 'TRANSFER_COMPLETED';
@@ -295,4 +297,31 @@ export interface ScoutMissionCancelledEvent {
   type: 'SCOUT_MISSION_CANCELLED';
   timestamp: number;
   clubId: string;
+}
+
+/** Emitted when the owner-forced-out trigger fires (bottom 3 + broke at week 30+) */
+export interface OwnerForcedOutEvent {
+  type: 'OWNER_FORCED_OUT';
+  timestamp: number;
+  /** The club the player was running */
+  previousClubId:   string;
+  previousClubName: string;
+  /** Their position in the table at the moment of ousting */
+  previousPosition: number;
+  /** The bottom NPC club offered as a takeover vehicle */
+  takeoverClubId:   string;
+  takeoverClubName: string;
+  /** Seed string for generating the takeover club's starting squad */
+  seed: string;
+  week: number;
+}
+
+/** Emitted when the player clicks "Accept" on the takeover offer screen */
+export interface TakeoverAcceptedEvent {
+  type: 'TAKEOVER_ACCEPTED';
+  timestamp: number;
+  takeoverClubId:   string;
+  takeoverClubName: string;
+  seed: string;
+  week: number;
 }

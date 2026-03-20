@@ -29,7 +29,8 @@ export type GameCommand =
   | BeginNextSeasonCommand
   | StartScoutMissionCommand
   | PlaceScoutBidCommand
-  | CancelScoutMissionCommand;
+  | CancelScoutMissionCommand
+  | AcceptTakeoverCommand;
 
 export interface MakeTransferCommand {
   type: 'MAKE_TRANSFER';
@@ -139,6 +140,10 @@ export interface PlaceScoutBidCommand {
 
 export interface CancelScoutMissionCommand {
   type: 'CANCEL_SCOUT_MISSION';
+}
+
+export interface AcceptTakeoverCommand {
+  type: 'ACCEPT_TAKEOVER';
 }
 
 export interface CommandResult {

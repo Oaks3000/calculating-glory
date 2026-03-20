@@ -4,7 +4,7 @@
  * Pure functions that apply events to state.
  */
 
-import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent, ManagerHiredEvent, ManagerSackedEvent, PreSeasonStartedEvent, ScoutMissionStartedEvent, ScoutTargetFoundEvent, ScoutBidPlacedEvent, ScoutTransferCompletedEvent } from '../events/types';
+import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent, ManagerHiredEvent, ManagerSackedEvent, PreSeasonStartedEvent, ScoutMissionStartedEvent, ScoutTargetFoundEvent, ScoutBidPlacedEvent, ScoutTransferCompletedEvent, OwnerForcedOutEvent, TakeoverAcceptedEvent } from '../events/types';
 import { GameState } from '../types/game-state-updated';
 import { Club } from '../types/club';
 import { LeagueTable, LeagueTableEntry, sortLeagueTable } from '../types/league';
@@ -81,6 +81,10 @@ export function reduceEvent(state: GameState, event: GameEvent): GameState {
       return handleScoutTransferCompleted(state, event);
     case 'SCOUT_MISSION_CANCELLED':
       return handleScoutMissionCancelled(state);
+    case 'OWNER_FORCED_OUT':
+      return handleOwnerForcedOut(state, event);
+    case 'TAKEOVER_ACCEPTED':
+      return handleTakeoverAccepted(state, event);
     default:
       return state;
   }
@@ -122,6 +126,7 @@ export function buildState(events: GameEvent[]): GameState {
     lowMoraleWeeks: 0,
     moraleEventCooldowns: {},
     scoutMission: null,
+    forcedOut:    null,
   };
 
   return events.reduce(reduceEvent, initialState);
@@ -736,6 +741,55 @@ function handleScoutMissionCancelled(state: GameState): GameState {
   return {
     ...state,
     scoutMission: null,
+  };
+}
+
+function handleOwnerForcedOut(state: GameState, event: OwnerForcedOutEvent): GameState {
+  return {
+    ...state,
+    phase: 'FORCED_OUT',
+    forcedOut: {
+      previousClubId:   event.previousClubId,
+      previousClubName: event.previousClubName,
+      previousPosition: event.previousPosition,
+      takeoverClubId:   event.takeoverClubId,
+      takeoverClubName: event.takeoverClubName,
+      week:             event.week,
+    },
+  };
+}
+
+function handleTakeoverAccepted(state: GameState, event: TakeoverAcceptedEvent): GameState {
+  if (!state.forcedOut) return state;
+
+  // Determine season phase from current week
+  const w     = state.currentWeek;
+  const phase = w <= 15 ? 'EARLY_SEASON' : w <= 30 ? 'MID_SEASON' : 'LATE_SEASON';
+
+  // Generate a fresh (very weak) starting squad for the takeover club
+  const newSquad = generateStartingSquad(
+    `${event.seed}-takeover-${event.takeoverClubId}`,
+    event.takeoverClubId,
+  );
+
+  return {
+    ...state,
+    phase,
+    forcedOut: null,
+    scoutMission: null,
+    boardConfidence: 20,      // rock-bottom board confidence
+    club: {
+      ...state.club,
+      id:             event.takeoverClubId,
+      name:           event.takeoverClubName,
+      transferBudget: 5_000_000,  // £50,000
+      wageBudget:     2_000_000,  // £20,000/wk
+      squad:          newSquad,
+      squadCapacity:  24,
+      facilities:     getDefaultFacilities(),
+      manager:        null,
+      staff:          [],
+    },
   };
 }
 
