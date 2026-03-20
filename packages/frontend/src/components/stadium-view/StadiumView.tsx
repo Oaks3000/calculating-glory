@@ -27,6 +27,7 @@ import { TrainingFocusSlideOver }           from './TrainingFocusSlideOver';
 import { FixturesSlideOver }                from './FixturesSlideOver';
 import { BoardConfidenceSlideOver }         from './BoardConfidenceSlideOver';
 import { ScoutingSlideOver }                from './ScoutingSlideOver';
+import { ScoutNetworkSlideOver }           from './ScoutNetworkSlideOver';
 
 // Commercial facilities always open the upgrade panel (no dedicated nav destination)
 const COMMERCIAL_TYPES = new Set<FacilityType>([
@@ -50,8 +51,9 @@ export function StadiumView({ state, dispatch, onError }: StadiumViewProps) {
   const [fixturesOpen,  setFixturesOpen]  = useState(false);
   const [trainingOpen,     setTrainingOpen]     = useState(false);
   const [backroomOpen,  setBackroomOpen]  = useState(false);
-  const [boardOpen,     setBoardOpen]     = useState(false);
-  const [scoutingOpen,  setScoutingOpen]  = useState(false);
+  const [boardOpen,        setBoardOpen]        = useState(false);
+  const [scoutingOpen,     setScoutingOpen]     = useState(false);
+  const [scoutNetworkOpen, setScoutNetworkOpen] = useState(false);
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -79,8 +81,9 @@ export function StadiumView({ state, dispatch, onError }: StadiumViewProps) {
       case 'STADIUM':         setFixturesOpen(true);  break;
       case 'TRAINING_GROUND': setTrainingOpen(true);     break;
       case 'MEDICAL_CENTER':  setBackroomOpen(true);  break;
-      case 'YOUTH_ACADEMY':   setScoutingOpen(true);  break;
-      case 'CLUB_OFFICE':     setBoardOpen(true);     break;
+      case 'YOUTH_ACADEMY':   setScoutingOpen(true);      break;
+      case 'SCOUT_NETWORK':   setScoutNetworkOpen(true);  break;
+      case 'CLUB_OFFICE':     setBoardOpen(true);         break;
     }
   }
 
@@ -178,6 +181,14 @@ export function StadiumView({ state, dispatch, onError }: StadiumViewProps) {
         isOpen={scoutingOpen}
         onClose={() => setScoutingOpen(false)}
         state={state}
+      />
+
+      {/* SCOUT_NETWORK → Scout Network */}
+      <ScoutNetworkSlideOver
+        isOpen={scoutNetworkOpen}
+        onClose={() => setScoutNetworkOpen(false)}
+        state={state}
+        dispatch={dispatch}
       />
 
       {/* CLUB_OFFICE → Board Confidence */}

@@ -317,3 +317,22 @@ export function scoutNoiseRange(scoutLevel: number): number {
 export function getScoutLevel(facilities: Facility[]): number {
   return facilities.find(f => f.type === 'SCOUT_NETWORK')?.level ?? 0;
 }
+
+/**
+ * Returns true when a transfer can legally complete.
+ * Pre-season is always open.
+ * In-season: summer window (weeks 1–4) and January window (weeks 21–24).
+ */
+export function isTransferWindowOpen(week: number, phase: string): boolean {
+  if (phase === 'PRE_SEASON') return true;
+  return (week >= 1 && week <= 4) || (week >= 21 && week <= 24);
+}
+
+/**
+ * Human-readable label for the next transfer window that will open,
+ * relative to the current in-season week.
+ */
+export function nextWindowLabel(week: number): string {
+  if (week < 21) return 'January window (week 21)';
+  return 'next summer window (start of next season)';
+}

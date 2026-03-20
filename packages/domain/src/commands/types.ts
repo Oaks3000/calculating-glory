@@ -9,6 +9,7 @@ import { GameEvent } from '../events/types';
 import { CommandError } from '../types/game-state-updated';
 import { TrainingFocus } from '../types/facility';
 import { Formation } from '../types/formation';
+import { Position } from '../types/player';
 
 export type GameCommand =
   | MakeTransferCommand
@@ -25,7 +26,10 @@ export type GameCommand =
   | HireManagerCommand
   | SackManagerCommand
   | SellPlayerToNpcCommand
-  | BeginNextSeasonCommand;
+  | BeginNextSeasonCommand
+  | StartScoutMissionCommand
+  | PlaceScoutBidCommand
+  | CancelScoutMissionCommand;
 
 export interface MakeTransferCommand {
   type: 'MAKE_TRANSFER';
@@ -115,6 +119,26 @@ export interface SellPlayerToNpcCommand {
 
 export interface BeginNextSeasonCommand {
   type: 'BEGIN_NEXT_SEASON';
+}
+
+export interface StartScoutMissionCommand {
+  type: 'START_SCOUT_MISSION';
+  position: Position;
+  attributePriority: 'attack' | 'defence' | 'teamwork' | null;
+  /** Maximum transfer fee willing to pay, in pence */
+  budgetCeiling: number;
+}
+
+export interface PlaceScoutBidCommand {
+  type: 'PLACE_SCOUT_BID';
+  /** Whether the math challenge was passed in the frontend */
+  negotiationPassed: boolean;
+  /** Weekly wage offered to the player, in pence */
+  offeredWage: number;
+}
+
+export interface CancelScoutMissionCommand {
+  type: 'CANCEL_SCOUT_MISSION';
 }
 
 export interface CommandResult {

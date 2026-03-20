@@ -9,7 +9,7 @@ import { GameEvent } from '../events/types';
 import { Club } from './club';
 import { LeagueTable } from './league';
 import { CurriculumConfig } from '../curriculum/curriculum-config';
-import { Player } from './player';
+import { Player, Position } from './player';
 import { Manager } from './staff';
 
 /**
@@ -52,6 +52,34 @@ export interface PendingClubEvent {
     npcClubName?: string;
     offeredFee?: number;
   };
+}
+
+// ── Scout Mission ─────────────────────────────────────────────────────────────
+
+export type ScoutMissionStatus =
+  | 'SEARCHING'     // Scout is out looking — resolves to TARGET_FOUND on next week tick
+  | 'TARGET_FOUND'  // Player identified at NPC club — awaiting bid
+  | 'BID_PENDING'   // Math challenge passed, bid submitted — completes when window opens
+  | 'BID_REJECTED'; // Math challenge failed — can re-bid
+
+export interface ScoutMission {
+  status: ScoutMissionStatus;
+  position: Position;
+  attributePriority: 'attack' | 'defence' | 'teamwork' | null;
+  /** Maximum transfer fee willing to pay, in pence */
+  budgetCeiling: number;
+  /** Scout fee already paid upfront, in pence */
+  scoutFee: number;
+  /** Week the mission was started */
+  weekStarted: number;
+  /** Populated when status moves to TARGET_FOUND */
+  target?: Player;
+  targetNpcClubId?: string;
+  targetNpcClubName?: string;
+  /** Transfer fee the NPC club wants, in pence */
+  askingPrice?: number;
+  /** Wage offered by the player — stored when bid is placed, used on window open */
+  offeredWage?: number;
 }
 
 /**
@@ -116,6 +144,12 @@ export interface GameState {
    * Prevents the same event firing more than once per 6 weeks.
    */
   moraleEventCooldowns: Record<string, number>;
+
+  /**
+   * Active scout mission, if any.
+   * Only one mission can be active at a time.
+   */
+  scoutMission: ScoutMission | null;
 }
 
 /**

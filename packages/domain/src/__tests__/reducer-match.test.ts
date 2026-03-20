@@ -64,6 +64,9 @@ function makeState(entries: LeagueTableEntry[], playerClubId: string = 'club-1')
     season: 1,
     freeAgentPool: [],
     managerPool: [],
+    lowMoraleWeeks: 0,
+    moraleEventCooldowns: {},
+    scoutMission: null,
   };
 }
 

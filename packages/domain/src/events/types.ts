@@ -5,7 +5,7 @@
  * They are immutable facts that build up the event stream.
  */
 
-import { Player } from '../types/player';
+import { Player, Position } from '../types/player';
 import { Staff, Manager } from '../types/staff';
 import { PendingClubEvent } from '../types/game-state-updated';
 import { TrainingFocus } from '../types/facility';
@@ -33,7 +33,12 @@ export type GameEvent =
   | NpcPlayerSignedEvent
   | ManagerHiredEvent
   | ManagerSackedEvent
-  | PreSeasonStartedEvent;
+  | PreSeasonStartedEvent
+  | ScoutMissionStartedEvent
+  | ScoutTargetFoundEvent
+  | ScoutBidPlacedEvent
+  | ScoutTransferCompletedEvent
+  | ScoutMissionCancelledEvent;
 
 export interface TransferCompletedEvent {
   type: 'TRANSFER_COMPLETED';
@@ -237,4 +242,57 @@ export interface PreSeasonStartedEvent {
   timestamp: number;
   /** The new season number (previous season + 1) */
   season: number;
+}
+
+// ── Scout Mission Events ───────────────────────────────────────────────────────
+
+export interface ScoutMissionStartedEvent {
+  type: 'SCOUT_MISSION_STARTED';
+  timestamp: number;
+  clubId: string;
+  position: Position;
+  attributePriority: 'attack' | 'defence' | 'teamwork' | null;
+  budgetCeiling: number;   // pence
+  scoutFee: number;        // pence deducted from transferBudget
+  weekStarted: number;
+}
+
+/** Emitted on the week tick after SCOUT_MISSION_STARTED — player identified at NPC club */
+export interface ScoutTargetFoundEvent {
+  type: 'SCOUT_TARGET_FOUND';
+  timestamp: number;
+  clubId: string;
+  target: Player;
+  targetNpcClubId: string;
+  targetNpcClubName: string;
+  /** Transfer fee the NPC club is asking, in pence */
+  askingPrice: number;
+}
+
+/** Emitted when the player attempts negotiation (math challenge result) */
+export interface ScoutBidPlacedEvent {
+  type: 'SCOUT_BID_PLACED';
+  timestamp: number;
+  clubId: string;
+  /** true = challenge passed, bid pending window; false = rejected, can retry */
+  negotiationPassed: boolean;
+  /** Wage offered to the player, stored until window opens */
+  offeredWage: number;
+}
+
+/** Emitted at the start of the first eligible transfer window week after a successful bid */
+export interface ScoutTransferCompletedEvent {
+  type: 'SCOUT_TRANSFER_COMPLETED';
+  timestamp: number;
+  clubId: string;
+  player: Player;          // full player object with agreed wage + contract
+  fee: number;             // pence deducted from transferBudget
+  targetNpcClubId: string;
+  targetNpcClubName: string;
+}
+
+export interface ScoutMissionCancelledEvent {
+  type: 'SCOUT_MISSION_CANCELLED';
+  timestamp: number;
+  clubId: string;
 }
