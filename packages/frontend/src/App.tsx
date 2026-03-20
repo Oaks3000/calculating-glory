@@ -5,6 +5,7 @@ import { StadiumView } from './components/stadium-view/StadiumView';
 import { ViewToggle, ActiveView } from './components/shared/ViewToggle';
 import { PreSeasonScreen } from './components/pre-season/PreSeasonScreen';
 import { SeasonEndScreen } from './components/season-end/SeasonEndScreen';
+import { ForcedOutScreen } from './components/forced-out/ForcedOutScreen';
 
 export default function App() {
   const { state, events, dispatch, isLoading } = useGameState();
@@ -17,6 +18,10 @@ export default function App() {
 
   if (state.phase === 'SEASON_END') {
     return <SeasonEndScreen state={state} dispatch={dispatch} />;
+  }
+
+  if (state.phase === 'FORCED_OUT') {
+    return <ForcedOutScreen state={state} dispatch={dispatch} />;
   }
 
   return (

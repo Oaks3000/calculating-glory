@@ -16,7 +16,7 @@ import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
 import { Player } from '../types/player';
 import { getScoutLevel, isTransferWindowOpen } from '../types/facility';
 import { generateScoutTarget, getScoutFee } from '../data/scout-target-generator';
-import { ScoutTargetFoundEvent, ScoutTransferCompletedEvent } from '../events/types';
+import { ScoutTargetFoundEvent, ScoutTransferCompletedEvent, TakeoverAcceptedEvent } from '../events/types';
 
 /**
  * Handle a game command
@@ -59,6 +59,8 @@ export function handleCommand(command: GameCommand, state: GameState): CommandRe
       return handlePlaceScoutBid(command, state);
     case 'CANCEL_SCOUT_MISSION':
       return handleCancelScoutMission(command, state);
+    case 'ACCEPT_TAKEOVER':
+      return handleAcceptTakeover(command, state);
     default:
       return {
         error: {
@@ -380,6 +382,44 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
     week,
     season
   });
+
+  // ── Owner-forced-out check ──────────────────────────────────────────────────
+  // Trigger: position bottom 3 of 24 + budget < £10,000 + week >= 30
+  // Fires once — if already in FORCED_OUT phase, skip.
+  if (
+    state.phase !== 'FORCED_OUT' &&
+    state.phase !== 'SEASON_END' &&
+    !state.forcedOut &&
+    week >= 30
+  ) {
+    const playerEntry   = state.league.entries.find(e => e.clubId === state.club.id);
+    const position      = playerEntry?.position ?? 1;
+    const inBottom3     = position > 21;              // positions 22, 23, 24 out of 24
+    const broke         = state.club.transferBudget < 1_000_000; // < £10,000
+
+    if (inBottom3 && broke) {
+      // Find the lowest-ranked NPC club (highest position number that isn't the player's)
+      const sorted    = [...state.league.entries].sort((a, b) => b.position - a.position);
+      const bottomNPC = sorted.find(e => e.clubId !== state.club.id);
+      if (bottomNPC) {
+        const gameStartEvent = state.events.find(e => e.type === 'GAME_STARTED') as
+          { type: 'GAME_STARTED'; seed: string } | undefined;
+        const seedStr = gameStartEvent?.seed ?? 'default-seed';
+        events.push({
+          type:             'OWNER_FORCED_OUT',
+          timestamp:        now,
+          previousClubId:   state.club.id,
+          previousClubName: state.club.name,
+          previousPosition: position,
+          takeoverClubId:   bottomNPC.clubId,
+          takeoverClubName: bottomNPC.clubName,
+          seed:             seedStr,
+          week,
+        });
+        return { events }; // Skip SEASON_ENDED — game transitions to FORCED_OUT phase
+      }
+    }
+  }
 
   // If this is the last week of the season, emit SeasonEndedEvent
   if (week === 46) {
@@ -973,4 +1013,30 @@ function handleRecordMathAttempt(command: any, _state: GameState): CommandResult
   ];
 
   return { events };
+}
+
+function handleAcceptTakeover(_command: any, state: GameState): CommandResult {
+  if (state.phase !== 'FORCED_OUT' || !state.forcedOut) {
+    return {
+      error: {
+        code: 'VALIDATION_FAILED',
+        message: 'No forced-out takeover is pending',
+      },
+    };
+  }
+
+  const gameStartEvent = state.events.find(e => e.type === 'GAME_STARTED') as
+    { type: 'GAME_STARTED'; seed: string } | undefined;
+  const seedStr = gameStartEvent?.seed ?? 'default-seed';
+
+  const event: TakeoverAcceptedEvent = {
+    type:             'TAKEOVER_ACCEPTED',
+    timestamp:        Date.now(),
+    takeoverClubId:   state.forcedOut.takeoverClubId,
+    takeoverClubName: state.forcedOut.takeoverClubName,
+    seed:             seedStr,
+    week:             state.forcedOut.week,
+  };
+
+  return { events: [event] };
 }

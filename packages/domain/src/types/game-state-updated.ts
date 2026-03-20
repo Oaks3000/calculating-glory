@@ -150,6 +150,28 @@ export interface GameState {
    * Only one mission can be active at a time.
    */
   scoutMission: ScoutMission | null;
+
+  /**
+   * Set when the owner has been forced out (trigger: bottom 3 + budget < £10k at week 30+).
+   * Cleared when the player accepts the takeover of the bottom NPC club.
+   */
+  forcedOut: ForcedOutState | null;
+}
+
+/**
+ * State held during the forced-out / takeover-offer interstitial.
+ */
+export interface ForcedOutState {
+  /** The club the player was ousted from */
+  previousClubId:   string;
+  previousClubName: string;
+  /** Their league position at the time of ousting */
+  previousPosition: number;
+  /** The bottom NPC club being offered as the takeover target */
+  takeoverClubId:   string;
+  takeoverClubName: string;
+  /** The week the ousting happened */
+  week: number;
 }
 
 /**
@@ -175,12 +197,13 @@ export interface BusinessAcumen {
 /**
  * Season phases
  */
-export type SeasonPhase = 
+export type SeasonPhase =
   | 'PRE_SEASON'
   | 'EARLY_SEASON'      // Weeks 1-15
   | 'MID_SEASON'        // Weeks 16-30
   | 'LATE_SEASON'       // Weeks 31-46
-  | 'SEASON_END';
+  | 'SEASON_END'
+  | 'FORCED_OUT';       // Owner ousted — awaiting takeover acceptance
 
 /**
  * Command errors
