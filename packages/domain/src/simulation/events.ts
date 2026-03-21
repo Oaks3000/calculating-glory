@@ -16,6 +16,7 @@ import { CLUB_EVENT_TEMPLATES, ClubEventTemplate } from '../data/club-events';
 import { createRng } from './rng';
 import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
 import { avgSquadMorale, isUnsettled } from './morale';
+import { computeOverallRating } from '../types/player';
 
 /**
  * Check whether a template's prerequisite has been met in the resolved history.
@@ -173,7 +174,7 @@ export function generateWeekEvents(
 
   // Find the squad's highest-rated player for player-specific events
   const starPlayer = state.club.squad.length > 0
-    ? state.club.squad.reduce((best, p) => p.overallRating > best.overallRating ? p : best)
+    ? state.club.squad.reduce((best, p) => computeOverallRating(p) > computeOverallRating(best) ? p : best)
     : null;
 
   // Hydrate into PendingClubEvent objects
@@ -252,7 +253,7 @@ export function generatePoachAttempts(
   if (state.phase === 'PRE_SEASON' || state.phase === 'SEASON_END') return [];
 
   // Squad must have at least one attractive player (OVR ≥ 55)
-  const targets = state.club.squad.filter(p => p.overallRating >= 55);
+  const targets = state.club.squad.filter(p => computeOverallRating(p) >= 55);
   if (targets.length === 0) return [];
 
   // Check if a poach event is already pending (one at a time)
@@ -265,7 +266,7 @@ export function generatePoachAttempts(
   // Unsettled players (morale < 20) are 3× more likely to be approached.
   const UNSETTLED_POACH_MULT = 3;
   const weightOf = (p: typeof targets[0]) =>
-    p.overallRating * (isUnsettled(p) ? UNSETTLED_POACH_MULT : 1);
+    computeOverallRating(p) * (isUnsettled(p) ? UNSETTLED_POACH_MULT : 1);
   const totalWeight = targets.reduce((sum, p) => sum + weightOf(p), 0);
   let pick = rng.next() * totalWeight;
   const target = targets.find(p => {
@@ -274,13 +275,13 @@ export function generatePoachAttempts(
   }) ?? targets[targets.length - 1];
 
   // Roll per-player chance
-  if (rng.next() > poachChance(target.overallRating)) return [];
+  if (rng.next() > poachChance(computeOverallRating(target))) return [];
 
   // Pick a random NPC club (not the player's own club)
   const npcClubs = LEAGUE_TWO_TEAMS.filter(t => t.id !== state.club.id);
   const npcClub = npcClubs[rng.nextInt(0, npcClubs.length - 1)];
 
-  const fee = offeredFee(target.wage, target.overallRating);
+  const fee = offeredFee(target.wage, computeOverallRating(target));
   const feeStr = (fee / 100).toLocaleString('en-GB', {
     style: 'currency',
     currency: 'GBP',

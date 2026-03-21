@@ -26,7 +26,6 @@ const gameStartedEvent: GameStartedEvent = {
 const squadPlayer: Player = {
   id: 'player-1',
   name: 'Dale Hutchins',
-  overallRating: 62,
   position: 'MID',
   wage: 100_000,
   transferValue: 1_500_000,
@@ -38,17 +37,20 @@ const squadPlayer: Player = {
   stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 62 },
 };
 
-/** A signed free agent — transferValue is 0, fee computed from OVR */
+/**
+ * A signed free agent — transferValue is 0, fee computed from OVR.
+ * Attributes are balanced to give computeOverallRating() == 70,
+ * so the expected fee is 70 × 70 × 500 = 2,450,000.
+ */
 const freeAgentPlayer: Player = {
   id: 'player-2',
   name: 'Connor Farrell',
-  overallRating: 70,
   position: 'FWD',
   wage: 150_000,
   transferValue: 0,
   age: 24,
   morale: 75,
-  attributes: { attack: 72, defence: 30, teamwork: 65, charisma: 50, publicPotential: 78 },
+  attributes: { attack: 70, defence: 70, teamwork: 70, charisma: 50, publicPotential: 78 },
   truePotential: 75,
   contractExpiresWeek: 50,
   stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 70 },

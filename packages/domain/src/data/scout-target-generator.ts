@@ -180,11 +180,6 @@ export function generateScoutTarget(
   // Attributes
   const attributes = generateTargetAttributes(position, attributePriority, band, rng);
 
-  // Overall rating: average of primary attributes
-  const overallRating = Math.round(
-    (attributes.attack + attributes.defence + attributes.teamwork) / 3
-  );
-
   // Wage: within the band
   const wage = rng.nextInt(band.wageMin, band.wageMax);
 
@@ -198,13 +193,14 @@ export function generateScoutTarget(
   // Morale: contracted players are generally content
   const morale = rng.nextInt(55, 80);
 
-  // Transfer value / asking price: same formula as SELL_PLAYER_TO_NPC
-  const askingPrice = Math.max(10_000_00, overallRating * overallRating * 800);
+  // Transfer value / asking price: OVR² × 800, same formula as SELL_PLAYER_TO_NPC.
+  // Computed inline here since overallRating is no longer stored on Player.
+  const ovr = Math.round((attributes.attack + attributes.defence + attributes.teamwork) / 3);
+  const askingPrice = Math.max(10_000_00, ovr * ovr * 800);
 
   const player: Player = {
     id: `scout-target-S${season}-W${week}-${position}`,
     name,
-    overallRating,
     position,
     wage,
     transferValue: askingPrice,
@@ -218,7 +214,7 @@ export function generateScoutTarget(
       assists: 0,
       cleanSheets: 0,
       appearances: 0,
-      averageRating: overallRating,
+      averageRating: ovr,
     },
   };
 

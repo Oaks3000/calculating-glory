@@ -1,4 +1,4 @@
-import { GameState, formatMoney, Player, getScoutedPotential, scoutNoiseRange, getScoutLevel, isUnsettled } from '@calculating-glory/domain';
+import { GameState, formatMoney, Player, getScoutedPotential, scoutNoiseRange, getScoutLevel, isUnsettled, computeOverallRating } from '@calculating-glory/domain';
 
 interface SquadAuditTableProps {
   state: GameState;
@@ -52,7 +52,7 @@ function PlayerRow({ player, scoutLevel }: { player: Player; scoutLevel: number 
     <tr className="border-b border-bg-raised/50 hover:bg-bg-raised/30 transition-colors text-txt-muted">
       <td className="py-1 pr-2 truncate max-w-[130px] text-txt-primary">{player.name}</td>
       <td className={`pr-2 py-1 font-bold ${POS_COLORS[player.position]}`}>{player.position}</td>
-      <td className="text-right pr-2 py-1 text-txt-primary font-semibold">{player.overallRating}</td>
+      <td className="text-right pr-2 py-1 text-txt-primary font-semibold">{computeOverallRating(player)}</td>
       <td className={`text-right pr-2 py-1 font-semibold ${potClass}`} title={`Scout accuracy: ±${noise}`}>
         {potPrefix}{scoutedPot}
       </td>
@@ -83,7 +83,7 @@ export function SquadAuditTable({ state }: SquadAuditTableProps) {
     const pa = POSITION_ORDER.indexOf(a.position);
     const pb = POSITION_ORDER.indexOf(b.position);
     if (pa !== pb) return pa - pb;
-    return b.overallRating - a.overallRating;
+    return computeOverallRating(b) - computeOverallRating(a);
   });
 
   const counts = POSITION_ORDER.reduce<Record<string, number>>((acc, pos) => {

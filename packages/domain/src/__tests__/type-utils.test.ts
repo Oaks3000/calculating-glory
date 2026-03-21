@@ -18,7 +18,7 @@ import { LeagueTableEntry } from '../types/league';
 
 function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
-    id: 'p1', name: 'Test', overallRating: 70, position: 'FWD',
+    id: 'p1', name: 'Test', position: 'FWD',
     wage: 50000, transferValue: 5000000, age: 25, morale: 75,
     attributes: { attack: 60, defence: 20, teamwork: 50, charisma: 45, publicPotential: 60 },
     truePotential: 62,
@@ -103,7 +103,8 @@ describe('calculateClubStrength', () => {
     // No squad → calculateSquadStrength crashes on division by zero? Let me check...
     // Actually: totalRating / squad.length = 0/0 = NaN → Math.floor(NaN * 100) = NaN
     // This might be an edge case, but let's test with a non-empty squad
-    const p = makePlayer({ overallRating: 60 });
+    // OVR = (60+60+60)/3 = 60 → squadStrength = floor(60 * 100) = 6000
+    const p = makePlayer({ attributes: { attack: 60, defence: 60, teamwork: 60, charisma: 45, publicPotential: 60 } });
     const clubWithPlayer: Club = { ...club, squad: [p], reputation: 50 };
     const strength = calculateClubStrength(clubWithPlayer);
     // squadStrength = floor((60 / 1) * 100) = 6000
@@ -114,7 +115,8 @@ describe('calculateClubStrength', () => {
   });
 
   it('includes staff quality bonus', () => {
-    const p = makePlayer({ overallRating: 70 });
+    // OVR = (70+70+70)/3 = 70
+    const p = makePlayer({ attributes: { attack: 70, defence: 70, teamwork: 70, charisma: 45, publicPotential: 60 } });
     const club: Club = {
       id: 'c1', name: 'Test', transferBudget: 0, wageBudget: 0,
       squad: [p],
@@ -136,7 +138,8 @@ describe('calculateClubStrength', () => {
   });
 
   it('includes facility level bonus', () => {
-    const p = makePlayer({ overallRating: 70 });
+    // OVR = (70+70+70)/3 = 70
+    const p = makePlayer({ attributes: { attack: 70, defence: 70, teamwork: 70, charisma: 45, publicPotential: 60 } });
     const facility: Facility = {
       type: 'TRAINING_GROUND', level: 3, upgradeCost: 5000000,
       benefit: { type: 'performance', improvement: 10 }

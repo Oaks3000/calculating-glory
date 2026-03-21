@@ -42,6 +42,9 @@ export * from './data/scout-target-generator';
 // Morale system
 export { isUnsettled, avgSquadMorale, UNSETTLED_THRESHOLD } from './simulation/morale';
 
+// Simulation helpers
+export { playerCharismaRevenue, squadCharismaRevenue } from './simulation/revenue';
+
 // Core state types
 export * from './types/game-state-updated';
 export * from './types/club';

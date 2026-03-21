@@ -11,6 +11,7 @@ import { LeagueTable, LeagueTableEntry, sortLeagueTable } from '../types/league'
 import { CURRICULUM_LEVELS } from '../curriculum/curriculum-config';
 import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
 import { getDefaultFacilities, getUpgradeCost } from '../types/facility';
+import { squadCharismaRevenue } from '../simulation/revenue';
 import { generateStartingSquad } from '../data/squad-generator';
 import { generateFreeAgentPool } from '../data/free-agent-generator';
 import { generateManagerPool } from '../data/manager-generator';
@@ -429,7 +430,13 @@ function handleWeekAdvanced(state: GameState, event: any): GameState {
   const foodBev = state.club.facilities.find(f => f.type === 'FOOD_AND_BEVERAGE');
   const commercialRevenue = commercial ? commercial.level * 50_000 : 0; // £500/week per level
   const foodRevenue = foodBev ? foodBev.level * 30_000 : 0;            // £300/week per level
-  const weeklyRevenue = commercialRevenue + foodRevenue;
+
+  // Charisma-based popularity revenue: t³ × 75,000p × (OVR × 0.1)
+  // Zero for most League Two squads; scales steeply above c=80 for high-OVR players.
+  // See simulation/revenue.ts for full formula documentation.
+  const charismaRevenue = squadCharismaRevenue(state.club.squad);
+
+  const weeklyRevenue = commercialRevenue + foodRevenue + charismaRevenue;
 
   let phase = state.phase;
   if (week <= 15) {

@@ -19,7 +19,6 @@ function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
     id: 'p1',
     name: 'Test Player',
-    overallRating: 70,
     position: 'MID',
     wage: 50000,          // £500/week
     transferValue: 5000000, // £50,000

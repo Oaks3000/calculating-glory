@@ -3,7 +3,7 @@
  * Opened when the player clicks the Training Ground core unit (level 1+).
  */
 
-import { GameState } from '@calculating-glory/domain';
+import { GameState, computeOverallRating } from '@calculating-glory/domain';
 import { SlideOver } from '../shared/SlideOver';
 import { SquadAuditTable } from '../command-centre/SquadAuditTable';
 
@@ -18,7 +18,7 @@ export function SquadAuditSlideOver({ isOpen, onClose, state }: SquadAuditSlideO
 
   // Squad summary stats
   const avgRating = club.squad.length
-    ? Math.round(club.squad.reduce((s, p) => s + p.overallRating, 0) / club.squad.length)
+    ? Math.round(club.squad.reduce((s, p) => s + computeOverallRating(p), 0) / club.squad.length)
     : 0;
   const totalWages = club.squad.reduce((s, p) => s + p.wage, 0);
 

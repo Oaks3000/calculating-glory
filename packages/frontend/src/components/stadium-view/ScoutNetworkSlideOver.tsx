@@ -22,6 +22,7 @@ import {
   getScoutLevel,
   nextWindowLabel,
   getScoutFee,
+  computeOverallRating,
 } from '@calculating-glory/domain';
 import { SlideOver } from '../shared/SlideOver';
 import { MathChallengeCard } from '../social-feed/MathChallengeCard';
@@ -346,7 +347,7 @@ export function ScoutNetworkSlideOver({
                 </div>
                 <div className="text-right">
                   <p className="text-xl font-black data-font text-data-blue">
-                    {target.overallRating}
+                    {computeOverallRating(target)}
                   </p>
                   <p className="text-xs2 text-txt-muted">OVR</p>
                 </div>
@@ -550,7 +551,7 @@ export function ScoutNetworkSlideOver({
               </div>
               <div className="text-right">
                 <p className="text-xl font-black data-font text-data-blue">
-                  {target.overallRating}
+                  {computeOverallRating(target)}
                 </p>
                 <p className="text-xs2 text-txt-muted">OVR</p>
               </div>

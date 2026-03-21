@@ -2,7 +2,7 @@
  * Club-related types
  */
 
-import { Player } from './player';
+import { Player, computeOverallRating } from './player';
 import { Facility, TrainingFocus } from './facility';
 import { Staff, Manager } from './staff';
 import { Formation } from './formation';
@@ -81,8 +81,8 @@ export function calculateClubStrength(club: Club): number {
 }
 
 function calculateSquadStrength(squad: Player[]): number {
-  // Average player ratings * 100
-  const totalRating = squad.reduce((sum, p) => sum + p.overallRating, 0);
+  // Average computed OVR * 100
+  const totalRating = squad.reduce((sum, p) => sum + computeOverallRating(p), 0);
   return Math.floor((totalRating / squad.length) * 100);
 }
 

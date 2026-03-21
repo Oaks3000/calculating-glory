@@ -10,6 +10,7 @@ import {
   getScoutedPotential,
   scoutNoiseRange,
   getScoutLevel,
+  computeOverallRating,
 } from '@calculating-glory/domain';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -164,7 +165,7 @@ function FreeAgentCard({ player, canAfford, hasSquadRoom, scoutLevel, onSign }: 
           <span className="text-xs text-txt-muted">Age {player.age} · {formatMoney(player.wage)}/wk</span>
         </div>
         <div className="text-right shrink-0">
-          <span className="text-data-blue font-bold text-sm">{player.overallRating}</span>
+          <span className="text-data-blue font-bold text-sm">{computeOverallRating(player)}</span>
           <div className="text-[10px] text-txt-muted">OVR</div>
         </div>
       </div>
@@ -240,9 +241,10 @@ function SquadPlayerCard({ player, currentWeek, clubId, scoutLevel, onRelease, o
     ? Math.round((player.contractExpiresWeek - currentWeek) * player.wage * 0.5)
     : 0;
 
+  const playerOvr = computeOverallRating(player);
   const sellFee = player.transferValue > 0
     ? player.transferValue
-    : Math.max(10_000, player.overallRating * player.overallRating * 500);
+    : Math.max(10_000, playerOvr * playerOvr * 500);
 
   // All 23 NPC clubs (excluding player's own club)
   const npcClubs = LEAGUE_TWO_TEAMS.filter(t => t.id !== clubId);
@@ -293,7 +295,7 @@ function SquadPlayerCard({ player, currentWeek, clubId, scoutLevel, onRelease, o
           </div>
         </div>
         <div className="text-right shrink-0">
-          <span className="text-data-blue font-bold text-sm">{player.overallRating}</span>
+          <span className="text-data-blue font-bold text-sm">{computeOverallRating(player)}</span>
           <div className="text-[10px] text-txt-muted">OVR</div>
         </div>
       </div>
@@ -383,7 +385,7 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
       .filter(p => positionFilter === 'ALL' || p.position === positionFilter)
       .sort((a, b) => {
         switch (sortKey) {
-          case 'rating':  return b.overallRating - a.overallRating;
+          case 'rating':  return computeOverallRating(b) - computeOverallRating(a);
           case 'attack':  return b.attributes.attack - a.attributes.attack;
           case 'defence': return b.attributes.defence - a.attributes.defence;
           case 'wage':    return b.wage - a.wage;

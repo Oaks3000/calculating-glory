@@ -13,7 +13,7 @@ import { generateSeasonFixtures, getWeekFixtures, matchSeed } from '../simulatio
 import { createRng } from '../simulation/rng';
 import { generateWeekEvents, generatePoachAttempts, generateMoraleThresholdEvents } from '../simulation/events';
 import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
-import { Player } from '../types/player';
+import { Player, computeOverallRating } from '../types/player';
 import { getScoutLevel, isTransferWindowOpen } from '../types/facility';
 import { generateScoutTarget, getScoutFee } from '../data/scout-target-generator';
 import { ScoutTargetFoundEvent, ScoutTransferCompletedEvent, TakeoverAcceptedEvent } from '../events/types';
@@ -77,7 +77,6 @@ function handleMakeTransfer(command: any, state: GameState): CommandResult {
   const mockPlayer = {
     id: command.playerId,
     name: 'Mock Player',
-    overallRating: 70,
     position: 'MID' as const,
     wage: command.offeredWages,
     transferValue: command.offeredFee,
@@ -544,7 +543,7 @@ function handleStartSeason(command: any, state: GameState): CommandResult {
 
       // Pick highest-rated affordable agent, with slight randomness to avoid
       // every NPC taking the same top agent
-      affordable.sort((a, b) => b.overallRating - a.overallRating);
+      affordable.sort((a, b) => computeOverallRating(b) - computeOverallRating(a));
       // Top 3 candidates, pick randomly among them
       const candidates = affordable.slice(0, Math.min(3, affordable.length));
       const picked = candidates[rng.nextInt(0, candidates.length - 1)];
@@ -845,10 +844,11 @@ function handleSellPlayerToNpc(command: any, state: GameState): CommandResult {
     };
   }
 
-  // Fee: use player's transferValue if set, otherwise derive from overallRating
+  // Fee: use player's transferValue if set, otherwise derive from computed OVR
+  const ovr = computeOverallRating(player);
   const fee = player.transferValue > 0
     ? player.transferValue
-    : Math.max(10_000, player.overallRating * player.overallRating * 500);
+    : Math.max(10_000, ovr * ovr * 500);
 
   const events: GameEvent[] = [
     {
