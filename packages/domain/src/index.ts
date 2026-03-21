@@ -47,6 +47,7 @@ export { playerCharismaRevenue, squadCharismaRevenue } from './simulation/revenu
 
 // Attribute progression
 export {
+  POTENTIAL_CEILING_AGE,
   computeStatsAtAge,
   computeTruePotential,
   generatePlayerCurve,

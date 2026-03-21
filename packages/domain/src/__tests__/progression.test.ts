@@ -43,7 +43,7 @@ function makePlayerWithCurve(overrides: Partial<Player> = {}): Player {
     age: 25,
     morale: 70,
     attributes: { attack: 50, defence: 50, teamwork: 55, charisma: 45, publicPotential: 60 },
-    truePotential: 33,
+    truePotential: 29, // (25-18)/(42-18)*100 = 29
     curve: DEFAULT_CURVE,
     contractExpiresWeek: 46,
     stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 55 },
@@ -151,12 +151,26 @@ describe('computeStatsAtAge', () => {
 // ── computeTruePotential ───────────────────────────────────────────────────────
 
 describe('computeTruePotential', () => {
+  // DEFAULT_CURVE has startAge=18; ceiling is always 42.
+  // maxCareerLength = 42 - 18 = 24.
+
   it('returns 0 at career start', () => {
     expect(computeTruePotential(DEFAULT_CURVE, 18)).toBe(0);
   });
 
-  it('returns 100 at retirement age', () => {
-    expect(computeTruePotential(DEFAULT_CURVE, 36)).toBe(100);
+  it('returns 100 at the potential ceiling age (42)', () => {
+    // Reaching 42 means full potential realised, regardless of retirementAge
+    expect(computeTruePotential(DEFAULT_CURVE, 42)).toBe(100);
+  });
+
+  it('retirementAge of 36 produces ~75 — potential was not fully realised', () => {
+    // (36-18)/(42-18) = 18/24 = 0.75 → 75
+    expect(computeTruePotential(DEFAULT_CURVE, 36)).toBe(75);
+  });
+
+  it('a player retiring at 28 leaves with ~42 — significant career unrealised', () => {
+    // (28-18)/(42-18) = 10/24 = 0.417 → 42
+    expect(computeTruePotential(DEFAULT_CURVE, 28)).toBe(42);
   });
 
   it('increases with age through the career', () => {
@@ -167,15 +181,14 @@ describe('computeTruePotential', () => {
     expect(at25).toBeLessThan(at30);
   });
 
-  it('values below 50 indicate ascending player (pre-peak for SHALLOW_BELL)', () => {
-    // SHALLOW_BELL peaks at t=0.45 → career midpoint is around 45% through
-    // At age 24 (t = 6/18 = 0.33), truePotential = 33
-    expect(computeTruePotential(DEFAULT_CURVE, 24)).toBe(33);
+  it('values below 50 indicate pre-ceiling midpoint — at age 24 with startAge 18', () => {
+    // (24-18)/(42-18) = 6/24 = 0.25 → 25
+    expect(computeTruePotential(DEFAULT_CURVE, 24)).toBe(25);
   });
 
   it('is clamped to [0, 100]', () => {
     expect(computeTruePotential(DEFAULT_CURVE, 5)).toBe(0);    // before career start
-    expect(computeTruePotential(DEFAULT_CURVE, 99)).toBe(100); // way past retirement
+    expect(computeTruePotential(DEFAULT_CURVE, 99)).toBe(100); // way past ceiling
   });
 });
 

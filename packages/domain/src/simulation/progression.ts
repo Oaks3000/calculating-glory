@@ -125,19 +125,32 @@ export function computeStatsAtAge(
 }
 
 /**
- * Compute the career-arc position indicator (0–100):
- *   0  = career start
- *   ~50 = approaching or at peak (depending on curve shape)
- *   100 = retirement age
+ * The absolute career ceiling used for truePotential calculations.
+ * A player who plays until this age has fulfilled all their potential.
+ * Individual retirementAge varies — retiring before 42 leaves potential
+ * on the table (truePotential < 100 at the point of retirement).
+ */
+export const POTENTIAL_CEILING_AGE = 42;
+
+/**
+ * Compute the career-arc position indicator (0–100).
  *
- * Values below 50 typically indicate an ascending player;
- * values at/above 50 typically indicate plateau or decline.
- * Repurposed as truePotential on the Player — replaces the old "ceiling" meaning.
+ * Anchored to POTENTIAL_CEILING_AGE (42) regardless of the player's actual
+ * retirementAge. This means:
+ *   - truePotential = 0   → just started (career start)
+ *   - truePotential = 100 → played until age 42 (full potential realised)
+ *   - truePotential = 42  → retired at ~29 — significant potential unrealised
+ *
+ * A player who retires at 35 will finish around truePotential = 71; one who
+ * retires at 28 leaves with ~40. The gap from their final value to 100 is a
+ * visible measure of what was left on the table.
+ *
+ * Values below ~50 are ascending; at/above ~50 are plateau or declining.
  */
 export function computeTruePotential(curve: PlayerCurve, age: number): number {
-  const careerLength = curve.retirementAge - curve.startAge;
-  if (careerLength <= 0) return 100;
-  const t = Math.max(0, Math.min(1, (age - curve.startAge) / careerLength));
+  const maxCareerLength = POTENTIAL_CEILING_AGE - curve.startAge;
+  if (maxCareerLength <= 0) return 100;
+  const t = Math.max(0, Math.min(1, (age - curve.startAge) / maxCareerLength));
   return Math.round(t * 100);
 }
 
