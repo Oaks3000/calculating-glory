@@ -26,6 +26,7 @@ function makePlayer(overrides: Partial<Player> = {}): Player {
     morale: 75,
     attributes: { attack: 50, defence: 50, teamwork: 55, charisma: 45, publicPotential: 60 },
     truePotential: 62,
+    curve: { shape: 'SHALLOW_BELL' as const, peakHeight: 3 as const, startAge: 18, retirementAge: 36, baseAttack: 50, baseDefence: 50 },
     contractExpiresWeek: 46,
     stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 70 },
     ...overrides

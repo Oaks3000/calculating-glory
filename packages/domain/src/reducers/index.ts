@@ -22,6 +22,7 @@ import {
   applyManagerChangeMorale,
   avgSquadMorale,
 } from '../simulation/morale';
+import { applySeasonProgression } from '../simulation/progression';
 
 /**
  * Reduce an event into state
@@ -670,14 +671,22 @@ function handleManagerSacked(state: GameState, event: ManagerSackedEvent): GameS
 }
 
 function handlePreSeasonStarted(state: GameState, event: PreSeasonStartedEvent): GameState {
+  const retiringIds = new Set((event.retiredPlayers ?? []).map(p => p.id));
+
+  // Age up all squad members, update attack/defence from their career curves,
+  // and remove anyone whose retirement was confirmed by the command handler.
+  const updatedSquad = state.club.squad
+    .filter(p => !retiringIds.has(p.id))
+    .map(p => applySeasonProgression(p));
+
   return {
     ...state,
     phase: 'PRE_SEASON',
     season: event.season,
     currentWeek: 0,
-    // Reset form so pre-season starts fresh
     club: {
       ...state.club,
+      squad: updatedSquad,
       form: [],
       trainingFocus: null,
       preferredFormation: null,

@@ -10,6 +10,7 @@
 
 import { Player, Position, PlayerAttributes } from '../types/player';
 import { createRng, Rng } from '../simulation/rng';
+import { generatePlayerCurve, computeTruePotential } from '../simulation/progression';
 
 // Name banks — plausible lower-league English football player names
 const FORENAMES = [
@@ -122,10 +123,11 @@ export function generateStartingSquad(seed: string, clubId: string): Player[] {
     const publicPotential = rng.nextInt(25, 55);
     attributes.publicPotential = publicPotential;
 
-    // truePotential: publicPotential ± rng offset 0–18 (clamped 1–100)
-    const potentialOffset = rng.nextInt(0, 18);
-    const potentialDirection = rng.next() < 0.5 ? 1 : -1;
-    const truePotential = Math.max(1, Math.min(100, publicPotential + potentialDirection * potentialOffset));
+    // Career curve — determines growth/decline arc and retirement age
+    const curve = generatePlayerCurve(rng, age, attributes.attack, attributes.defence, position);
+
+    // truePotential: career-arc position indicator derived from the curve
+    const truePotential = computeTruePotential(curve, age);
 
     // contractExpiresWeek: mix of 23 and 46 (half expire mid-season to create urgency)
     const contractExpiresWeek = rng.next() < 0.5 ? 23 : 46;
@@ -140,6 +142,7 @@ export function generateStartingSquad(seed: string, clubId: string): Player[] {
       morale,
       attributes,
       truePotential,
+      curve,
       contractExpiresWeek,
       stats: {
         goals: 0,

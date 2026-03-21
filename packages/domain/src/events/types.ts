@@ -244,6 +244,11 @@ export interface PreSeasonStartedEvent {
   timestamp: number;
   /** The new season number (previous season + 1) */
   season: number;
+  /**
+   * Players retiring this off-season (age reached retirementAge).
+   * Populated by BEGIN_NEXT_SEASON command handler; applied by the reducer.
+   */
+  retiredPlayers?: ReadonlyArray<{ id: string; name: string; flavour: string }>;
 }
 
 // ── Scout Mission Events ───────────────────────────────────────────────────────

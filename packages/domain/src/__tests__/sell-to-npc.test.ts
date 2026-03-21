@@ -33,6 +33,7 @@ const squadPlayer: Player = {
   morale: 70,
   attributes: { attack: 55, defence: 50, teamwork: 60, charisma: 45, publicPotential: 65 },
   truePotential: 68,
+  curve: { shape: 'SHALLOW_BELL' as const, peakHeight: 3 as const, startAge: 18, retirementAge: 36, baseAttack: 50, baseDefence: 50 },
   contractExpiresWeek: 46,
   stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 62 },
 };
@@ -52,6 +53,7 @@ const freeAgentPlayer: Player = {
   morale: 75,
   attributes: { attack: 70, defence: 70, teamwork: 70, charisma: 50, publicPotential: 78 },
   truePotential: 75,
+  curve: { shape: 'SHALLOW_BELL' as const, peakHeight: 3 as const, startAge: 18, retirementAge: 36, baseAttack: 50, baseDefence: 50 },
   contractExpiresWeek: 50,
   stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 70 },
 };
