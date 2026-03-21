@@ -2,53 +2,42 @@
 
 ## What Was Done This Session
 
-### 1. Scout Missions — PR #49 ✅
+### 1. PR #51 — Computed overallRating + Charisma → Commercial Revenue ✅
 
-Full targeted-scouting flow on top of the existing Scout Network facility:
+Closed issue #30 (first half):
 
-- `START_SCOUT_MISSION` — position picker, attribute priority, budget ceiling, upfront £1,000 scout fee deducted
-- `PLACE_SCOUT_BID` — math challenge gate; on pass → `BID_PENDING`; on fail → `BID_REJECTED` (can retry)
-- `CANCEL_SCOUT_MISSION` — refunds nothing, clears state
-- State machine: `SEARCHING` → `SCOUT_TARGET_FOUND` (next week tick) → `TARGET_FOUND` → `BID_PENDING` / `BID_REJECTED`
-- Transfer completes automatically when window opens (`isTransferWindowOpen`) while `BID_PENDING`
-- `ScoutNetworkSlideOver.tsx` — full 4-state UI (no mission, searching, target found with inline math challenge, bid submitted)
-- `scout-target-generator.ts` — seeded NPC target generation (position, attributes, asking price from NPC club)
-- 329 scout-mission tests + `reducer-match.test.ts` updated
+- Removed stored `overallRating` field from `Player` — replaced with pure `computeOverallRating(player)` function: `round((attack + defence + teamwork) / 3)`
+- Charisma excluded from OVR intentionally — it's a commercial attribute, not on-pitch
+- New `simulation/revenue.ts` — `playerCharismaRevenue(player)` uses a cubic curve: `t³ × 75,000p × (OVR × 0.1)` where `t = (charisma - 60) / 40`; zero below charisma 60. Self-calibrating: League Two players (low OVR + low charisma) produce near-zero; PL superstars (c=92/OVR=90) → ~£5,500/wk
+- `squadCharismaRevenue()` aggregates and wires into `handleWeekAdvanced()` weekly revenue
+- All domain + frontend read sites updated to use `computeOverallRating()` (7 frontend files, 4 domain files)
+- BACKLOG updated: facility revenue scaling noted as prerequisite for multi-league work
 
-### 2. Phase 5.8 — Owner Forced Out — PR #50 ✅
+### 2. PR #52 — Seasonal Player Attribute Progression + Retirement System ✅
 
-Full forced-out mechanic closing issue #34:
-
-- **Trigger**: position > 21 (bottom 3 of 24) + `transferBudget < £10,000` + `week >= 30`
-- `OWNER_FORCED_OUT` event fires from `handleSimulateWeek`, short-circuits before `SEASON_ENDED`
-- Takeover target = lowest-ranked NPC club in current league table
-- `ACCEPT_TAKEOVER` command → `TAKEOVER_ACCEPTED` event
-- On takeover: new club id/name, £50k budget, £20k/wk wages, fresh (weak) squad, reset facilities, boardConfidence = 20
-- Business Acumen carries over unchanged — "the one thing they can't take away"
-- `ForcedOutScreen.tsx` — two-step UI: ousted screen (position/week/budget stats) → offer screen (win condition, carry-over callout, Accept CTA)
-- `App.tsx` — `FORCED_OUT` phase gate before main game UI
-- 29 new forced-out tests; 374 total domain tests green
-
-### 3. Merge / rebase / prune
-
-- Rebased `objective-chaum` onto updated main (resolved 4 conflicts + duplicate morale export)
-- Merged PR #49 (squash)
-- Rebased `gifted-dijkstra` onto post-#49 main (resolved 6 conflicts)
-- Merged PR #50 (squash)
-- Both worktrees pruned
-- Domain dist rebuilt from final main
+- **`PlayerCurve` type** — 4 shapes (SHALLOW_BELL, STEEP_BELL, FRONT_WEIGHTED, BACK_WEIGHTED) + peak-height modifier (1–5, controlling total stat gain: +10 to +42pts)
+- **Self-consistency guarantee** — curve back-calculates `baseAttack`/`baseDefence` so `computeStatsAtAge(curve, currentAge)` always returns the player's current stats at generation; no stat-jump on first tick
+- **`progression.ts`** — pure module: `computeStatsAtAge`, `computeTruePotential`, `generatePlayerCurve`, `applySeasonProgression`, `shouldRetire`, `getRetirementFlavour`
+- **Seasonal tick** — `BEGIN_NEXT_SEASON` command computes retiring players with seeded flavour text; `PRE_SEASON_STARTED` reducer ages all squad members, updates attack/defence from curve, removes retirees
+- **Attack + defence only** — teamwork and charisma unchanged; 70:30 position weighting (FWD: 70% attack, GK/DEF: 70% defence, MID: 50/50)
+- **Retirement age** — approximate Gaussian centred ~35 (SD ~3.5), clamped 28–42; always ≥ currentAge + 1
+- **Retirement flavour** — 75% absurd (competitive ferret training, snail-racing syndicate jackpot), 25% mundane (injury)
+- **`truePotential` redefined** — career-arc position cursor anchored to assumed ceiling of **age 42** (not actual retirementAge). Player retiring at 35 finishes at ~71; retiring at 28 finishes at ~42. Gap to 100 = unrealised career. Updated each season.
+- **33 new progression tests** — curve shapes, position weighting, floor enforcement, self-consistency, retirement boundaries, flavour determinism; 409 total, all green
 
 ---
 
 ## Current State
 
 ### ✅ Working
-- Main is clean at `afdee60` — all Phase 5 features shipped (5.1–5.8 + Scout Missions)
-- 374 domain tests green across 21 suites
+
+- Main is clean at `91e16f3` — PRs #51 + #52 both squash-merged
+- 409 domain tests green across 22 suites
 - No open worktrees
 - Full season flow: PRE_SEASON → EARLY/MID/LATE_SEASON → SEASON_END → PRE_SEASON (next season) or FORCED_OUT → takeover
-- Scout Network facility + scout mission bid flow end-to-end
-- Business Acumen curriculum gating across all 5 levels
+- Players now grow and decline each season; some retire with flavour text
+- `computeOverallRating()` is a pure function — no stored field
+- Charisma contributes to weekly commercial revenue (cubic curve, OVR-amplified)
 
 ### 🟡 In Progress
 - Nothing
@@ -58,33 +47,46 @@ Full forced-out mechanic closing issue #34:
 
 ---
 
-## Phase 5 — Complete Feature List
+## Architecture Notes
 
-| PR | Feature |
-|----|---------|
-| #33 #37–#39 #42 | Pre-season, transfers, match sim rewrite (5.1–5.3) |
-| #43 | NPC poaching — 4 response options, teamwork cascade (5.4) |
-| #44 | Manager hire & impact — 3-tier pool, tactical/motivation/experience (5.5) |
-| #45 | Club-owned transfers — SELL_PLAYER_TO_NPC, fee calc, news ticker (5.6) |
-| #46 | Season end screen — outcome banner, stats grid, BEGIN_NEXT_SEASON (5.7) |
-| #47 | Scout Network facility — truePotential visibility by level |
-| #48 | Morale system — result deltas, contract anxiety, threshold events |
-| #49 | Scout missions — targeted scouting, math challenge bid gate |
-| #50 | Owner forced out — FORCED_OUT phase, takeover flow (5.8) |
+### PlayerCurve design
+- `startAge` = player's current age at generation (curve is relative, not absolute career history)
+- Back-calculation: `baseAttack = currentAttack - curveValue(currentT) * gain * attackWeight`
+- Self-consistency: `computeStatsAtAge(curve, startAge)` always equals the player's stats at generation
+- Curve shapes: `sin(π/2 * x) ^ sharpness` for both ascent and descent phases; exponent determines steepness
+
+### truePotential semantics (new)
+- 0 = career start; 100 = played until age 42 (assumed ceiling)
+- `POTENTIAL_CEILING_AGE = 42` exported constant
+- `publicPotential` in `PlayerAttributes` now represents the noisy visible read of this; the gap between them is what scouting reveals
+
+### Facility revenue ceiling
+- Current: level × £500/wk commercial, capping at ~£4k/wk total
+- Will not scale to Championship/PL — logged in BACKLOG.md as prerequisite for multi-league work
+- Fix deferred; next season work may expose this
+
+---
+
+## Open Issues
+
+| # | Title | Priority |
+|---|-------|----------|
+| #30 | Charisma revenue ✅ + overallRating computed ✅ — remaining: `publicPotential` ↔ `truePotential` Scout Network semantic update | Low |
+| #27 | Hub tile action flags rerouting | Medium |
+| #28 | Construction lag time + staged build visuals | Low |
 
 ---
 
 ## What's Next
 
-**Recommended: #30 Player attribute wiring**
-- Wire `charisma` into weekly revenue formula
-- Confirm `attack`/`defence`/`teamwork` weighting in match sim is balanced post-morale
-- Decide `overallRating` derivation: computed from attributes (weighted by position) vs stored independently
+**Recommended: Second season loop**
+- Progression and retirement are now live — the second season is where they become visible and meaningful
+- Promotion to League One / relegation; does the revenue formula hold? Do players at a higher level look noticeably better?
+- Likely to surface balance issues (growth rate too slow/fast? retirements too frequent?)
 
 Other candidates:
-- **Frontend test suite** — zero component-level coverage currently
-- **#27 Hub tile action flags** — stale routing on Command Centre tiles
-- **Second season loop** — promotion to League One / relegation tuning
+- **Frontend test suite** — zero component-level coverage
+- **#27 Hub tile action flags** — stale routing on Command Centre tiles (quick fix)
 
 ---
 
@@ -127,16 +129,18 @@ cd /Users/oakleywalters/Projects/calculating-glory/.claude/worktrees/<name>/pack
 ```
 packages/domain/src/
   simulation/
+    progression.ts          — Curve math, applySeasonProgression, shouldRetire, getRetirementFlavour
+    revenue.ts              — playerCharismaRevenue, squadCharismaRevenue
     match.ts                — Full match sim (attack/defence/teamwork/morale/facilities wired)
     morale.ts               — Morale deltas, contract anxiety, threshold events, contagion
   commands/
-    handlers.ts             — All command handlers incl. scout missions + forced-out
+    handlers.ts             — All command handlers (BEGIN_NEXT_SEASON now computes retirements)
   types/
-    player.ts               — Player, PlayerAttributes (attack/defence/teamwork/charisma/potential)
+    player.ts               — Player, PlayerAttributes, PlayerCurve, CurveShape, computeOverallRating()
     game-state-updated.ts   — GameState, ScoutMission, ForcedOutState, SeasonPhase
   data/
-    scout-target-generator.ts — Seeded NPC scouting targets
-    league-two-teams.ts     — 24 Pro-Evo analogue clubs
+    scout-target-generator.ts — Seeded NPC scouting targets (now includes PlayerCurve)
+    league-two-teams.ts       — 24 Pro-Evo analogue clubs
 
 packages/frontend/src/components/
   forced-out/
@@ -149,4 +153,4 @@ packages/frontend/src/components/
 
 ---
 
-**Status**: Main clean. Phase 5 fully shipped (PRs #33–#50). 374 domain tests. No open worktrees. Next: #30 player attribute wiring.
+**Status**: Main clean at `91e16f3`. PRs #51 + #52 merged. 409 domain tests. No open worktrees. Next: second season loop.
