@@ -52,6 +52,8 @@ status: "in-progress"
 ## Notes
 
 - Target device: Chromebook 1366×768 (keyboard + trackpad)
+- **Live URL**: https://oaks3000.github.io/calculating-glory/ — auto-deploys on every push to main via GitHub Actions
+- Repo is **public** (required for GitHub Pages free tier); plan to migrate to Railway or similar when multiplayer/auth is needed
 - Dev server: `npm run dev --workspace=@calculating-glory/frontend`
 - Domain tests: `cd packages/domain && npm test`
 - Domain dist is a symlink to main project — always rebuild from `/packages/domain && npm run build`

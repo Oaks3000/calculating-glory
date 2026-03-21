@@ -106,6 +106,15 @@ cd /Users/oakleywalters/Projects/calculating-glory/packages/domain && npm test
 cd /Users/oakleywalters/Projects/calculating-glory/packages/frontend && npx tsc --noEmit
 ```
 
+## Deployment
+
+**Live URL**: https://oaks3000.github.io/calculating-glory/
+
+Auto-deploys on every push to main via `.github/workflows/deploy.yml`.
+- Builds domain (`tsc`), then frontend (`tsc && vite build --base=/calculating-glory/`)
+- Repo is public (GitHub Pages free tier requirement)
+- Future: migrate to Railway or similar when multiplayer/auth is needed
+
 ## How to Start Next Session
 
 ```bash
