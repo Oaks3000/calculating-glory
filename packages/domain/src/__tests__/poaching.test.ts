@@ -33,6 +33,8 @@ function makeStartedState(seed = 'test-seed'): GameState {
 }
 
 /** Build a Player with the given overrides. */
+const DEFAULT_CURVE = { shape: 'SHALLOW_BELL' as const, peakHeight: 3 as const, startAge: 18, retirementAge: 36, baseAttack: 60, baseDefence: 55 };
+
 function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
     id: 'p1',
@@ -45,7 +47,8 @@ function makePlayer(overrides: Partial<Player> = {}): Player {
     morale: 75,
     stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 62 },
     attributes: { attack: 60, defence: 55, teamwork: 70, charisma: 50, publicPotential: 65 },
-    truePotential: 68,
+    truePotential: 33,
+    curve: DEFAULT_CURVE,
     contractExpiresWeek: 46,
     ...overrides,
   };

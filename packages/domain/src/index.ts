@@ -45,6 +45,16 @@ export { isUnsettled, avgSquadMorale, UNSETTLED_THRESHOLD } from './simulation/m
 // Simulation helpers
 export { playerCharismaRevenue, squadCharismaRevenue } from './simulation/revenue';
 
+// Attribute progression
+export {
+  computeStatsAtAge,
+  computeTruePotential,
+  generatePlayerCurve,
+  applySeasonProgression,
+  shouldRetire,
+  getRetirementFlavour,
+} from './simulation/progression';
+
 // Core state types
 export * from './types/game-state-updated';
 export * from './types/club';

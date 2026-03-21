@@ -11,6 +11,7 @@
 
 import { Player, Position, PlayerAttributes } from '../types/player';
 import { createRng } from '../simulation/rng';
+import { generatePlayerCurve, computeTruePotential } from '../simulation/progression';
 import { LEAGUE_TWO_TEAMS } from './league-two-teams';
 
 // ── Names for contracted players ──────────────────────────────────────────────
@@ -183,13 +184,6 @@ export function generateScoutTarget(
   // Wage: within the band
   const wage = rng.nextInt(band.wageMin, band.wageMax);
 
-  // truePotential: public ± offset
-  const potentialOffset = rng.nextInt(0, 20);
-  const potentialDirection = rng.next() < 0.5 ? 1 : -1;
-  const truePotential = Math.max(1, Math.min(99,
-    attributes.publicPotential + potentialDirection * potentialOffset
-  ));
-
   // Morale: contracted players are generally content
   const morale = rng.nextInt(55, 80);
 
@@ -197,6 +191,12 @@ export function generateScoutTarget(
   // Computed inline here since overallRating is no longer stored on Player.
   const ovr = Math.round((attributes.attack + attributes.defence + attributes.teamwork) / 3);
   const askingPrice = Math.max(10_000_00, ovr * ovr * 800);
+
+  // Career curve — determines growth/decline arc and retirement age
+  const curve = generatePlayerCurve(rng, age, attributes.attack, attributes.defence, position);
+
+  // truePotential: career-arc position indicator derived from the curve
+  const truePotential = computeTruePotential(curve, age);
 
   const player: Player = {
     id: `scout-target-S${season}-W${week}-${position}`,
@@ -208,6 +208,7 @@ export function generateScoutTarget(
     morale,
     attributes,
     truePotential,
+    curve,
     contractExpiresWeek: 0, // updated on SCOUT_TRANSFER_COMPLETED
     stats: {
       goals: 0,

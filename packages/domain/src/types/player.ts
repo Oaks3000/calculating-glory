@@ -8,6 +8,59 @@
 export type Position = 'GK' | 'DEF' | 'MID' | 'FWD';
 
 /**
+ * Career curve shape — assigned at player generation, never changes.
+ *
+ * SHALLOW_BELL   — gentle slopes, long plateau around mid-career peak
+ * STEEP_BELL     — stays flat then rises sharply; boom-and-bust profile
+ * FRONT_WEIGHTED — peaks early (t≈0.25), very gradual long-term fade
+ * BACK_WEIGHTED  — barely rises for years, peaks late (t≈0.65), then collapses
+ */
+export type CurveShape =
+  | 'SHALLOW_BELL'
+  | 'STEEP_BELL'
+  | 'FRONT_WEIGHTED'
+  | 'BACK_WEIGHTED';
+
+/**
+ * Predetermined career arc for a player.
+ *
+ * Stored on the Player object. Pure functions in simulation/progression.ts
+ * use this to compute exact stats at any age without storing historical state.
+ *
+ * Self-consistency guarantee: computeStatsAtAge(curve, position, currentAge)
+ * always returns the player's actual attack/defence at the time of generation.
+ */
+export interface PlayerCurve {
+  /** Curve shape — governs where the peak falls and the steepness of growth/decline */
+  shape: CurveShape;
+
+  /**
+   * Peak height tier (1–5).
+   * Controls the total stat points gained at peak above the baseline:
+   * 1 = +10pts, 2 = +18pts, 3 = +26pts, 4 = +34pts, 5 = +42pts (split by position)
+   */
+  peakHeight: 1 | 2 | 3 | 4 | 5;
+
+  /** Age at which this player's career arc began (conceptual career start, pre-game). */
+  startAge: number;
+
+  /** Age at which the player retires. Pre-assigned at generation. */
+  retirementAge: number;
+
+  /**
+   * Attack stat at startAge (before any career growth).
+   * Back-calculated so computeStatsAtAge returns currentAttack at currentAge.
+   */
+  baseAttack: number;
+
+  /**
+   * Defence stat at startAge (before any career growth).
+   * Back-calculated so computeStatsAtAge returns currentDefence at currentAge.
+   */
+  baseDefence: number;
+}
+
+/**
  * Individual skill attributes for a player
  */
 export interface PlayerAttributes {
@@ -66,10 +119,21 @@ export interface Player {
   attributes: PlayerAttributes;
 
   /**
-   * True development potential (1–100). Hidden — scouting reveals the gap.
-   * publicPotential is a 55%-accurate proxy for this value.
+   * Career-arc position indicator (0–100). Updated each season at PRE_SEASON_STARTED.
+   *   0  = career start (just entered professional football)
+   *  ~50 = approaching or at peak (varies by curve shape)
+   * 100  = retirement age
+   *
+   * Values < 50 → ascending; ≥ 50 → plateau or decline.
+   * publicPotential is the noisily-visible version of this value.
    */
   truePotential: number;
+
+  /**
+   * Predetermined career curve. Assigned at player generation; never changes.
+   * Used by applySeasonProgression() to update attack/defence each season.
+   */
+  curve: PlayerCurve;
 
   /**
    * Game week when this player's contract with your club expires.

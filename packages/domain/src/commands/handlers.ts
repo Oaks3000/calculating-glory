@@ -14,6 +14,7 @@ import { createRng } from '../simulation/rng';
 import { generateWeekEvents, generatePoachAttempts, generateMoraleThresholdEvents } from '../simulation/events';
 import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
 import { Player, computeOverallRating } from '../types/player';
+import { shouldRetire, getRetirementFlavour } from '../simulation/progression';
 import { getScoutLevel, isTransferWindowOpen } from '../types/facility';
 import { generateScoutTarget, getScoutFee } from '../data/scout-target-generator';
 import { ScoutTargetFoundEvent, ScoutTransferCompletedEvent, TakeoverAcceptedEvent } from '../events/types';
@@ -83,7 +84,8 @@ function handleMakeTransfer(command: any, state: GameState): CommandResult {
     age: 25,
     morale: 75,
     attributes: { attack: 55, defence: 55, teamwork: 60, charisma: 50, publicPotential: 65 },
-    truePotential: 68,
+    truePotential: 33,
+    curve: { shape: 'SHALLOW_BELL' as const, peakHeight: 3 as const, startAge: 18, retirementAge: 35, baseAttack: 55, baseDefence: 55 },
     contractExpiresWeek: state.currentWeek + 46,
     stats: {
       goals: 0,
@@ -876,11 +878,22 @@ function handleBeginNextSeason(_command: any, state: GameState): CommandResult {
     };
   }
 
+  // Compute retirements: any squad player whose age+1 >= retirementAge hangs up their boots
+  const retirementRng = createRng(`retirement-S${state.season}-${state.club.id}`);
+  const retiredPlayers = state.club.squad
+    .filter(p => shouldRetire(p))
+    .map(p => ({
+      id:     p.id,
+      name:   p.name,
+      flavour: getRetirementFlavour(retirementRng),
+    }));
+
   return {
     events: [{
       type: 'PRE_SEASON_STARTED',
       timestamp: Date.now(),
       season: state.season + 1,
+      retiredPlayers,
     }],
   };
 }

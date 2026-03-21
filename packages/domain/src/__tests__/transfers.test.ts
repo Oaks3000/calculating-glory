@@ -167,6 +167,7 @@ describe('handleCommand — SIGN_FREE_AGENT', () => {
         morale: 70,
         attributes: { attack: 40, defence: 40, teamwork: 40, charisma: 40, publicPotential: 40 },
         truePotential: 40,
+        curve: { shape: 'SHALLOW_BELL' as const, peakHeight: 3 as const, startAge: 18, retirementAge: 36, baseAttack: 50, baseDefence: 50 },
         contractExpiresWeek: 46,
         stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 50 },
       });

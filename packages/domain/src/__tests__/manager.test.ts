@@ -41,6 +41,8 @@ function makeStartedState(seed = 'test-seed'): GameState {
   ]);
 }
 
+const DEFAULT_CURVE = { shape: 'SHALLOW_BELL' as const, peakHeight: 3 as const, startAge: 18, retirementAge: 36, baseAttack: 50, baseDefence: 50 };
+
 function makePlayer(overrides: Partial<Player> = {}): Player {
   return {
     id: 'p1',
@@ -52,7 +54,8 @@ function makePlayer(overrides: Partial<Player> = {}): Player {
     morale: 60,
     stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 60 },
     attributes: { attack: 50, defence: 50, teamwork: 50, charisma: 50, publicPotential: 60 },
-    truePotential: 60,
+    truePotential: 33,
+    curve: DEFAULT_CURVE,
     contractExpiresWeek: 46,
     ...overrides,
   };
