@@ -108,6 +108,33 @@ Full rework of the stadium renderer to give it a SimCity 2000 "living machine" f
 - [ ] Z-indexing: animated overlay elements always respect Painter's Algorithm sort order
 - [ ] `isMatchDay` boolean on `gameState` is the trigger for crowd-flash and blip overlay; no animation outside match context
 
+**Match director — advisory (verify against game wiring when Phase 7 begins)**
+
+> ⚠️ The current match sim is deterministic and runs synchronously — there are no streaming `matchEvent` emissions mid-simulation. This spec assumes a real-time event feed that doesn't currently exist. Treat as design intent; implementation approach needs to be worked out against actual game architecture.
+
+Blip state machine (5 states):
+- `IDLE` — default jitter around home coordinate based on position role (Def / Mid / Atk)
+- `BUILD_UP` — blips drift toward opposition half; speed tied to `teamwork` attribute
+- `CHANCE` — high-intensity jitter near opponent goal area
+- `CELEBRATE` — scoring team's blips converge on pitch centre / corner flag (3 seconds)
+- `RESET` — blips glide back to starting isometric coordinates
+
+`PitchDirector` component concept:
+- Sits inside the Pitch core unit `<g>` on the 20×14 grid
+- Receives `matchEvent` (goal scored / attack attempt) and drives phase transitions
+- Player blips receive `phase`, `speed` (from `teamwork / 10`), `aggression` (from `attack`)
+- Renders only while `isMatchDay` — single `<svg>` or `<g>`, not 22 individual React subtrees
+
+Goal reaction cascade:
+- Trigger `crowd-flash` simultaneously on all Stands units (the "Flash Mob")
+- Fire existing Reputation flash animation on home goal — immediate positive reinforcement
+- Scoreboard / Fan Zone tile briefly shifts to bright neon white ("Jumbotron effect")
+
+Performance notes for Chromebooks:
+- Use `transition: transform 0.5s ease-in-out` on blips — GPU-handled, not JS-calculated per frame
+- Blip engine renders only during match context (`isMatchDay`) — zero overhead outside match
+- 22 blips as `<rect>` elements inside one `<g>` is cheap; avoid mounting as individual React components with their own state/intervals
+
 ## Captured Thoughts
 
 - Isometric SVG: right vertex of tile (c,r) = top vertex of tile (c+1,r) — this identity makes multi-tile footprint math clean and composable
