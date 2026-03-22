@@ -67,6 +67,47 @@ lastUpdated: "2026-03-10"
 - [ ] Multiple leagues (League One, Championship)
 - [ ] Custom club creation (name, colours, badge)
 
+### Phase 7: Isometric Stadium — SC2K Visual Overhaul
+
+Full rework of the stadium renderer to give it a SimCity 2000 "living machine" feel. Three-tone shading, per-facility micro-animations, and a match day overlay with moving player blips.
+
+**SC2KTile component (3-tone shading)**
+- [ ] Replace flat-colour tiles with proper 3-face geometry: top / left / right
+- [ ] 2:1 tile ratio (tileW 64, tileH 32), unitH 12px per level — buildings grow vertically with upgrade level
+- [ ] Three-tone rule: `topFace = color`, `leftFace = shadeColor(color, -15)`, `rightFace = shadeColor(color, -30)`
+- [ ] Cast ground shadow (black, 15% opacity) offset at 135° to anchor buildings to the grid — prevents "floating" during animations
+- [ ] `shadeColor()` utility — lighten/darken hex by percentage
+
+**Construction state**
+- [ ] `hazard-slide` CSS keyframe — animated yellow dashed stroke (`stroke-dashoffset` 0→12, 0.5s linear infinite) on tile base while `isBuilding`
+- [ ] `construction-jostle` keyframe — 2px vertical translateY oscillation (2s ease-in-out infinite) on the building body
+- [ ] Dust particles — emit small SVG `<circle>` elements at tile base while upgrading (CSS fade-out, seeded positions)
+
+**Per-facility micro-animations (ambient, always-on when active)**
+- [ ] Scout Network — small 2D radar dish on roof, CSS 360° rotation loop
+- [ ] Medical Centre — Red Cross neon flicker (opacity 0.7↔1.0 oscillation)
+- [ ] Fan Zone — SVG flag paths flutter via `skewX` animation
+- [ ] (Remaining 7 facilities to be designed — one looping animation each)
+
+**Match day overlay**
+- [ ] `MatchDayOverlay` component renders on top of the Pitch unit during match sim
+- [ ] 22 `<rect>` blips (2×2px): 11 home colour, 11 white (away)
+- [ ] Default jitter: ±2px random movement every 500ms within positional zones (defence / midfield / attack)
+- [ ] Surge state: attacking team blips shift mean x-position toward opponent goal when attack event fires
+- [ ] Goal celebration: scoring team blips converge on centre circle for 3 seconds
+- [ ] Blip movement must be deterministic (seeded by gameWeek + playerId) — not `Math.random()` — so replays are consistent
+- [ ] `crowd-flash` keyframe on Stands tiles — staggered brightness spikes (2.5× and 3× peaks) per stand section; `animation-delay` varies by section to avoid global strobe
+
+**Visual connectivity**
+- [ ] Auto-path tiles between adjacent facilities — "concrete" texture rendered between neighbours
+- [ ] All path tiles respect Painter's Algorithm (gc+gr sort order) — blips and dust must not appear behind foreground buildings
+
+**Technical constraints**
+- [ ] All animations CSS-based or `requestAnimationFrame` — no JS `setInterval` for visual updates (Chromebook perf)
+- [ ] `prefers-reduced-motion` media query disables all keyframe animations (accessibility — school use)
+- [ ] Z-indexing: animated overlay elements always respect Painter's Algorithm sort order
+- [ ] `isMatchDay` boolean on `gameState` is the trigger for crowd-flash and blip overlay; no animation outside match context
+
 ## Captured Thoughts
 
 - Isometric SVG: right vertex of tile (c,r) = top vertex of tile (c+1,r) — this identity makes multi-tile footprint math clean and composable
