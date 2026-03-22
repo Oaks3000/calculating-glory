@@ -14,7 +14,7 @@
 import { GameState, PendingClubEvent } from '../types/game-state-updated';
 import { CLUB_EVENT_TEMPLATES, ClubEventTemplate } from '../data/club-events';
 import { createRng } from './rng';
-import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
+import { getTeamsForDivision } from '../data/division-teams';
 import { avgSquadMorale, isUnsettled } from './morale';
 import { computeOverallRating } from '../types/player';
 
@@ -278,7 +278,7 @@ export function generatePoachAttempts(
   if (rng.next() > poachChance(computeOverallRating(target))) return [];
 
   // Pick a random NPC club (not the player's own club)
-  const npcClubs = LEAGUE_TWO_TEAMS.filter(t => t.id !== state.club.id);
+  const npcClubs = getTeamsForDivision(state.division).filter(t => t.id !== state.club.id);
   const npcClub = npcClubs[rng.nextInt(0, npcClubs.length - 1)];
 
   const fee = offeredFee(target.wage, computeOverallRating(target));
