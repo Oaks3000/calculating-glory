@@ -30,12 +30,15 @@ interface CoreUnitProps {
   def:       CoreUnitDef;
   /** Facility level 0–5 */
   level:     number;
+  /** Weeks remaining on active construction; undefined or 0 = not building */
+  constructionWeeksRemaining?: number;
   isHovered: boolean;
   onClick:   () => void;
   onHover:   (id: string | null) => void;
 }
 
-export function CoreUnit({ def, level, isHovered, onClick, onHover }: CoreUnitProps) {
+export function CoreUnit({ def, level, constructionWeeksRemaining, isHovered, onClick, onHover }: CoreUnitProps) {
+  const isBuilding = (constructionWeeksRemaining ?? 0) > 0;
   const bh   = def.blockHeights[Math.min(level, 5)];
   const fv   = footprintVertices(def.gc, def.gr, def.cols, def.rows);
   const gnd  = footprintPath(fv);
@@ -74,13 +77,25 @@ export function CoreUnit({ def, level, isHovered, onClick, onHover }: CoreUnitPr
       />
 
       {/* ── Dashed "empty plot" border at level 0 ────────────────── */}
-      {level === 0 && (
+      {level === 0 && !isBuilding && (
         <path
           d={gnd}
           fill="none"
           stroke={isHovered ? '#448AFF' : '#546E7A'}
           strokeWidth="1.5"
           strokeDasharray="4 3"
+          style={{ pointerEvents: 'none' }}
+        />
+      )}
+
+      {/* ── Construction outline (amber dashes while building) ────── */}
+      {isBuilding && (
+        <path
+          d={hitPath}
+          fill="rgba(255,180,0,0.08)"
+          stroke="#FFB400"
+          strokeWidth="2"
+          strokeDasharray="5 3"
           style={{ pointerEvents: 'none' }}
         />
       )}
@@ -144,7 +159,7 @@ export function CoreUnit({ def, level, isHovered, onClick, onHover }: CoreUnitPr
         fontSize={def.cols >= 4 ? 22 : 16}
         style={{ pointerEvents: 'none', userSelect: 'none' }}
       >
-        {def.icon}
+        {isBuilding ? '🏗' : def.icon}
       </text>
 
       {/* ── Level pip row (level > 0, small dots above icon) ─────── */}

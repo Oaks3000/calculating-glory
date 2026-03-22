@@ -1,10 +1,12 @@
-import { LeagueTableEntry } from '@calculating-glory/domain';
+import { useState } from 'react';
+import { LeagueTableEntry, LeagueTable as LeagueTableType } from '@calculating-glory/domain';
 
 interface LeagueTableProps {
   entries: LeagueTableEntry[];
   playerClubId: string;
   promotionCutoff: number;
   relegationStart: number;
+  previousLeagueTable?: LeagueTableType;
 }
 
 const FORM_COLORS: Record<string, string> = {
@@ -13,12 +15,111 @@ const FORM_COLORS: Record<string, string> = {
   L: 'bg-alert-red text-white',
 };
 
-export function LeagueTable({ entries, playerClubId, promotionCutoff, relegationStart }: LeagueTableProps) {
+function TableRows({
+  entries,
+  playerClubId,
+  promotionCutoff,
+  relegationStart,
+}: {
+  entries: LeagueTableEntry[];
+  playerClubId: string;
+  promotionCutoff: number;
+  relegationStart: number;
+}) {
+  return (
+    <>
+      {entries.map((entry, i) => {
+        const isPlayer    = entry.clubId === playerClubId;
+        const isPromotion = entry.position <= promotionCutoff;
+        const isPlayoff   = entry.position > promotionCutoff && entry.position <= 7;
+        const isRelegation = entry.position >= relegationStart;
+
+        return (
+          <tr
+            key={entry.clubId}
+            className={[
+              'border-b border-bg-raised/50 transition-colors',
+              isPlayer ? 'bg-data-blue/10 text-txt-primary font-medium' : 'text-txt-muted',
+              i === promotionCutoff ? 'border-b-2 border-data-blue/40' : '',
+              i === 6 ? 'border-b-2 border-warn-amber/40' : '',
+              i === relegationStart - 2 ? 'border-b-2 border-alert-red/40' : '',
+            ].join(' ')}
+          >
+            <td className="text-right pr-2 py-1">
+              <span className={[
+                'inline-block w-4 text-center',
+                isPromotion ? 'text-pitch-green' : isPlayoff ? 'text-warn-amber' : isRelegation ? 'text-alert-red' : '',
+              ].join(' ')}>
+                {entry.position}
+              </span>
+            </td>
+            <td className="py-1 truncate max-w-[120px]">
+              {isPlayer ? `▶ ${entry.clubName}` : entry.clubName}
+            </td>
+            <td className="text-right pr-1 py-1">{entry.played}</td>
+            <td className="text-right pr-1 py-1">{entry.won}</td>
+            <td className={[
+              'text-right pr-2 py-1',
+              entry.goalDifference > 0 ? 'text-pitch-green' : entry.goalDifference < 0 ? 'text-alert-red' : '',
+            ].join(' ')}>
+              {entry.goalDifference > 0 ? `+${entry.goalDifference}` : entry.goalDifference}
+            </td>
+            <td className="text-right pr-2 py-1 font-semibold text-txt-primary">{entry.points}</td>
+            <td className="py-1">
+              <div className="flex gap-0.5">
+                {entry.form.slice(-3).map((r, j) => (
+                  <span key={j} className={`${FORM_COLORS[r]} text-xs2 w-4 h-4 flex items-center justify-center rounded-sm font-bold`}>
+                    {r}
+                  </span>
+                ))}
+              </div>
+            </td>
+          </tr>
+        );
+      })}
+    </>
+  );
+}
+
+export function LeagueTable({ entries, playerClubId, promotionCutoff, relegationStart, previousLeagueTable }: LeagueTableProps) {
+  const [tab, setTab] = useState<'current' | 'previous'>('current');
+
+  const showingPrevious = tab === 'previous' && !!previousLeagueTable;
+  const activeEntries = showingPrevious ? previousLeagueTable!.entries : entries;
+
   return (
     <div className="card overflow-hidden">
-      <h2 className="text-xs font-semibold text-txt-muted uppercase tracking-wider mb-3">
-        League Table
-      </h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-xs font-semibold text-txt-muted uppercase tracking-wider">
+          League Table
+        </h2>
+        {previousLeagueTable && (
+          <div className="flex gap-1">
+            <button
+              onClick={() => setTab('current')}
+              className={[
+                'px-2 py-0.5 rounded-tag text-xs2 font-medium transition-colors',
+                tab === 'current'
+                  ? 'bg-data-blue/20 text-data-blue'
+                  : 'text-txt-muted hover:text-txt-primary',
+              ].join(' ')}
+            >
+              This Season
+            </button>
+            <button
+              onClick={() => setTab('previous')}
+              className={[
+                'px-2 py-0.5 rounded-tag text-xs2 font-medium transition-colors',
+                tab === 'previous'
+                  ? 'bg-data-blue/20 text-data-blue'
+                  : 'text-txt-muted hover:text-txt-primary',
+              ].join(' ')}
+            >
+              Last Season
+            </button>
+          </div>
+        )}
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs data-font">
           <thead>
@@ -33,55 +134,12 @@ export function LeagueTable({ entries, playerClubId, promotionCutoff, relegation
             </tr>
           </thead>
           <tbody>
-            {entries.map((entry, i) => {
-              const isPlayer = entry.clubId === playerClubId;
-              const isPromotion = entry.position <= promotionCutoff;
-              const isPlayoff = entry.position > promotionCutoff && entry.position <= 7;
-              const isRelegation = entry.position >= relegationStart;
-
-              return (
-                <tr
-                  key={entry.clubId}
-                  className={[
-                    'border-b border-bg-raised/50 transition-colors',
-                    isPlayer ? 'bg-data-blue/10 text-txt-primary font-medium' : 'text-txt-muted',
-                    i === promotionCutoff ? 'border-b-2 border-data-blue/40' : '',
-                    i === 6 ? 'border-b-2 border-warn-amber/40' : '',
-                    i === relegationStart - 2 ? 'border-b-2 border-alert-red/40' : '',
-                  ].join(' ')}
-                >
-                  <td className="text-right pr-2 py-1">
-                    <span className={[
-                      'inline-block w-4 text-center',
-                      isPromotion ? 'text-pitch-green' : isPlayoff ? 'text-warn-amber' : isRelegation ? 'text-alert-red' : '',
-                    ].join(' ')}>
-                      {entry.position}
-                    </span>
-                  </td>
-                  <td className="py-1 truncate max-w-[120px]">
-                    {isPlayer ? `▶ ${entry.clubName}` : entry.clubName}
-                  </td>
-                  <td className="text-right pr-1 py-1">{entry.played}</td>
-                  <td className="text-right pr-1 py-1">{entry.won}</td>
-                  <td className={[
-                    'text-right pr-2 py-1',
-                    entry.goalDifference > 0 ? 'text-pitch-green' : entry.goalDifference < 0 ? 'text-alert-red' : '',
-                  ].join(' ')}>
-                    {entry.goalDifference > 0 ? `+${entry.goalDifference}` : entry.goalDifference}
-                  </td>
-                  <td className="text-right pr-2 py-1 font-semibold text-txt-primary">{entry.points}</td>
-                  <td className="py-1">
-                    <div className="flex gap-0.5">
-                      {entry.form.slice(-3).map((r, j) => (
-                        <span key={j} className={`${FORM_COLORS[r]} text-xs2 w-4 h-4 flex items-center justify-center rounded-sm font-bold`}>
-                          {r}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+            <TableRows
+              entries={activeEntries}
+              playerClubId={playerClubId}
+              promotionCutoff={promotionCutoff}
+              relegationStart={relegationStart}
+            />
           </tbody>
         </table>
       </div>

@@ -103,6 +103,12 @@ export function validateFacilityUpgrade(
     return { valid: false, errors };
   }
 
+  // Check if already under construction
+  if (facility.constructionWeeksRemaining && facility.constructionWeeksRemaining > 0) {
+    errors.push(`${facilityType} is already under construction`);
+    return { valid: false, errors };
+  }
+
   // Check if already at max level
   const MAX_LEVEL = 5;
   if (facility.level >= MAX_LEVEL) {

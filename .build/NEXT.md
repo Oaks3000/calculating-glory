@@ -8,9 +8,8 @@ lastUpdated: "2026-03-22"
 
 ## Immediate (Next Session)
 
-1. **Balance pass — play through two seasons** — machinery is solid; observe: are growth/decline rates perceptible? Are ~1–2 retirements per season landing? Does promotion to League One feel meaningfully harder with the new tier revenue multipliers?
-2. **Frontend test suite** — zero component-level coverage; good hygiene before the game grows further. Start with core hooks (`useGameState`) and key components (`InboxCard`, `HubTile`).
-3. **#28 Construction lag time + staged build visuals** — low priority but adds texture to facility upgrades.
+1. **Frontend test suite** — zero component-level coverage; good hygiene before the game grows further. Start with core hooks (`useGameState`) and key components (`InboxCard`, `HubTile`).
+2. **#28 Construction lag time + staged build visuals** — low priority but adds texture to facility upgrades.
 
 ## Short Term (Next 2–4 Weeks)
 

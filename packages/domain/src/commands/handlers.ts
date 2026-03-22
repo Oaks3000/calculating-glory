@@ -15,7 +15,7 @@ import { generateWeekEvents, generatePoachAttempts, generateMoraleThresholdEvent
 import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
 import { Player, computeOverallRating } from '../types/player';
 import { shouldRetire, getRetirementFlavour } from '../simulation/progression';
-import { getScoutLevel, isTransferWindowOpen } from '../types/facility';
+import { getScoutLevel, isTransferWindowOpen, constructionDuration } from '../types/facility';
 import { generateScoutTarget, getScoutFee } from '../data/scout-target-generator';
 import { ScoutTargetFoundEvent, ScoutTransferCompletedEvent, TakeoverAcceptedEvent } from '../events/types';
 
@@ -151,14 +151,16 @@ function handleUpgradeFacility(command: any, state: GameState): CommandResult {
     };
   }
 
+  const targetLevel = facility.level + 1;
   const events: GameEvent[] = [
     {
-      type: 'FACILITY_UPGRADED',
+      type: 'FACILITY_UPGRADE_STARTED',
       timestamp: Date.now(),
       clubId: command.clubId,
       facilityType: command.facilityType,
-      level: facility.level + 1,
-      cost: upgradeCost
+      targetLevel,
+      cost: upgradeCost,
+      weeksToComplete: constructionDuration(targetLevel),
     }
   ];
 
@@ -374,6 +376,20 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
       askingPrice,
     };
     events.push(foundEvent);
+  }
+
+  // Complete any constructions that finish this week (weeksRemaining === 1)
+  // These fire BEFORE WEEK_ADVANCED so the reducer can safely decrement the rest.
+  for (const facility of state.club.facilities) {
+    if (facility.constructionWeeksRemaining === 1) {
+      events.push({
+        type: 'FACILITY_CONSTRUCTION_COMPLETED',
+        timestamp: now,
+        clubId: state.club.id,
+        facilityType: facility.type,
+        newLevel: facility.level + 1,
+      });
+    }
   }
 
   // Advance the week after all matches and events
