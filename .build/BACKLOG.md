@@ -17,6 +17,7 @@ lastUpdated: "2026-03-10"
 - [ ] Tutorial/onboarding flow — first-time player guidance
 - [ ] Pre-season flow — squad building before the season starts
 - [ ] Season end screen — promotion/relegation celebration/commiseration
+- [ ] localStorage persistence — serialise event log on every command, rehydrate on load; prevents progress loss on browser close (no infrastructure needed)
 - [ ] Multiplayer sync — async turn-based between friends
 - [ ] Save/load to server (beyond localStorage)
 - [x] Stadium View plan — MECE coverage, grid layout, hit regions, sub-unit progression ✅
@@ -62,7 +63,7 @@ lastUpdated: "2026-03-10"
 
 ## Future Phases
 
-- [ ] Second season — promotion/relegation to different league
+- [x] Second season — league table reset, reputation/board confidence deltas, contextual outcome text ✅ (PR #53)
 - [ ] Multiple leagues (League One, Championship)
 - [ ] Custom club creation (name, colours, badge)
 
