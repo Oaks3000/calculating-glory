@@ -576,6 +576,138 @@ describe('reducer — SEASON_STARTED', () => {
   });
 });
 
+// ─── SEASON_ENDED — reputation + board confidence ─────────────────────────────
+
+describe('reducer — SEASON_ENDED reputation and board confidence', () => {
+  function seasonEndedEvent(finalPosition: number, promoted: boolean, relegated: boolean): GameEvent {
+    return {
+      type: 'SEASON_ENDED',
+      timestamp: 2000,
+      season: 1,
+      finalPosition,
+      promoted,
+      relegated,
+    } as any;
+  }
+
+  it('grants +10 reputation and +20 board confidence on promotion', () => {
+    const state = base();
+    const next = reduceEvent(state, seasonEndedEvent(1, true, false));
+    expect(next.club.reputation).toBe(state.club.reputation + 10);
+    expect(next.boardConfidence).toBe(Math.min(100, state.boardConfidence + 20));
+  });
+
+  it('deducts -8 reputation and -20 board confidence on relegation', () => {
+    const state = base();
+    const next = reduceEvent(state, seasonEndedEvent(23, false, true));
+    expect(next.club.reputation).toBe(Math.max(0, state.club.reputation - 8));
+    expect(next.boardConfidence).toBe(Math.max(0, state.boardConfidence - 20));
+  });
+
+  it('grants +3 reputation and +10 board confidence for a playoff finish (top 7)', () => {
+    const state = base();
+    const next = reduceEvent(state, seasonEndedEvent(6, false, false));
+    expect(next.club.reputation).toBe(state.club.reputation + 3);
+    expect(next.boardConfidence).toBe(Math.min(100, state.boardConfidence + 10));
+  });
+
+  it('deducts -2 reputation for a bottom-half finish (13+)', () => {
+    const state = base();
+    const next = reduceEvent(state, seasonEndedEvent(15, false, false));
+    expect(next.club.reputation).toBe(Math.max(0, state.club.reputation - 2));
+    expect(next.boardConfidence).toBe(state.boardConfidence); // no conf delta for 8-20
+  });
+
+  it('deducts -10 board confidence for near-relegation (21-22)', () => {
+    const state = base();
+    const next = reduceEvent(state, seasonEndedEvent(21, false, false));
+    expect(next.boardConfidence).toBe(Math.max(0, state.boardConfidence - 10));
+  });
+
+  it('clamps reputation at 0', () => {
+    const state = { ...base(), club: { ...base().club, reputation: 4 } };
+    const next = reduceEvent(state, seasonEndedEvent(23, false, true)); // relegated: -8
+    expect(next.club.reputation).toBe(0);
+  });
+
+  it('clamps board confidence at 100', () => {
+    const state = { ...base(), boardConfidence: 95 };
+    const next = reduceEvent(state, seasonEndedEvent(1, true, false)); // promoted: +20
+    expect(next.boardConfidence).toBe(100);
+  });
+});
+
+// ─── PRE_SEASON_STARTED — league reset ────────────────────────────────────────
+
+describe('reducer — PRE_SEASON_STARTED resets league table stats', () => {
+  /** Build a state where some clubs have non-zero match stats */
+  function stateWithMatchData(): GameState {
+    const s = base();
+    const dirtyEntries = s.league.entries.map((entry, i) => ({
+      ...entry,
+      played: 46,
+      won: 15 + i,
+      drawn: 10,
+      lost: 21 - i,
+      goalsFor: 55 + i,
+      goalsAgainst: 48,
+      goalDifference: 7 + i,
+      points: 55 + i,
+      form: ['W', 'D', 'L', 'W', 'W'] as ('W' | 'D' | 'L')[],
+    }));
+    return { ...s, league: { ...s.league, entries: dirtyEntries } };
+  }
+
+  function preSeasonStartedEvent(): GameEvent {
+    return {
+      type: 'PRE_SEASON_STARTED',
+      timestamp: 3000,
+      season: 2,
+      retiredPlayers: [],
+    } as any;
+  }
+
+  it('zeroes played, won, drawn, lost for every entry', () => {
+    const next = reduceEvent(stateWithMatchData(), preSeasonStartedEvent());
+    for (const entry of next.league.entries) {
+      expect(entry.played).toBe(0);
+      expect(entry.won).toBe(0);
+      expect(entry.drawn).toBe(0);
+      expect(entry.lost).toBe(0);
+    }
+  });
+
+  it('zeroes goals and points for every entry', () => {
+    const next = reduceEvent(stateWithMatchData(), preSeasonStartedEvent());
+    for (const entry of next.league.entries) {
+      expect(entry.goalsFor).toBe(0);
+      expect(entry.goalsAgainst).toBe(0);
+      expect(entry.goalDifference).toBe(0);
+      expect(entry.points).toBe(0);
+    }
+  });
+
+  it('clears form arrays for every entry', () => {
+    const next = reduceEvent(stateWithMatchData(), preSeasonStartedEvent());
+    for (const entry of next.league.entries) {
+      expect(entry.form).toEqual([]);
+    }
+  });
+
+  it('preserves club IDs and names after reset', () => {
+    const state = stateWithMatchData();
+    const next = reduceEvent(state, preSeasonStartedEvent());
+    const originalIds = new Set(state.league.entries.map(e => e.clubId));
+    const resetIds = new Set(next.league.entries.map(e => e.clubId));
+    expect(resetIds).toEqual(originalIds);
+  });
+
+  it('preserves the 24-club count after reset', () => {
+    const next = reduceEvent(stateWithMatchData(), preSeasonStartedEvent());
+    expect(next.league.entries).toHaveLength(24);
+  });
+});
+
 // ─── Default case ─────────────────────────────────────────────────────────────
 
 describe('reducer — unknown event type', () => {

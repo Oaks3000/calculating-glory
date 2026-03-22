@@ -8,10 +8,10 @@ interface SeasonEndScreenProps {
 // ─── Outcome helpers ───────────────────────────────────────────────────────────
 
 function getOutcome(position: number, promoted: boolean, relegated: boolean) {
-  if (promoted) return { label: 'PROMOTED', colour: 'text-pitch-green', bg: 'bg-pitch-green/10 border-pitch-green/40', emoji: '🏆' };
-  if (relegated) return { label: 'RELEGATED', colour: 'text-alert-red', bg: 'bg-alert-red/10 border-alert-red/40', emoji: '📉' };
-  if (position <= 7) return { label: 'PLAYOFFS', colour: 'text-warn-amber', bg: 'bg-warn-amber/10 border-warn-amber/40', emoji: '⚔️' };
-  return { label: 'MID-TABLE', colour: 'text-data-blue', bg: 'bg-data-blue/10 border-data-blue/40', emoji: '🤝' };
+  if (promoted) return { label: 'PROMOTED', colour: 'text-pitch-green', bg: 'bg-pitch-green/10 border-pitch-green/40', emoji: '🏆', sub: 'Earning promotion to League One' };
+  if (relegated) return { label: 'RELEGATED', colour: 'text-alert-red', bg: 'bg-alert-red/10 border-alert-red/40', emoji: '📉', sub: 'Dropping out of League Two' };
+  if (position <= 7) return { label: 'PLAYOFFS', colour: 'text-warn-amber', bg: 'bg-warn-amber/10 border-warn-amber/40', emoji: '⚔️', sub: 'Into the promotion playoffs' };
+  return { label: 'MID-TABLE', colour: 'text-data-blue', bg: 'bg-data-blue/10 border-data-blue/40', emoji: '🤝', sub: 'A season of consolidation' };
 }
 
 function ordinal(n: number): string {
@@ -58,7 +58,7 @@ export function SeasonEndScreen({ state, dispatch }: SeasonEndScreenProps) {
           {outcome.emoji} {outcome.label}
         </div>
         <div className="text-lg text-txt-muted">
-          Finished <span className="text-txt-primary font-semibold">{ordinal(finalPosition)}</span> in League Two
+          Finished <span className="text-txt-primary font-semibold">{ordinal(finalPosition)}</span> — {outcome.sub}
         </div>
       </div>
 

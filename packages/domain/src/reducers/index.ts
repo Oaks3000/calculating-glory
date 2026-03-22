@@ -489,10 +489,34 @@ function handleWeekAdvanced(state: GameState, event: any): GameState {
   };
 }
 
-function handleSeasonEnded(state: GameState, _event: any): GameState {
+function handleSeasonEnded(state: GameState, event: any): GameState {
+  const { finalPosition, promoted, relegated } = event as {
+    finalPosition: number;
+    promoted: boolean;
+    relegated: boolean;
+  };
+
+  // Reputation delta: promotion +10, relegation -8, top 7 +3, bottom half -2
+  const repDelta = promoted ? 10
+    : relegated ? -8
+    : finalPosition <= 7 ? 3
+    : finalPosition >= 13 ? -2
+    : 0;
+  const newReputation = Math.max(0, Math.min(100, state.club.reputation + repDelta));
+
+  // Board confidence delta: promotion +20, top 7 +10, near-relegated (21-22) -10, relegated -20
+  const confDelta = promoted ? 20
+    : relegated ? -20
+    : finalPosition <= 7 ? 10
+    : finalPosition >= 21 ? -10
+    : 0;
+  const newBoardConfidence = Math.max(0, Math.min(100, state.boardConfidence + confDelta));
+
   return {
     ...state,
-    phase: 'SEASON_END'
+    phase: 'SEASON_END',
+    club: { ...state.club, reputation: newReputation },
+    boardConfidence: newBoardConfidence,
   };
 }
 
@@ -679,11 +703,26 @@ function handlePreSeasonStarted(state: GameState, event: PreSeasonStartedEvent):
     .filter(p => !retiringIds.has(p.id))
     .map(p => applySeasonProgression(p));
 
+  // Reset all league entry stats — clubs stay the same, season tallies clear.
+  const resetEntries = state.league.entries.map(entry => ({
+    ...entry,
+    played: 0,
+    won: 0,
+    drawn: 0,
+    lost: 0,
+    goalsFor: 0,
+    goalsAgainst: 0,
+    goalDifference: 0,
+    points: 0,
+    form: [] as ('W' | 'D' | 'L')[],
+  }));
+
   return {
     ...state,
     phase: 'PRE_SEASON',
     season: event.season,
     currentWeek: 0,
+    league: { ...state.league, entries: resetEntries },
     club: {
       ...state.club,
       squad: updatedSquad,
