@@ -3,22 +3,22 @@ project: "Calculating Glory"
 type: "build"
 priority: 2
 phase: "Phase 6 — Live Season Depth"
-progress: 15
-lastUpdated: "2026-03-21"
-lastTouched: "2026-03-21"
+progress: 35
+lastUpdated: "2026-03-22"
+lastTouched: "2026-03-22"
 status: "in-progress"
 ---
 
 # Calculating Glory - Current Status
 
 **Phase:** Phase 6 — Live Season Depth (in progress)
-**Last Updated:** 2026-03-21
+**Last Updated:** 2026-03-22
 
 ## What's Done
 
 - Full TypeScript monorepo workspace (domain + frontend packages)
 - Event sourcing architecture: all event types, reducers, command handlers
-- 421 domain tests passing across 22 suites
+- 441 domain tests passing across 23 suites
 - Deterministic match simulation (Poisson, seeded RNG, attack/defence split)
 - Season fixtures: circle method round-robin, 24 teams, 46 weeks
 - Weekly club events: 15 templates, branching chains, pending resolution
@@ -33,10 +33,13 @@ status: "in-progress"
 - **Computed overallRating** (PR #51 ✅) — pure function replacing stored field; charisma → commercial revenue (cubic curve, OVR-amplified)
 - **Player attribute progression + retirement** (PR #52 ✅) — 4 curve shapes, peak-height modifier 1–5, seasonal tick on PRE_SEASON_STARTED, truePotential redefined as career-arc cursor anchored to age 42
 - **Second season loop** (PR #53 ✅) — league table reset on PRE_SEASON_STARTED; reputation + board confidence deltas on season end; contextual SeasonEndScreen outcome text
+- **Facility revenue tier scaling** (PR #54 ✅) — Division type tracked on GameState; TIER_REVENUE_MULTIPLIER (1×→2×→4×→10× across L2/L1/Champ/PL); facilityRevenue() extracted to revenue.ts; 20 new tests
+- **localStorage persistence** (PR #54 ✅) — event log serialised to `cg-events-v1` on every dispatch; rehydrates on page load; resetGame() exposed for future New Game UI
+- **Hub tile routing fix** (PR #55 ✅) — Stadium tile badge now fires only on first-time facility unlocks (level 0 → affordable), not routine level-ups; Chats tile badge already targeted to math-challenge negotiations only
 
 ## What's In Progress
 
-- Nothing — PR #53 open, awaiting merge
+- Nothing — main is clean at `5fb24a4`
 
 ## Blockers
 
@@ -47,7 +50,6 @@ status: "in-progress"
 | # | Title | Priority |
 |---|-------|----------|
 | #30 | `publicPotential` ↔ `truePotential` Scout Network semantic update (remaining) | Low |
-| #27 | Hub tile action flags rerouting | Medium |
 | #28 | Construction lag time + staged build visuals | Low |
 
 ## Notes
@@ -58,6 +60,6 @@ status: "in-progress"
 - Dev server: `npm run dev --workspace=@calculating-glory/frontend`
 - Domain tests: `cd packages/domain && npm test`
 - Domain dist is a symlink to main project — always rebuild from `/packages/domain && npm run build`
-- Active worktrees: `nostalgic-carson` (PR #53)
-- Facility revenue ceiling: current max ~£4k/wk total will not scale to Championship/PL — needs league-tier coefficient before multi-league work
+- Active worktrees: `zen-chaplygin` (current session branch, post-merge still alive)
 - **Design principle confirmed**: promotion/relegation does NOT affect player stats — ability follows PlayerCurve only; promotion means competing in a harder league, not a stat boost
+- **Balance pass still outstanding** — growth/retirement rates theoretical; need a two-season play-through to verify feel

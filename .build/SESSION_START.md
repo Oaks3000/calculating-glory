@@ -1,32 +1,38 @@
-# Session Handover — 2026-03-21
+# Session Handover — 2026-03-22
 
 ## What Was Done This Session
 
-### PR #53 — Second Season Loop: League Reset + Season-End Consequences ✅
+### PR #53 — Second Season Loop (already merged, picked up from last session)
+- Merged at session start; main pulled to `823567e`
 
-**Problem being solved:**
-The game was mechanically broken past season 1. `handlePreSeasonStarted` never zeroed league entry stats, so season 2 accumulated results on top of season 1 standings. `handleSeasonEnded` received `promoted`/`relegated`/`finalPosition` flags but ignored them entirely — no consequences for finishing position.
+### PR #54 — Facility Revenue Tier Scaling + localStorage Persistence ✅
 
-**What was built:**
+**Facility revenue tier scaling:**
+- Added `Division` type (`LEAGUE_TWO | LEAGUE_ONE | CHAMPIONSHIP | PREMIER_LEAGUE`) to `GameState`
+- `SEASON_ENDED` now calls `stepDivision()` — promotion bumps up, relegation drops down, clamped at both ends
+- `facilityRevenue(facilities, division)` extracted to `revenue.ts` with `TIER_REVENUE_MULTIPLIER` table (1×→2×→4×→10×)
+- `handleWeekAdvanced` uses new function — facility income scales with division
+- Max facility output: £4k/wk (L2) → £8k (L1) → £16k (Champ) → £40k (PL)
+- 20 new tests; 441 total across 23 suites
 
-- **`handlePreSeasonStarted`** — now zeroes all league entry stats (played, won, drawn, lost, GF, GA, GD, points, form) for every club at the start of each new season
-- **`handleSeasonEnded`** — now applies reputation and board confidence deltas based on `finalPosition` and promotion/relegation outcome:
+**localStorage persistence:**
+- `src/lib/persistence.ts` — `saveEvents` / `loadEvents` / `clearSave`
+- `initialGame.ts` — `loadOrCreateGameState()` checks storage first, falls back to fresh game
+- `useGameState` — saves after every successful dispatch; exposes `resetGame()`
+- Key: `cg-events-v1` (versioned for future migration)
+- Verified: formation selection survives full page reload
 
-| Outcome | Rep | Board confidence |
-|---|---|---|
-| Promoted (top 3) | +10 | +20 |
-| Playoff finish (4–7) | +3 | +10 |
-| Mid-table (8–20) | 0 | 0 |
-| Near-relegated (21–22) | −2 | −10 |
-| Relegated (23–24) | −8 | −20 |
+### PR #55 — Hub Tile Routing Fix (#27) ✅
 
-Both values clamped 0–100.
+**Problem:** Stadium tile fired "Action needed" badge whenever any affordable upgrade existed — essentially always. Chats tile had previously fired for all pending events (not just math-challenge ones).
 
-- **`SeasonEndScreen`** — contextual outcome text replaces hardcoded "in League Two" string (e.g. "Earning promotion to League One", "A narrow escape from relegation", "A season of consolidation")
-- **12 new tests** — league reset × 5, reputation/confidence deltas × 7; 421 total across 22 suites
+**Fix (in `CommandCentre.tsx`):**
+- Stadium tile `hasEvent` now uses `canUnlockNew` (level-0 facility affordable = first build) not `canUpgrade` (any level-up)
+- Subtitle: "New facility available" / "Upgrade available" / "Facilities Lv{n}"
+- Chats tile `hasEvent` was already correctly scoped to `requiresMath` events — left untouched
+- `HubTiles.tsx` wrapper also updated (same logic) though it is not currently rendered
 
-**Key design decision locked in:**
-Promotion/relegation does **not** affect player stats. Ability follows `PlayerCurve` only. Promotion means competing in a harder league — not a stat boost. Players shouldn't necessarily improve just because they've been promoted.
+Verified in browser: Stadium shows "New facility available" + badge on game start (all facilities at L0, £500k budget). Chats and Transfers quiet.
 
 ---
 
@@ -34,16 +40,17 @@ Promotion/relegation does **not** affect player stats. Ability follows `PlayerCu
 
 ### ✅ Working
 
-- PR #53 open at https://github.com/Oaks3000/calculating-glory/pull/53 — ready to merge
-- 421 domain tests green across 22 suites
-- Full season loop is now mechanically sound: league resets, consequences fire, two seasons are playable
-- Players grow/decline each season via PlayerCurve; some retire with flavour text
-- `computeOverallRating()` is a pure function — no stored field
+- Main at `5fb24a4` — all PRs merged, CI green
+- 441 domain tests green across 23 suites
+- Full season loop: league resets, consequences fire, two seasons playable
+- localStorage saves/rehydrates correctly on page reload
+- Hub tile badges are meaningful signals, not noise
+- Facility revenue scales with division tier — prereq for multi-league work done
+- `Division` field on `GameState` ready for multiple leagues
 
 ### 🟡 In Progress
 
-- PR #53 awaiting merge
-- Balance not yet tested — growth/retirement rates are theoretical; need a two-season play-through to verify feel
+- Balance pass not yet done — growth/retirement rates theoretical
 
 ### 🔴 Blocked
 
@@ -53,20 +60,21 @@ Promotion/relegation does **not** affect player stats. Ability follows `PlayerCu
 
 ## Architecture Notes
 
-### Second season loop design
-- League reset happens in `PRE_SEASON_STARTED` reducer (not `SEASON_ENDED`) — clean separation: season-end handles consequences, pre-season handles fresh-slate setup
-- Reputation/board confidence deltas are clamped in the reducer; no domain logic depends on them being unclamped
-- `finalPosition` (1-indexed) is already on `SeasonEndedPayload` — no new events needed
+### Division tracking
+- `division: Division` field on `GameState`, defaults to `LEAGUE_TWO`
+- `stepDivision()` in reducer — called on `SEASON_ENDED`, clamped at both ends
+- `TIER_REVENUE_MULTIPLIER` in `revenue.ts` is the single source of truth for tier scaling
 
-### Player stats / promotion clarification
-- `PlayerCurve` is the single source of truth for how a player's attack/defence changes over time
-- The division a player competes in has zero effect on their curve tick
-- Promotion difficulty comes from the NPC clubs being stronger (higher-attribute squads), not from player stat inflation
+### localStorage persistence
+- Only the event log is persisted — state is always re-derived via `buildState(events)`
+- Save happens in `dispatch()` inside `useGameState` after every successful command
+- `GAME_STARTED` event is included in the first save (when player picks formation)
+- Falls back to fresh game if `cg-events-v1` is absent or corrupt
 
-### Worktree: nostalgic-carson
-- Branch: `claude/nostalgic-carson`
-- Commit: `4eb01be`
-- Worktree path: `.claude/worktrees/nostalgic-carson`
+### Hub tile logic
+- Stadium tile badge: `canUnlockNew = f.level === 0 && f.upgradeCost <= budget` — new facility affordable
+- Chats tile badge: `unresolvedEvents.some(e => e.choices.some(c => c.requiresMath))` — math negotiation waiting
+- Logic lives in **`CommandCentre.tsx`** (inline), NOT in `HubTiles.tsx` wrapper
 
 ---
 
@@ -74,8 +82,7 @@ Promotion/relegation does **not** affect player stats. Ability follows `PlayerCu
 
 | # | Title | Priority |
 |---|-------|----------|
-| #30 | `publicPotential` ↔ `truePotential` Scout Network semantic update (remaining) | Low |
-| #27 | Hub tile action flags rerouting | Medium |
+| #30 | `publicPotential` ↔ `truePotential` Scout Network semantic update | Low |
 | #28 | Construction lag time + staged build visuals | Low |
 
 ---
@@ -93,7 +100,7 @@ cd /Users/oakleywalters/Projects/calculating-glory/packages/domain && npm run bu
 cd /Users/oakleywalters/Projects/calculating-glory/packages/domain && npm test
 
 # TypeScript check
-cd /Users/oakleywalters/Projects/calculating-glory/packages/frontend && npx tsc --noEmit
+cd /Users/oakleywalters/Projects/calculating-glory/.claude/worktrees/<name>/packages/frontend && npx tsc --noEmit
 ```
 
 ## Deployment
@@ -107,16 +114,13 @@ Auto-deploys on every push to main via `.github/workflows/deploy.yml`.
 ## How to Start Next Session
 
 ```bash
-# 1. Merge PR #53 via GitHub, then pull main
+# 1. Pull main
 git -C /Users/oakleywalters/Projects/calculating-glory pull origin main
 
-# 2. Prune merged worktree
-git -C /Users/oakleywalters/Projects/calculating-glory worktree remove .claude/worktrees/nostalgic-carson
-
-# 3. Rebuild domain dist
+# 2. Rebuild domain dist
 cd /Users/oakleywalters/Projects/calculating-glory/packages/domain && npm run build
 
-# 4. Create worktree for next feature
+# 3. Create worktree for next feature
 git -C /Users/oakleywalters/Projects/calculating-glory worktree add \
   .claude/worktrees/<name> -b feat/<name> origin/main
 ```
@@ -125,21 +129,21 @@ git -C /Users/oakleywalters/Projects/calculating-glory worktree add \
 
 ```
 packages/domain/src/
-  commands/
-    handlers.ts             — handlePreSeasonStarted (league reset), handleSeasonEnded (rep/confidence deltas)
-  reducers/
-    game-reducer.ts         — PRE_SEASON_STARTED reducer zeroes all league entry stats
   simulation/
-    progression.ts          — Curve math, applySeasonProgression, shouldRetire, getRetirementFlavour
-    revenue.ts              — playerCharismaRevenue, squadCharismaRevenue
+    revenue.ts              — facilityRevenue(), TIER_REVENUE_MULTIPLIER, squadCharismaRevenue()
   types/
-    player.ts               — Player, PlayerAttributes, PlayerCurve, CurveShape, computeOverallRating()
+    game-state-updated.ts   — Division type + division field on GameState
 
-packages/frontend/src/components/
-  season-end/
-    SeasonEndScreen.tsx     — Contextual outcome text, season stats, league table
+packages/frontend/src/
+  lib/
+    persistence.ts          — saveEvents, loadEvents, clearSave
+    initialGame.ts          — loadOrCreateGameState()
+  hooks/
+    useGameState.ts         — saves on dispatch, exposes resetGame()
+  components/command-centre/
+    CommandCentre.tsx       — hub tile hasEvent logic (canUnlockNew, canUpgrade)
 ```
 
 ---
 
-**Status**: PR #53 open (`4eb01be`). 421 domain tests. Second season loop mechanically complete. Merge and do a balance play-through next.
+**Status**: Main at `5fb24a4`. 441 domain tests. Three PRs shipped this session (#53 merged on pickup, #54 facility tier revenue + persistence, #55 hub tile routing). Balance pass is the next manual task.
