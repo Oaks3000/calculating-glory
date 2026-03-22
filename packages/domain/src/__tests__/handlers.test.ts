@@ -129,7 +129,7 @@ describe('handleCommand — MAKE_TRANSFER', () => {
 // ─── UPGRADE_FACILITY ─────────────────────────────────────────────────────────
 
 describe('handleCommand — UPGRADE_FACILITY', () => {
-  it('produces a FACILITY_UPGRADED event on success', () => {
+  it('produces a FACILITY_UPGRADE_STARTED event on success', () => {
     const state = stateWithFacility(1, 100000000);
     const result = handleCommand({
       type: 'UPGRADE_FACILITY',
@@ -138,7 +138,9 @@ describe('handleCommand — UPGRADE_FACILITY', () => {
     }, state);
     expect(result.error).toBeUndefined();
     expect(result.events).toBeDefined();
-    expect(result.events![0].type).toBe('FACILITY_UPGRADED');
+    expect(result.events![0].type).toBe('FACILITY_UPGRADE_STARTED');
+    expect((result.events![0] as any).targetLevel).toBe(2);
+    expect((result.events![0] as any).weeksToComplete).toBe(3); // targetLevel + 1
   });
 
   it('returns an error when facility does not exist', () => {

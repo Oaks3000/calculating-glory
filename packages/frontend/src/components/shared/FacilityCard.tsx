@@ -28,9 +28,10 @@ export function FacilityCard({
   onUpgrade: () => void;
 }) {
   const meta = FACILITY_CONFIG[facility.type];
+  const isBuilding = (facility.constructionWeeksRemaining ?? 0) > 0;
   const isMaxLevel = facility.level >= 5;
   const canAfford = facility.upgradeCost <= budget;
-  const canUpgrade = !isMaxLevel && canAfford;
+  const canUpgrade = !isMaxLevel && !isBuilding && canAfford;
 
   return (
     <div
@@ -74,8 +75,21 @@ export function FacilityCard({
         </span>
       </div>
 
+      {/* Construction in progress */}
+      {isBuilding && (
+        <div className="flex items-center gap-2 pt-1 border-t border-bg-raised">
+          <span className="text-base">🏗</span>
+          <div>
+            <span className="text-xs font-semibold text-warn-amber">Under Construction</span>
+            <span className="text-xs2 text-txt-muted ml-1.5">
+              — {facility.constructionWeeksRemaining} week{facility.constructionWeeksRemaining === 1 ? '' : 's'} remaining
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Upgrade section */}
-      {!isMaxLevel && (
+      {!isMaxLevel && !isBuilding && (
         <div className="flex items-center justify-between pt-1 border-t border-bg-raised">
           <div>
             <span className="text-xs2 text-txt-muted">Upgrade cost: </span>

@@ -56,9 +56,12 @@ export function IsometricBlueprint({
   // Ref so handleMouseMove can read the current hoveredId without stale closures.
   const hoveredIdRef = useRef<string | null>(null);
 
-  // Fast lookup: facilityType → level
+  // Fast lookups: facilityType → level / constructionWeeksRemaining
   const levelOf = Object.fromEntries(
     club.facilities.map(f => [f.type, f.level]),
+  ) as Record<FacilityType, number>;
+  const constructionOf = Object.fromEntries(
+    club.facilities.map(f => [f.type, f.constructionWeeksRemaining ?? 0]),
   ) as Record<FacilityType, number>;
 
   // ── Handlers ─────────────────────────────────────────────────────────────
@@ -111,7 +114,12 @@ export function IsometricBlueprint({
           Level {level} — {LEVEL_LABELS[level]}
         </p>
         <p className="text-xs2 text-txt-muted mt-0.5 italic">{meta.description}</p>
-        {level === 0 && (
+        {constructionOf[def.facilityType] > 0 && (
+          <p className="text-xs2 text-warn-amber mt-1">
+            🏗 Under construction — {constructionOf[def.facilityType]} wk{constructionOf[def.facilityType] === 1 ? '' : 's'} remaining
+          </p>
+        )}
+        {level === 0 && constructionOf[def.facilityType] === 0 && (
           <p className="text-xs2 text-data-blue mt-1">Click to upgrade →</p>
         )}
       </div>
@@ -194,6 +202,7 @@ export function IsometricBlueprint({
             key={def.id}
             def={def}
             level={levelOf[def.facilityType] ?? 0}
+            constructionWeeksRemaining={constructionOf[def.facilityType]}
             isHovered={hoveredId === def.id}
             onClick={() => onCoreUnitClick?.(def.facilityType)}
             onHover={handleHover}

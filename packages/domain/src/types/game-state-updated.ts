@@ -113,6 +113,13 @@ export interface GameState {
   /** League standings */
   league: LeagueTable;
 
+  /**
+   * Final standings from the previous season.
+   * Undefined for season 1. Populated at the start of each subsequent season
+   * so the UI can display last season's table alongside the current one.
+   */
+  previousLeagueTable?: LeagueTable;
+
   /** Board confidence level (0-100) */
   boardConfidence: number;
 

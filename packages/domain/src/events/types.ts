@@ -18,6 +18,8 @@ export type GameEvent =
   | BudgetUpdatedEvent
   | MatchSimulatedEvent
   | FacilityUpgradedEvent
+  | FacilityUpgradeStartedEvent
+  | FacilityConstructionCompletedEvent
   | StaffHiredEvent
   | StaffFiredEvent
   | MathAttemptRecordedEvent
@@ -78,6 +80,28 @@ export interface FacilityUpgradedEvent {
   facilityType: string;
   level: number;
   cost: number; // in pence
+}
+
+export interface FacilityUpgradeStartedEvent {
+  type: 'FACILITY_UPGRADE_STARTED';
+  timestamp: number;
+  clubId: string;
+  facilityType: string;
+  /** The level being built toward (current level + 1) */
+  targetLevel: number;
+  /** Budget deducted immediately (in pence) */
+  cost: number;
+  /** Weeks until construction completes */
+  weeksToComplete: number;
+}
+
+export interface FacilityConstructionCompletedEvent {
+  type: 'FACILITY_CONSTRUCTION_COMPLETED';
+  timestamp: number;
+  clubId: string;
+  facilityType: string;
+  /** The new level now active */
+  newLevel: number;
 }
 
 export interface StaffHiredEvent {

@@ -37,10 +37,10 @@ export function HubTiles({ state, onOpenSocialFeed, onOpenIsometric }: HubTilesP
   // Only badge when a brand-new facility (level 0) can be built for the first time.
   // Routine level-ups are expected and don't warrant an action signal.
   const canUnlockNew = state.club.facilities.some(
-    f => f.level === 0 && f.upgradeCost <= state.club.transferBudget
+    f => f.level === 0 && !(f.constructionWeeksRemaining ?? 0) && f.upgradeCost <= state.club.transferBudget
   );
   const canUpgrade = state.club.facilities.some(
-    f => f.level > 0 && f.level < 5 && f.upgradeCost <= state.club.transferBudget
+    f => f.level > 0 && f.level < 5 && !(f.constructionWeeksRemaining ?? 0) && f.upgradeCost <= state.club.transferBudget
   );
 
   return (

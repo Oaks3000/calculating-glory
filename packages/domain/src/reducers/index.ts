@@ -41,6 +41,10 @@ export function reduceEvent(state: GameState, event: GameEvent): GameState {
       return handleMatchSimulated(state, event);
     case 'FACILITY_UPGRADED':
       return handleFacilityUpgraded(state, event);
+    case 'FACILITY_UPGRADE_STARTED':
+      return handleFacilityUpgradeStarted(state, event);
+    case 'FACILITY_CONSTRUCTION_COMPLETED':
+      return handleFacilityConstructionCompleted(state, event);
     case 'STAFF_HIRED':
       return handleStaffHired(state, event);
     case 'STAFF_FIRED':
@@ -340,6 +344,35 @@ function handleFacilityUpgraded(state: GameState, event: any): GameState {
   };
 }
 
+function handleFacilityUpgradeStarted(state: GameState, event: any): GameState {
+  return {
+    ...state,
+    club: {
+      ...state.club,
+      facilities: state.club.facilities.map(f =>
+        f.type === event.facilityType
+          ? { ...f, constructionWeeksRemaining: event.weeksToComplete }
+          : f
+      ),
+      transferBudget: state.club.transferBudget - event.cost,
+    }
+  };
+}
+
+function handleFacilityConstructionCompleted(state: GameState, event: any): GameState {
+  return {
+    ...state,
+    club: {
+      ...state.club,
+      facilities: state.club.facilities.map(f =>
+        f.type === event.facilityType
+          ? { ...f, level: event.newLevel, upgradeCost: getUpgradeCost(event.facilityType, event.newLevel), constructionWeeksRemaining: undefined }
+          : f
+      ),
+    }
+  };
+}
+
 function handleStaffHired(state: GameState, event: StaffHiredEvent): GameState {
   return {
     ...state,
@@ -474,6 +507,15 @@ function handleWeekAdvanced(state: GameState, event: any): GameState {
   const avg = avgSquadMorale(squad);
   const lowMoraleWeeks = avg < 40 ? (state.lowMoraleWeeks ?? 0) + 1 : 0;
 
+  // Decrement construction timers on any in-progress facilities.
+  // Facilities completing this week already had FACILITY_CONSTRUCTION_COMPLETED applied
+  // before this event, so their constructionWeeksRemaining is already cleared.
+  const facilities = state.club.facilities.map(f =>
+    f.constructionWeeksRemaining && f.constructionWeeksRemaining > 0
+      ? { ...f, constructionWeeksRemaining: f.constructionWeeksRemaining - 1 }
+      : f
+  );
+
   return {
     ...state,
     currentWeek: week,
@@ -482,6 +524,7 @@ function handleWeekAdvanced(state: GameState, event: any): GameState {
     club: {
       ...state.club,
       squad,
+      facilities,
       transferBudget: state.club.transferBudget + weeklyRevenue,
     }
   };
@@ -718,6 +761,9 @@ function handlePreSeasonStarted(state: GameState, event: PreSeasonStartedEvent):
     .filter(p => !retiringIds.has(p.id))
     .map(p => applySeasonProgression(p));
 
+  // Snapshot the final standings before resetting — used to display "Last Season" in the UI.
+  const previousLeagueTable = state.league;
+
   // Reset all league entry stats — clubs stay the same, season tallies clear.
   const resetEntries = state.league.entries.map(entry => ({
     ...entry,
@@ -737,6 +783,7 @@ function handlePreSeasonStarted(state: GameState, event: PreSeasonStartedEvent):
     phase: 'PRE_SEASON',
     season: event.season,
     currentWeek: 0,
+    previousLeagueTable,
     league: { ...state.league, entries: resetEntries },
     club: {
       ...state.club,

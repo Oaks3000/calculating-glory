@@ -52,10 +52,10 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
   // Badge only when a brand-new facility (level 0) can be built for the first time.
   // Routine level-ups don't warrant an action signal — they're always available.
   const canUnlockNew = state.club.facilities.some(
-    f => f.level === 0 && f.upgradeCost <= state.club.transferBudget
+    f => f.level === 0 && !(f.constructionWeeksRemaining ?? 0) && f.upgradeCost <= state.club.transferBudget
   );
   const canUpgrade = state.club.facilities.some(
-    f => f.level > 0 && f.level < 5 && f.upgradeCost <= state.club.transferBudget
+    f => f.level > 0 && f.level < 5 && !(f.constructionWeeksRemaining ?? 0) && f.upgradeCost <= state.club.transferBudget
   );
 
   return (
@@ -155,6 +155,7 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
                 playerClubId={state.club.id}
                 promotionCutoff={3}
                 relegationStart={22}
+                previousLeagueTable={state.previousLeagueTable}
               />
             </div>
           </div>

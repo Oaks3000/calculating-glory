@@ -79,6 +79,20 @@ export interface Facility {
 
   /** Benefit description */
   benefit: FacilityBenefit;
+
+  /**
+   * Weeks remaining until construction completes.
+   * Undefined (or 0) means the facility is not under construction.
+   */
+  constructionWeeksRemaining?: number;
+}
+
+/**
+ * Number of weeks construction takes to complete for each target level.
+ * targetLevel 1 → 2 weeks, 2 → 3 weeks, ... 5 → 6 weeks.
+ */
+export function constructionDuration(targetLevel: number): number {
+  return targetLevel + 1;
 }
 
 export interface FacilityBenefit {
