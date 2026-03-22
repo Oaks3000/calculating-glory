@@ -66,7 +66,7 @@ lastUpdated: "2026-03-23"
 - [x] Second season — league table reset, reputation/board confidence deltas, contextual outcome text ✅ (PR #53)
 - [x] Multiple leagues — League One NPC data, division-aware opponent pool swap ✅ (PR #68)
 - [ ] Custom club creation (name, colours, badge)
-- [ ] **Pre-season league rebuild — multiplayer rethink**: current `handlePreSeasonStarted` rebuilds NPC slots from `state.division` (single player assumption). In multiplayer, different human players will be in different divisions — league tables can't be keyed to a single player's division. Needs a `leagueId`-per-player or shared-world model before this pattern scales.
+- [ ] **League as first-class entity (multiplayer prerequisite)**: `state.league` is player-owned — the player *has a* league rather than *participates in* one. This works for single-player (one `GameState`, one private scoreboard) but is the wrong abstraction. The correct model: `League` is a shared entity; players and NPCs hold a `leagueId` reference; multiple humans in the same division share one `League` instance whose events are separate from any single player's event log. Requires splitting `buildState` into player-state + league-state before multiplayer is viable. Do not attempt mid-season.
 
 ### Phase 7: Isometric Stadium — SC2K Visual Overhaul
 
