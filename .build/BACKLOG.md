@@ -64,8 +64,9 @@ lastUpdated: "2026-03-23"
 ## Future Phases
 
 - [x] Second season — league table reset, reputation/board confidence deltas, contextual outcome text ✅ (PR #53)
-- [ ] Multiple leagues (League One, Championship)
+- [x] Multiple leagues — League One NPC data, division-aware opponent pool swap ✅ (PR #68)
 - [ ] Custom club creation (name, colours, badge)
+- [ ] **Pre-season league rebuild — multiplayer rethink**: current `handlePreSeasonStarted` rebuilds NPC slots from `state.division` (single player assumption). In multiplayer, different human players will be in different divisions — league tables can't be keyed to a single player's division. Needs a `leagueId`-per-player or shared-world model before this pattern scales.
 
 ### Phase 7: Isometric Stadium — SC2K Visual Overhaul
 
