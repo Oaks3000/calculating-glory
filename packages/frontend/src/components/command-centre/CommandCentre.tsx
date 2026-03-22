@@ -49,8 +49,13 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
   const maxFacilityLevel = state.club.facilities.length > 0
     ? Math.max(...state.club.facilities.map(f => f.level))
     : 0;
-  const canUpgrade       = state.club.facilities.some(
-    f => f.level < 5 && f.upgradeCost <= state.club.transferBudget
+  // Badge only when a brand-new facility (level 0) can be built for the first time.
+  // Routine level-ups don't warrant an action signal — they're always available.
+  const canUnlockNew = state.club.facilities.some(
+    f => f.level === 0 && f.upgradeCost <= state.club.transferBudget
+  );
+  const canUpgrade = state.club.facilities.some(
+    f => f.level > 0 && f.level < 5 && f.upgradeCost <= state.club.transferBudget
   );
 
   return (
@@ -110,8 +115,12 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
             <HubTile
               icon="🏟"
               label="Stadium & Facilities"
-              sub={canUpgrade ? 'Upgrade available' : `Facilities Lv${maxFacilityLevel}`}
-              hasEvent={canUpgrade}
+              sub={
+                canUnlockNew ? 'New facility available'
+                  : canUpgrade ? 'Upgrade available'
+                  : `Facilities Lv${maxFacilityLevel}`
+              }
+              hasEvent={canUnlockNew}
               onClick={onNavigateToStadium}
             />
             <HubTile
