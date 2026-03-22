@@ -5,13 +5,13 @@
  */
 
 import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent, ManagerHiredEvent, ManagerSackedEvent, PreSeasonStartedEvent, ScoutMissionStartedEvent, ScoutTargetFoundEvent, ScoutBidPlacedEvent, ScoutTransferCompletedEvent, OwnerForcedOutEvent, TakeoverAcceptedEvent } from '../events/types';
-import { GameState } from '../types/game-state-updated';
+import { GameState, Division } from '../types/game-state-updated';
 import { Club } from '../types/club';
 import { LeagueTable, LeagueTableEntry, sortLeagueTable } from '../types/league';
 import { CURRICULUM_LEVELS } from '../curriculum/curriculum-config';
 import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
 import { getDefaultFacilities, getUpgradeCost } from '../types/facility';
-import { squadCharismaRevenue } from '../simulation/revenue';
+import { facilityRevenue, squadCharismaRevenue } from '../simulation/revenue';
 import { generateStartingSquad } from '../data/squad-generator';
 import { generateFreeAgentPool } from '../data/free-agent-generator';
 import { generateManagerPool } from '../data/manager-generator';
@@ -129,6 +129,7 @@ export function buildState(events: GameEvent[]): GameState {
     moraleEventCooldowns: {},
     scoutMission: null,
     forcedOut:    null,
+    division:     'LEAGUE_TWO',
   };
 
   return events.reduce(reduceEvent, initialState);
@@ -426,18 +427,15 @@ function handleMathAttemptRecorded(state: GameState, event: MathAttemptRecordedE
 function handleWeekAdvanced(state: GameState, event: any): GameState {
   const week: number = event.week;
 
-  // Calculate weekly revenue from revenue-generating facilities
-  const commercial = state.club.facilities.find(f => f.type === 'CLUB_COMMERCIAL');
-  const foodBev = state.club.facilities.find(f => f.type === 'FOOD_AND_BEVERAGE');
-  const commercialRevenue = commercial ? commercial.level * 50_000 : 0; // £500/week per level
-  const foodRevenue = foodBev ? foodBev.level * 30_000 : 0;            // £300/week per level
+  // Facility revenue scales with division tier (see simulation/revenue.ts).
+  const facRevenue = facilityRevenue(state.club.facilities, state.division);
 
   // Charisma-based popularity revenue: t³ × 75,000p × (OVR × 0.1)
   // Zero for most League Two squads; scales steeply above c=80 for high-OVR players.
   // See simulation/revenue.ts for full formula documentation.
   const charismaRevenue = squadCharismaRevenue(state.club.squad);
 
-  const weeklyRevenue = commercialRevenue + foodRevenue + charismaRevenue;
+  const weeklyRevenue = facRevenue + charismaRevenue;
 
   let phase = state.phase;
   if (week <= 15) {
@@ -489,6 +487,20 @@ function handleWeekAdvanced(state: GameState, event: any): GameState {
   };
 }
 
+const DIVISION_ORDER: Division[] = [
+  'LEAGUE_TWO',
+  'LEAGUE_ONE',
+  'CHAMPIONSHIP',
+  'PREMIER_LEAGUE',
+];
+
+function stepDivision(current: Division, promoted: boolean, relegated: boolean): Division {
+  const idx = DIVISION_ORDER.indexOf(current);
+  if (promoted)  return DIVISION_ORDER[Math.min(idx + 1, DIVISION_ORDER.length - 1)];
+  if (relegated) return DIVISION_ORDER[Math.max(idx - 1, 0)];
+  return current;
+}
+
 function handleSeasonEnded(state: GameState, event: any): GameState {
   const { finalPosition, promoted, relegated } = event as {
     finalPosition: number;
@@ -512,11 +524,14 @@ function handleSeasonEnded(state: GameState, event: any): GameState {
     : 0;
   const newBoardConfidence = Math.max(0, Math.min(100, state.boardConfidence + confDelta));
 
+  const newDivision = stepDivision(state.division, promoted, relegated);
+
   return {
     ...state,
     phase: 'SEASON_END',
     club: { ...state.club, reputation: newReputation },
     boardConfidence: newBoardConfidence,
+    division: newDivision,
   };
 }
 

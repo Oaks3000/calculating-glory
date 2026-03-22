@@ -1,6 +1,7 @@
 /**
  * Central game state hook.
  * Manages the event log and re-derives state after every command.
+ * Persists the event log to localStorage after every successful dispatch.
  */
 import { useState, useCallback } from 'react';
 import {
@@ -10,16 +11,18 @@ import {
   GameEvent,
   GameState,
 } from '@calculating-glory/domain';
-import { createInitialGameState } from '../lib/initialGame';
+import { loadOrCreateGameState, createInitialGameState } from '../lib/initialGame';
+import { saveEvents, clearSave } from '../lib/persistence';
 
 interface UseGameStateReturn {
   state: GameState;
   events: GameEvent[];
   dispatch: (command: GameCommand) => { error?: string };
+  resetGame: () => void;
   isLoading: boolean;
 }
 
-const { state: initialState, events: initialEvents } = createInitialGameState();
+const { state: initialState, events: initialEvents } = loadOrCreateGameState();
 
 export function useGameState(): UseGameStateReturn {
   const [events, setEvents] = useState<GameEvent[]>(initialEvents);
@@ -41,11 +44,19 @@ export function useGameState(): UseGameStateReturn {
       const newState = buildState(newEvents);
       setEvents(newEvents);
       setState(newState);
+      saveEvents(newEvents);
     }
 
     setIsLoading(false);
     return {};
   }, [state, events]);
 
-  return { state, events, dispatch, isLoading };
+  const resetGame = useCallback(() => {
+    clearSave();
+    const { state: freshState, events: freshEvents } = createInitialGameState();
+    setEvents(freshEvents);
+    setState(freshState);
+  }, []);
+
+  return { state, events, dispatch, resetGame, isLoading };
 }
