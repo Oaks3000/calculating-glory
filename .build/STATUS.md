@@ -4,8 +4,8 @@ type: "build"
 priority: 2
 phase: "Phase 6 — Live Season Depth"
 progress: 45
-lastUpdated: "2026-03-23"
-lastTouched: "2026-03-23"
+lastUpdated: "2026-03-24"
+lastTouched: "2026-03-24"
 status: "in-progress"
 ---
 
@@ -38,10 +38,11 @@ status: "in-progress"
 - **Hub tile routing fix** (PR #55 ✅) — Stadium tile badge now fires only on first-time facility unlocks (level 0 → affordable), not routine level-ups; Chats tile badge already targeted to math-challenge negotiations only
 - **Construction lag + frontend tests + NPC league persistence** (PR #66 ✅) — facility upgrades take 2–6 weeks; amber dashes + 🏗 icon in isometric view; 23 new component tests (FacilityCard + InboxCard); previousLeagueTable snapshotted at season reset with "Last Season" tab in UI
 - **publicPotential semantics** (PR #67 ✅) — `publicPotential` now derived from `getScoutedPotential(player, 0)` — noisy ±15 read of `truePotential` at L0 scout — in both squad-generator and free-agent-generator; Scout Network upgrades now meaningfully narrow the signal gap
+- **League One + division-aware opponents** (PR #68 ✅) — 23 fictional League One NPC clubs (strength 55–78); `getTeamsForDivision(division)` helper; pre-season league reset now rebuilds NPC pool from current division — promoted clubs face League One opponents; NPC transfers, poaching, scout targets, sell-to-NPC all division-aware
 
 ## What's In Progress
 
-- Nothing — main is clean at PR #67 merge
+- Nothing — main is clean at PR #68 merge
 
 ## Blockers
 

@@ -8,7 +8,8 @@ lastUpdated: "2026-03-23"
 
 ## Immediate (Next Session)
 
-1. **Multiple leagues** — League One NPC team data, division-aware match sim, promotion/relegation opponent pool swap. Division tracking is already on GameState.
+1. **Division-aware match difficulty** — League One NPC AI team strengths are higher (55–78 vs L2's 35–65) but `generateAITeam()` still uses a fixed ±10 noise from baseStrength. Consider a division-aware strength floor or multiplier so promoted teams face genuinely harder match sims.
+2. **resetGame() UI** — no "New Game" button surfaced anywhere yet.
 
 ## Short Term (Next 2–4 Weeks)
 
