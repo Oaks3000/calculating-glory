@@ -7,6 +7,53 @@
 
 import { Player } from '../types/player';
 import { computeOverallRating } from '../types/player';
+import { Division } from '../types/game-state-updated';
+import { Facility } from '../types/facility';
+
+// ─── League Tier Revenue Multipliers ──────────────────────────────────────────
+
+/**
+ * Revenue multiplier applied to all facility income based on current division.
+ *
+ * Design intent:
+ * - League Two is the base (1×). Bigger leagues have bigger crowds, bigger
+ *   sponsorship deals, and larger media contracts — all of which amplify
+ *   what the same physical facility can generate.
+ * - Multipliers are intentionally round numbers: easy to communicate to the
+ *   player as a "promotion bonus" and easy to re-tune in future.
+ *
+ * Approximate real-world revenue ratios (EFL/PL club median):
+ *   League Two → League One ≈ 2×
+ *   League One → Championship ≈ 2×
+ *   Championship → Premier League ≈ 5×
+ */
+export const TIER_REVENUE_MULTIPLIER: Record<Division, number> = {
+  LEAGUE_TWO:    1,
+  LEAGUE_ONE:    2,
+  CHAMPIONSHIP:  4,
+  PREMIER_LEAGUE: 10,
+};
+
+// ─── Facility Revenue ─────────────────────────────────────────────────────────
+
+/**
+ * Weekly facility revenue from CLUB_COMMERCIAL and FOOD_AND_BEVERAGE,
+ * scaled by the current division tier.
+ *
+ * Base rates (League Two):
+ *   CLUB_COMMERCIAL  — £500/wk per level  (50,000p × level)
+ *   FOOD_AND_BEVERAGE — £300/wk per level  (30,000p × level)
+ *
+ * Returns value in pence (integer).
+ */
+export function facilityRevenue(facilities: Facility[], division: Division): number {
+  const commercial   = facilities.find(f => f.type === 'CLUB_COMMERCIAL');
+  const foodBev      = facilities.find(f => f.type === 'FOOD_AND_BEVERAGE');
+  const commercialRev = commercial ? commercial.level * 50_000 : 0;
+  const foodRev       = foodBev    ? foodBev.level    * 30_000 : 0;
+  const multiplier    = TIER_REVENUE_MULTIPLIER[division];
+  return Math.round((commercialRev + foodRev) * multiplier);
+}
 
 // ─── Charisma Revenue ─────────────────────────────────────────────────────────
 

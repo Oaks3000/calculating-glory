@@ -83,6 +83,12 @@ export interface ScoutMission {
 }
 
 /**
+ * Which division the player's club is currently competing in.
+ * Starts at LEAGUE_TWO; updated on SEASON_ENDED based on promoted/relegated flags.
+ */
+export type Division = 'LEAGUE_TWO' | 'LEAGUE_ONE' | 'CHAMPIONSHIP' | 'PREMIER_LEAGUE';
+
+/**
  * Complete game state - derived from event log
  */
 export interface GameState {
@@ -156,6 +162,9 @@ export interface GameState {
    * Cleared when the player accepts the takeover of the bottom NPC club.
    */
   forcedOut: ForcedOutState | null;
+
+  /** Which division the club is currently in. Updated at season end. */
+  division: Division;
 }
 
 /**

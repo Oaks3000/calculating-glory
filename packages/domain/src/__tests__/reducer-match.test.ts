@@ -68,6 +68,7 @@ function makeState(entries: LeagueTableEntry[], playerClubId: string = 'club-1')
     moraleEventCooldowns: {},
     scoutMission: null,
     forcedOut: null,
+    division: 'LEAGUE_TWO',
   };
 }
 
