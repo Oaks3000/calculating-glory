@@ -1,149 +1,83 @@
-# Session Handover — 2026-03-22
+# Session Progress - 2026-03-22
 
-## What Was Done This Session
+## Session Goals
+- Ship #28 construction lag + staged build visuals
+- Add frontend component test suite
+- Fix NPC league table staleness between seasons
 
-### PR #53 — Second Season Loop (already merged, picked up from last session)
-- Merged at session start; main pulled to `823567e`
+## Completed Work
 
-### PR #54 — Facility Revenue Tier Scaling + localStorage Persistence ✅
+### 1. Construction lag — #28 (PR #66) ✅
+- **Domain** — `UPGRADE_FACILITY` now emits `FACILITY_UPGRADE_STARTED` instead of instant `FACILITY_UPGRADED`; new `FACILITY_CONSTRUCTION_COMPLETED` event fires when `constructionWeeksRemaining` hits 1 during `SIMULATE_WEEK`; `WEEK_ADVANCED` reducer decrements timers; validation blocks double-upgrades during construction
+- **Duration formula** — `targetLevel + 1` weeks (L0→L1 = 2 wks, L4→L5 = 6 wks)
+- **Backward compat** — old `FACILITY_UPGRADED` event + reducer untouched; existing saves work
+- **Frontend** — FacilityCard shows "🏗 Under Construction — X weeks remaining"; CoreUnit renders amber dashed outline + 🏗 icon; tooltip shows weeks remaining; HubTiles/CommandCentre badge logic excludes in-construction facilities
 
-**Facility revenue tier scaling:**
-- Added `Division` type (`LEAGUE_TWO | LEAGUE_ONE | CHAMPIONSHIP | PREMIER_LEAGUE`) to `GameState`
-- `SEASON_ENDED` now calls `stepDivision()` — promotion bumps up, relegation drops down, clamped at both ends
-- `facilityRevenue(facilities, division)` extracted to `revenue.ts` with `TIER_REVENUE_MULTIPLIER` table (1×→2×→4×→10×)
-- `handleWeekAdvanced` uses new function — facility income scales with division
-- Max facility output: £4k/wk (L2) → £8k (L1) → £16k (Champ) → £40k (PL)
-- 20 new tests; 441 total across 23 suites
+### 2. Frontend test suite (PR #66) ✅
+- **FacilityCard** — 13 tests: rendering, level labels, MAX badge, upgrade button (affordable / broke / max), all three construction lag states (building / complete / undefined)
+- **InboxCard** — 10 tests: empty state, unresolved-only decisions, badge count, match section visibility, dismiss handler, +N more overflow, onViewAll
+- PendingEventCard mocked to isolate InboxCard logic
+- **Total**: 91 frontend tests across 6 suites (up from 68)
 
-**localStorage persistence:**
-- `src/lib/persistence.ts` — `saveEvents` / `loadEvents` / `clearSave`
-- `initialGame.ts` — `loadOrCreateGameState()` checks storage first, falls back to fresh game
-- `useGameState` — saves after every successful dispatch; exposes `resetGame()`
-- Key: `cg-events-v1` (versioned for future migration)
-- Verified: formation selection survives full page reload
-
-### PR #55 — Hub Tile Routing Fix (#27) ✅
-
-**Problem:** Stadium tile fired "Action needed" badge whenever any affordable upgrade existed — essentially always. Chats tile had previously fired for all pending events (not just math-challenge ones).
-
-**Fix (in `CommandCentre.tsx`):**
-- Stadium tile `hasEvent` now uses `canUnlockNew` (level-0 facility affordable = first build) not `canUpgrade` (any level-up)
-- Subtitle: "New facility available" / "Upgrade available" / "Facilities Lv{n}"
-- Chats tile `hasEvent` was already correctly scoped to `requiresMath` events — left untouched
-- `HubTiles.tsx` wrapper also updated (same logic) though it is not currently rendered
-
-Verified in browser: Stadium shows "New facility available" + badge on game start (all facilities at L0, £500k budget). Chats and Transfers quiet.
-
----
-
-## Current State
-
-### ✅ Working
-
-- Main at `5fb24a4` — all PRs merged, CI green
-- 441 domain tests green across 23 suites
-- Full season loop: league resets, consequences fire, two seasons playable
-- localStorage saves/rehydrates correctly on page reload
-- Hub tile badges are meaningful signals, not noise
-- Facility revenue scales with division tier — prereq for multi-league work done
-- `Division` field on `GameState` ready for multiple leagues
-
-### 🟡 In Progress
-
-- Balance pass not yet done — growth/retirement rates theoretical
-
-### 🔴 Blocked
-
-- Nothing
-
----
+### 3. NPC league table persistence (PR #66) ✅
+- `previousLeagueTable?: LeagueTable` added to `GameState`
+- `handlePreSeasonStarted` snapshots `state.league` before zeroing — season 1 = undefined, season 2+ = full final standings with all stats + form
+- `LeagueTable` component gains "This Season / Last Season" pill toggle — only visible from season 2 onwards
 
 ## Architecture Notes
 
-### Division tracking
-- `division: Division` field on `GameState`, defaults to `LEAGUE_TWO`
-- `stepDivision()` in reducer — called on `SEASON_ENDED`, clamped at both ends
-- `TIER_REVENUE_MULTIPLIER` in `revenue.ts` is the single source of truth for tier scaling
+- **Worktree domain build**: worktree `node_modules/@calculating-glory/domain` symlinks to the worktree's own `packages/domain` (not the main project) — always rebuild from the worktree: `cd packages/domain && npm run build`
+- **Construction event ordering**: `FACILITY_CONSTRUCTION_COMPLETED` must fire before `WEEK_ADVANCED` in the same tick so the reducer can safely decrement remaining counters without double-processing the completing facility
+- **Save compat pattern**: new events sit alongside old ones; old events remain handled by their original reducers — no migration needed
 
-### localStorage persistence
-- Only the event log is persisted — state is always re-derived via `buildState(events)`
-- Save happens in `dispatch()` inside `useGameState` after every successful command
-- `GAME_STARTED` event is included in the first save (when player picks formation)
-- Falls back to fresh game if `cg-events-v1` is absent or corrupt
+## Current Status
 
-### Hub tile logic
-- Stadium tile badge: `canUnlockNew = f.level === 0 && f.upgradeCost <= budget` — new facility affordable
-- Chats tile badge: `unresolvedEvents.some(e => e.choices.some(c => c.requiresMath))` — math negotiation waiting
-- Logic lives in **`CommandCentre.tsx`** (inline), NOT in `HubTiles.tsx` wrapper
+### ✅ Working
+- All three features shipped and merged (PR #66)
+- 441 domain tests + 91 frontend tests — all green
+- TypeScript clean (pre-existing inboxUtils test fixture issue only — unrelated to session work)
+- Dev server renders without errors
 
----
+### 🟡 In Progress
+- Nothing — main is clean
 
-## Open Issues
+### 🔴 Blocked
+- Nothing
 
-| # | Title | Priority |
-|---|-------|----------|
-| #30 | `publicPotential` ↔ `truePotential` Scout Network semantic update | Low |
-| #28 | Construction lag time + staged build visuals | Low |
-
----
-
-## Build Commands
+## Build Commands / Key Files
 
 ```bash
 # Dev server
 npm run dev --workspace=@calculating-glory/frontend
 
-# ALWAYS rebuild domain dist in MAIN project after domain source changes
-cd /Users/oakleywalters/Projects/calculating-glory/packages/domain && npm run build
+# Domain tests (from worktree)
+cd packages/domain && npm test
 
-# Tests
-cd /Users/oakleywalters/Projects/calculating-glory/packages/domain && npm test
+# Frontend tests
+cd packages/frontend && npx vitest run
 
-# TypeScript check
-cd /Users/oakleywalters/Projects/calculating-glory/.claude/worktrees/<name>/packages/frontend && npx tsc --noEmit
+# Domain dist rebuild (must be from worktree, not main project)
+cd packages/domain && npm run build
 ```
 
-## Deployment
+Key files touched this session:
+- `packages/domain/src/types/facility.ts` — Facility type + constructionDuration()
+- `packages/domain/src/events/types.ts` — FacilityUpgradeStartedEvent, FacilityConstructionCompletedEvent
+- `packages/domain/src/commands/handlers.ts` — UPGRADE_FACILITY + SIMULATE_WEEK
+- `packages/domain/src/reducers/index.ts` — new event cases + WEEK_ADVANCED decrement + previousLeagueTable snapshot
+- `packages/domain/src/types/game-state-updated.ts` — previousLeagueTable on GameState
+- `packages/frontend/src/components/shared/FacilityCard.tsx` — construction state UI
+- `packages/frontend/src/components/isometric/CoreUnit.tsx` — construction visual
+- `packages/frontend/src/components/isometric/IsometricBlueprint.tsx` — pass construction data through
+- `packages/frontend/src/components/command-centre/LeagueTable.tsx` — Last Season tab
+- `packages/frontend/src/components/shared/__tests__/FacilityCard.test.tsx` — 13 tests
+- `packages/frontend/src/components/command-centre/__tests__/InboxCard.test.tsx` — 10 tests
 
-**Live URL**: https://oaks3000.github.io/calculating-glory/
+## Next Session Goals
 
-Auto-deploys on every push to main via `.github/workflows/deploy.yml`.
+1. **#30 publicPotential semantics** — noisy read of truePotential via Scout Network level
+2. **Multiple leagues** — League One NPC data, division-aware match sim, promotion/relegation pool swap
 
 ---
 
-## How to Start Next Session
-
-```bash
-# 1. Pull main
-git -C /Users/oakleywalters/Projects/calculating-glory pull origin main
-
-# 2. Rebuild domain dist
-cd /Users/oakleywalters/Projects/calculating-glory/packages/domain && npm run build
-
-# 3. Create worktree for next feature
-git -C /Users/oakleywalters/Projects/calculating-glory worktree add \
-  .claude/worktrees/<name> -b feat/<name> origin/main
-```
-
-## Key Files (next session context)
-
-```
-packages/domain/src/
-  simulation/
-    revenue.ts              — facilityRevenue(), TIER_REVENUE_MULTIPLIER, squadCharismaRevenue()
-  types/
-    game-state-updated.ts   — Division type + division field on GameState
-
-packages/frontend/src/
-  lib/
-    persistence.ts          — saveEvents, loadEvents, clearSave
-    initialGame.ts          — loadOrCreateGameState()
-  hooks/
-    useGameState.ts         — saves on dispatch, exposes resetGame()
-  components/command-centre/
-    CommandCentre.tsx       — hub tile hasEvent logic (canUnlockNew, canUpgrade)
-```
-
----
-
-**Status**: Main at `5fb24a4`. 441 domain tests. Three PRs shipped this session (#53 merged on pickup, #54 facility tier revenue + persistence, #55 hub tile routing). Balance pass is the next manual task.
+**Status**: Three issues shipped in one session — PR #66 merged cleanly. 441 domain + 91 frontend tests green. Next: #30 publicPotential or multiple leagues.
