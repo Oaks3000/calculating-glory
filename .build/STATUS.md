@@ -4,8 +4,8 @@ type: "build"
 priority: 2
 phase: "Phase 6 — Live Season Depth"
 progress: 45
-lastUpdated: "2026-03-22"
-lastTouched: "2026-03-22"
+lastUpdated: "2026-03-23"
+lastTouched: "2026-03-23"
 status: "in-progress"
 ---
 
@@ -37,10 +37,11 @@ status: "in-progress"
 - **localStorage persistence** (PR #54 ✅) — event log serialised to `cg-events-v1` on every dispatch; rehydrates on page load; resetGame() exposed for future New Game UI
 - **Hub tile routing fix** (PR #55 ✅) — Stadium tile badge now fires only on first-time facility unlocks (level 0 → affordable), not routine level-ups; Chats tile badge already targeted to math-challenge negotiations only
 - **Construction lag + frontend tests + NPC league persistence** (PR #66 ✅) — facility upgrades take 2–6 weeks; amber dashes + 🏗 icon in isometric view; 23 new component tests (FacilityCard + InboxCard); previousLeagueTable snapshotted at season reset with "Last Season" tab in UI
+- **publicPotential semantics** (PR #67 ✅) — `publicPotential` now derived from `getScoutedPotential(player, 0)` — noisy ±15 read of `truePotential` at L0 scout — in both squad-generator and free-agent-generator; Scout Network upgrades now meaningfully narrow the signal gap
 
 ## What's In Progress
 
-- Nothing — main is clean at PR #66 merge
+- Nothing — main is clean at PR #67 merge
 
 ## Blockers
 
@@ -48,9 +49,7 @@ status: "in-progress"
 
 ## Open Issues
 
-| # | Title | Priority |
-|---|-------|----------|
-| #30 | `publicPotential` ↔ `truePotential` Scout Network semantic update | Low |
+None
 
 ## Notes
 

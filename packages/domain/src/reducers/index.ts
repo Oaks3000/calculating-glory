@@ -9,7 +9,7 @@ import { GameState, Division } from '../types/game-state-updated';
 import { Club } from '../types/club';
 import { LeagueTable, LeagueTableEntry, sortLeagueTable } from '../types/league';
 import { CURRICULUM_LEVELS } from '../curriculum/curriculum-config';
-import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
+import { getTeamsForDivision } from '../data/division-teams';
 import { getDefaultFacilities, getUpgradeCost } from '../types/facility';
 import { facilityRevenue, squadCharismaRevenue } from '../simulation/revenue';
 import { generateStartingSquad } from '../data/squad-generator';
@@ -159,7 +159,7 @@ function handleGameStarted(state: GameState, event: GameStartedEvent): GameState
   };
 
   // Create AI team entries from the first 23 teams (player's club is 24th)
-  const aiTeamEntries: LeagueTableEntry[] = LEAGUE_TWO_TEAMS.slice(0, 23).map(team => ({
+  const aiTeamEntries: LeagueTableEntry[] = getTeamsForDivision('LEAGUE_TWO').slice(0, 23).map(team => ({
     position: 1,
     clubId: team.id,
     clubName: team.name,
@@ -764,19 +764,23 @@ function handlePreSeasonStarted(state: GameState, event: PreSeasonStartedEvent):
   // Snapshot the final standings before resetting — used to display "Last Season" in the UI.
   const previousLeagueTable = state.league;
 
-  // Reset all league entry stats — clubs stay the same, season tallies clear.
-  const resetEntries = state.league.entries.map(entry => ({
-    ...entry,
-    played: 0,
-    won: 0,
-    drawn: 0,
-    lost: 0,
-    goalsFor: 0,
-    goalsAgainst: 0,
-    goalDifference: 0,
-    points: 0,
-    form: [] as ('W' | 'D' | 'L')[],
+  // Rebuild NPC entries from the player's current division (may have changed via
+  // promotion/relegation). The player's own entry is preserved and stats cleared.
+  const playerEntry = state.league.entries.find(e => e.clubId === state.club.id)!;
+  const freshPlayerEntry: LeagueTableEntry = {
+    ...playerEntry,
+    played: 0, won: 0, drawn: 0, lost: 0,
+    goalsFor: 0, goalsAgainst: 0, goalDifference: 0,
+    points: 0, form: [],
+  };
+  const npcTeams = getTeamsForDivision(state.division);
+  const freshNpcEntries: LeagueTableEntry[] = npcTeams.slice(0, 23).map(team => ({
+    position: 1, clubId: team.id, clubName: team.name,
+    played: 0, won: 0, drawn: 0, lost: 0,
+    goalsFor: 0, goalsAgainst: 0, goalDifference: 0,
+    points: 0, form: [],
   }));
+  const freshEntries = sortLeagueTable([freshPlayerEntry, ...freshNpcEntries]);
 
   return {
     ...state,
@@ -784,7 +788,7 @@ function handlePreSeasonStarted(state: GameState, event: PreSeasonStartedEvent):
     season: event.season,
     currentWeek: 0,
     previousLeagueTable,
-    league: { ...state.league, entries: resetEntries },
+    league: { ...state.league, entries: freshEntries },
     club: {
       ...state.club,
       squad: updatedSquad,

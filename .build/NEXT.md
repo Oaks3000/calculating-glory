@@ -1,15 +1,14 @@
 ---
 project: "Calculating Glory"
 type: "build"
-lastUpdated: "2026-03-22"
+lastUpdated: "2026-03-23"
 ---
 
 # Calculating Glory - Next Steps
 
 ## Immediate (Next Session)
 
-1. **#30 publicPotential semantics** — now that `truePotential` is a career-arc cursor, `publicPotential` should be a noisy read of that. Low-priority Scout Network update.
-2. **Multiple leagues** — League One NPC team data, division-aware match sim, promotion/relegation opponent pool swap. Division tracking is already on GameState.
+1. **Multiple leagues** — League One NPC team data, division-aware match sim, promotion/relegation opponent pool swap. Division tracking is already on GameState.
 
 ## Short Term (Next 2–4 Weeks)
 

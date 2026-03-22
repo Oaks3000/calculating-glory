@@ -12,7 +12,8 @@
 import { Player, Position, PlayerAttributes } from '../types/player';
 import { createRng } from '../simulation/rng';
 import { generatePlayerCurve, computeTruePotential } from '../simulation/progression';
-import { LEAGUE_TWO_TEAMS } from './league-two-teams';
+import { getTeamsForDivision } from './division-teams';
+import { Division } from '../types/game-state-updated';
 
 // ── Names for contracted players ──────────────────────────────────────────────
 
@@ -163,13 +164,14 @@ export function generateScoutTarget(
   season: number,
   week: number,
   playerClubId: string,
+  division: Division = 'LEAGUE_TWO',
 ): ScoutTargetResult {
   const level = Math.max(0, Math.min(5, scoutLevel));
   const band  = QUALITY_BAND[level];
   const rng   = createRng(`scout-${baseSeed}-S${season}-W${week}`);
 
   // Pick an NPC club (not the player's own club)
-  const eligibleClubs = LEAGUE_TWO_TEAMS.filter(t => t.id !== playerClubId);
+  const eligibleClubs = getTeamsForDivision(division).filter(t => t.id !== playerClubId);
   const npcClub = eligibleClubs[rng.nextInt(0, eligibleClubs.length - 1)];
 
   // Pick a name

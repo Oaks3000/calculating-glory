@@ -12,7 +12,7 @@ import { simulateMatch, clubToTeam, generateAITeam, Team } from '../simulation/m
 import { generateSeasonFixtures, getWeekFixtures, matchSeed } from '../simulation/season';
 import { createRng } from '../simulation/rng';
 import { generateWeekEvents, generatePoachAttempts, generateMoraleThresholdEvents } from '../simulation/events';
-import { LEAGUE_TWO_TEAMS } from '../data/league-two-teams';
+import { getTeamsForDivision } from '../data/division-teams';
 import { Player, computeOverallRating } from '../types/player';
 import { shouldRetire, getRetirementFlavour } from '../simulation/progression';
 import { getScoutLevel, isTransferWindowOpen, constructionDuration } from '../types/facility';
@@ -365,6 +365,7 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
       season,
       week,
       state.club.id,
+      state.division,
     );
     const foundEvent: ScoutTargetFoundEvent = {
       type:              'SCOUT_TARGET_FOUND',
@@ -544,7 +545,7 @@ function handleStartSeason(command: any, state: GameState): CommandResult {
   let remainingPool: Player[] = [...state.freeAgentPool];
 
   // Stronger clubs pick first; exclude player's own club
-  const npcClubs = [...LEAGUE_TWO_TEAMS]
+  const npcClubs = [...getTeamsForDivision(state.division)]
     .filter(t => t.id !== state.club.id)
     .sort((a, b) => b.baseStrength - a.baseStrength);
 
@@ -842,7 +843,7 @@ function handleSellPlayerToNpc(command: any, state: GameState): CommandResult {
   }
 
   // Validate buying club exists
-  const buyingClub = LEAGUE_TWO_TEAMS.find(t => t.id === command.npcClubId);
+  const buyingClub = getTeamsForDivision(state.division).find(t => t.id === command.npcClubId);
   if (!buyingClub) {
     return {
       error: {
