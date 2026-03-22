@@ -3,7 +3,7 @@ project: "Calculating Glory"
 type: "build"
 priority: 2
 phase: "Phase 6 — Live Season Depth"
-progress: 35
+progress: 45
 lastUpdated: "2026-03-22"
 lastTouched: "2026-03-22"
 status: "in-progress"
@@ -36,10 +36,11 @@ status: "in-progress"
 - **Facility revenue tier scaling** (PR #54 ✅) — Division type tracked on GameState; TIER_REVENUE_MULTIPLIER (1×→2×→4×→10× across L2/L1/Champ/PL); facilityRevenue() extracted to revenue.ts; 20 new tests
 - **localStorage persistence** (PR #54 ✅) — event log serialised to `cg-events-v1` on every dispatch; rehydrates on page load; resetGame() exposed for future New Game UI
 - **Hub tile routing fix** (PR #55 ✅) — Stadium tile badge now fires only on first-time facility unlocks (level 0 → affordable), not routine level-ups; Chats tile badge already targeted to math-challenge negotiations only
+- **Construction lag + frontend tests + NPC league persistence** (PR #66 ✅) — facility upgrades take 2–6 weeks; amber dashes + 🏗 icon in isometric view; 23 new component tests (FacilityCard + InboxCard); previousLeagueTable snapshotted at season reset with "Last Season" tab in UI
 
 ## What's In Progress
 
-- Nothing — main is clean at `5fb24a4`
+- Nothing — main is clean at PR #66 merge
 
 ## Blockers
 
@@ -49,8 +50,7 @@ status: "in-progress"
 
 | # | Title | Priority |
 |---|-------|----------|
-| #30 | `publicPotential` ↔ `truePotential` Scout Network semantic update (remaining) | Low |
-| #28 | Construction lag time + staged build visuals | Low |
+| #30 | `publicPotential` ↔ `truePotential` Scout Network semantic update | Low |
 
 ## Notes
 
@@ -58,8 +58,8 @@ status: "in-progress"
 - **Live URL**: https://oaks3000.github.io/calculating-glory/ — auto-deploys on every push to main via GitHub Actions
 - Repo is **public** (required for GitHub Pages free tier); plan to migrate to Railway or similar when multiplayer/auth is needed
 - Dev server: `npm run dev --workspace=@calculating-glory/frontend`
-- Domain tests: `cd packages/domain && npm test`
-- Domain dist is a symlink to main project — always rebuild from `/packages/domain && npm run build`
-- Active worktrees: `zen-chaplygin` (current session branch, post-merge still alive)
+- Domain tests: `cd packages/domain && npm test` (run from worktree domain, not main project)
+- Frontend tests: `cd packages/frontend && npx vitest run`
+- Domain dist: worktree node_modules symlinks to worktree's own packages/domain — rebuild from worktree: `packages/domain && npm run build`
 - **Design principle confirmed**: promotion/relegation does NOT affect player stats — ability follows PlayerCurve only; promotion means competing in a harder league, not a stat boost
-- **Balance pass still outstanding** — growth/retirement rates theoretical; need a two-season play-through to verify feel
+- **Balance pass deferred** — punted to back of queue; observe passively during normal play-throughs

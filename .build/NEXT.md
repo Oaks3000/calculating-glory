@@ -8,18 +8,16 @@ lastUpdated: "2026-03-22"
 
 ## Immediate (Next Session)
 
-1. **Frontend test suite** — zero component-level coverage; good hygiene before the game grows further. Start with core hooks (`useGameState`) and key components (`InboxCard`, `HubTile`).
-2. **#28 Construction lag time + staged build visuals** — low priority but adds texture to facility upgrades.
+1. **#30 publicPotential semantics** — now that `truePotential` is a career-arc cursor, `publicPotential` should be a noisy read of that. Low-priority Scout Network update.
+2. **Multiple leagues** — League One NPC team data, division-aware match sim, promotion/relegation opponent pool swap. Division tracking is already on GameState.
 
 ## Short Term (Next 2–4 Weeks)
 
-1. **NPC league table persistence between seasons** — NPCs don't carry stats between seasons; second season NPC standings always start fresh. Not a bug now, but will become jarring with multiple seasons.
-2. **#30 publicPotential semantics** — now that `truePotential` is a career-arc cursor, `publicPotential` should be a noisy read of that. Low-priority Scout Network update.
-3. **Multiple leagues** — League One NPC team data, division-aware match sim, promotion/relegation opponent pool swap. Enabled by Division tracking already in place.
+1. **resetGame() UI** — `useGameState` exposes `resetGame()` but there's no "New Game" button anywhere in the UI yet.
+2. **NPC strength evolution** — use previousLeagueTable finish position to modestly adjust NPC AI strength each season (top 4 +2, bottom 4 −2, clamped 30–70). Complements the league persistence work.
+3. **Morale event surfacing** — news ticker milestone messages ("Squad spirits high after 3-match run") as passive flavour.
 
 ## Questions / Unknowns
 
-- **Second season balance** — growth/retirement numbers are untested in play; may need tuning after the balance pass.
-- **Morale event surfacing** — morale events fire correctly; question remains whether the news ticker should log milestones ("Squad spirits high after 3-match winning run") as passive flavour.
-- **NPC league table staleness** — NPCs don't carry stats between seasons; will become jarring once multiple seasons are in play.
-- **resetGame() UI** — `useGameState` now exposes `resetGame()` but there's no "New Game" button surfaced anywhere in the UI yet.
+- **Second season balance** — growth/retirement numbers are untested in play; may need tuning after a real play-through.
+- **resetGame() UI** — no "New Game" button surfaced anywhere yet.

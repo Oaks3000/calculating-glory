@@ -11,6 +11,7 @@
 import { Player, Position, PlayerAttributes } from '../types/player';
 import { createRng, Rng } from '../simulation/rng';
 import { generatePlayerCurve, computeTruePotential } from '../simulation/progression';
+import { getScoutedPotential } from '../types/facility';
 
 // Name banks — plausible lower-league English football player names
 const FORENAMES = [
@@ -119,21 +120,21 @@ export function generateStartingSquad(seed: string, clubId: string): Player[] {
     // Attributes for weak non-league players
     const attributes = generateWeakAttributes(position, rng);
 
-    // publicPotential: 25–55 (they're mostly not going anywhere)
-    const publicPotential = rng.nextInt(25, 55);
-    attributes.publicPotential = publicPotential;
-
     // Career curve — determines growth/decline arc and retirement age
     const curve = generatePlayerCurve(rng, age, attributes.attack, attributes.defence, position);
 
     // truePotential: career-arc position indicator derived from the curve
     const truePotential = computeTruePotential(curve, age);
 
+    // publicPotential: noisy level-0 read of truePotential (±15 noise at L0 scout)
+    const playerId = `inherited-${clubId}-${index}`;
+    attributes.publicPotential = getScoutedPotential({ id: playerId, truePotential } as Player, 0);
+
     // contractExpiresWeek: mix of 23 and 46 (half expire mid-season to create urgency)
     const contractExpiresWeek = rng.next() < 0.5 ? 23 : 46;
 
     return {
-      id: `inherited-${clubId}-${index}`,
+      id: playerId,
       name,
       position,
       wage,

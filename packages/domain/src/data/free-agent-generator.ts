@@ -11,6 +11,7 @@
 import { Player, Position, PlayerAttributes } from '../types/player';
 import { createRng, Rng } from '../simulation/rng';
 import { generatePlayerCurve, computeTruePotential } from '../simulation/progression';
+import { getScoutedPotential } from '../types/facility';
 
 // ─── Famous-ish parody names (8) ──────────────────────────────────────────────
 
@@ -172,22 +173,21 @@ export function generateFreeAgentPool(seed: string): Player[] {
     // Attributes based on position
     const attributes = generateAttributes(position, rng);
 
-    // publicPotential: 38–82, cap at 55 for older players (age > 28)
-    const rawPotential = rng.nextInt(38, 82);
-    const publicPotential = age > 28 ? Math.min(rawPotential, 55) : rawPotential;
-    attributes.publicPotential = publicPotential;
-
     // Career curve — determines growth/decline arc and retirement age
     const curve = generatePlayerCurve(rng, age, attributes.attack, attributes.defence, position);
 
     // truePotential: career-arc position indicator derived from the curve
     const truePotential = computeTruePotential(curve, age);
 
+    // publicPotential: noisy level-0 read of truePotential (±15 noise at L0 scout)
+    const playerId = `free-agent-${index}-${seed}`;
+    attributes.publicPotential = getScoutedPotential({ id: playerId, truePotential } as Player, 0);
+
     // Morale: 65–85 (they're keen to get a club)
     const morale = rng.nextInt(65, 85);
 
     return {
-      id: `free-agent-${index}-${seed}`,
+      id: playerId,
       name,
       position,
       wage,

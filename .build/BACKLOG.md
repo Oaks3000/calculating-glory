@@ -1,7 +1,7 @@
 ---
 project: "Calculating Glory"
 type: "build"
-lastUpdated: "2026-03-10"
+lastUpdated: "2026-03-22"
 ---
 
 # Calculating Glory - Backlog & Ideas
@@ -33,7 +33,7 @@ lastUpdated: "2026-03-10"
 ## Improvements / Optimisations
 
 - [ ] Clean up `any` types in internal command handler signatures
-- [ ] Add frontend test suite (component tests)
+- [x] Frontend test suite — FacilityCard + InboxCard component tests; 91 tests total across 6 suites ✅ (PR #66)
 - [ ] AI team evolution — form/results affect strength over the season
 - [ ] Morale system — explicit morale stat rather than folded into randomness
 - [ ] Match events beyond goals — injuries, red cards, suspensions
@@ -79,7 +79,8 @@ Full rework of the stadium renderer to give it a SimCity 2000 "living machine" f
 - [ ] `shadeColor()` utility — lighten/darken hex by percentage
 
 **Construction state**
-- [ ] `hazard-slide` CSS keyframe — animated yellow dashed stroke (`stroke-dashoffset` 0→12, 0.5s linear infinite) on tile base while `isBuilding`
+- [x] Construction lag — FACILITY_UPGRADE_STARTED / FACILITY_CONSTRUCTION_COMPLETED events; 2–6 week timers; amber dashes + 🏗 icon in isometric view ✅ (PR #66)
+- [ ] `hazard-slide` CSS keyframe — animated yellow dashed stroke (`stroke-dashoffset` 0→12, 0.5s linear infinite) on tile base while `isBuilding` (static dashes currently in place)
 - [ ] `construction-jostle` keyframe — 2px vertical translateY oscillation (2s ease-in-out infinite) on the building body
 - [ ] Dust particles — emit small SVG `<circle>` elements at tile base while upgrading (CSS fade-out, seeded positions)
 
