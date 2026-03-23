@@ -84,6 +84,8 @@ These issues form an architectural dependency chain. None should be attempted un
 
 - [ ] **#M7 — Async turn-based sync**: Once leagues and event logs are properly separated (#M1–#M3), the turn-based multiplayer mechanic itself — submitting a week's decisions, waiting for all participants, advancing the sim — can be designed. This is the last issue in the chain, not the first.
 
+- [ ] **#M8 — Human performance scoreboard (design debate)**: How do we rate and surface human player performance — and should we? Open questions to resolve before building anything: (1) What is the unit of performance — league position, curriculum progress, decision quality, or some composite? (2) Single-player: is a personal-best / season-over-season delta sufficient, or does it need an external benchmark? (3) Multiplayer: head-to-head league table is the obvious answer, but does it pit players of different curriculum levels against each other unfairly? (4) Educational context — does a visible scoreboard motivate or demotivate learners? Is teacher-visible-only the right default? (5) Is "performance" the right frame at all, or is it "progress"? Needs a design conversation before any UI or data model is committed.
+
 ### Phase 7: Isometric Stadium — SC2K Visual Overhaul
 
 Full rework of the stadium renderer to give it a SimCity 2000 "living machine" feel. Three-tone shading, per-facility micro-animations, and a match day overlay with moving player blips.
