@@ -605,15 +605,15 @@ function buildTeamMap(
   season: number
 ): Map<string, Team> {
   const teamMap = new Map<string, Team>();
-  const rng = createRng(`${baseSeed}-S${season}-strengths`);
 
   for (const entry of state.league.entries) {
     if (playerTeam && entry.clubId === state.club.id) {
       teamMap.set(entry.clubId, playerTeam);
     } else {
-      // AI team: base strength spread across League Two range (35-65)
-      // Use the RNG to assign a consistent base strength per team per season
-      const baseStrength = 35 + rng.next() * 30;
+      // Use evolved NPC strength (seeded from static team data, adjusted each season).
+      // Falls back to 50 for any NPC not yet in the strengths map (shouldn't occur
+      // in normal play, but guards against stale saves from before this feature).
+      const baseStrength = state.npcStrengths[entry.clubId] ?? 50;
       const aiTeam = generateAITeam(
         entry.clubId,
         entry.clubName,

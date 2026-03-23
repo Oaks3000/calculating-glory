@@ -69,6 +69,7 @@ function makeState(entries: LeagueTableEntry[], playerClubId: string = 'club-1')
     scoutMission: null,
     forcedOut: null,
     division: 'LEAGUE_TWO',
+    npcStrengths: {},
   };
 }
 

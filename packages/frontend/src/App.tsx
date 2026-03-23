@@ -8,7 +8,7 @@ import { SeasonEndScreen } from './components/season-end/SeasonEndScreen';
 import { ForcedOutScreen } from './components/forced-out/ForcedOutScreen';
 
 export default function App() {
-  const { state, events, dispatch, isLoading } = useGameState();
+  const { state, events, dispatch, isLoading, resetGame } = useGameState();
   const [activeView, setActiveView] = useState<ActiveView>('command');
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +33,7 @@ export default function App() {
         isLoading={isLoading}
         dispatch={dispatch}
         onError={setError}
+        onResetGame={resetGame}
       />
 
       {/* Error toast */}
