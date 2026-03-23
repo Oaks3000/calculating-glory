@@ -18,7 +18,6 @@ lastUpdated: "2026-03-23"
 - [ ] Pre-season flow — squad building before the season starts
 - [ ] Season end screen — promotion/relegation celebration/commiseration
 - [ ] localStorage persistence — serialise event log on every command, rehydrate on load; prevents progress loss on browser close (no infrastructure needed)
-- [ ] Multiplayer sync — async turn-based between friends
 - [ ] Save/load to server (beyond localStorage)
 - [x] Stadium View plan — MECE coverage, grid layout, hit regions, sub-unit progression ✅
 - [x] Domain foundation — 9 facility types, FACILITY_CONFIG, weekly revenue ✅
@@ -66,7 +65,24 @@ lastUpdated: "2026-03-23"
 - [x] Second season — league table reset, reputation/board confidence deltas, contextual outcome text ✅ (PR #53)
 - [x] Multiple leagues — League One NPC data, division-aware opponent pool swap ✅ (PR #68)
 - [ ] Custom club creation (name, colours, badge)
-- [ ] **League as first-class entity (multiplayer prerequisite)**: `state.league` is player-owned — the player *has a* league rather than *participates in* one. This works for single-player (one `GameState`, one private scoreboard) but is the wrong abstraction. The correct model: `League` is a shared entity; players and NPCs hold a `leagueId` reference; multiple humans in the same division share one `League` instance whose events are separate from any single player's event log. Requires splitting `buildState` into player-state + league-state before multiplayer is viable. Do not attempt mid-season.
+
+## Multiplayer — Prerequisite Issues
+
+These issues form an architectural dependency chain. None should be attempted until single-player is feature-complete. Tackle in roughly the order listed.
+
+- [ ] **#M1 — League as first-class entity**: `state.league` is player-owned but a league is a shared competitive environment — the player *participates in* one, not *owns* one. The correct model: `League` is a standalone entity with its own state and event log; players and NPCs hold a `leagueId` reference; multiple humans in the same division share one `League` instance. Requires splitting `buildState` into player-state + league-state. Do not attempt mid-season. This is the load-bearing issue — everything else below depends on it.
+
+- [ ] **#M2 — Pre-season rebuild scoped to league, not player**: `handlePreSeasonStarted` currently rebuilds NPC slots from `state.division`, which is a single-player assumption. Once leagues are first-class entities, pre-season logic (resetting the table, reassigning NPC slots, handling promotion/relegation) belongs on the `League` aggregate, not inside any individual player's command handler.
+
+- [ ] **#M3 — Per-league event log**: Currently a single `events[]` array in `GameState` serves both player decisions and league-level facts (results, standings). In multiplayer, league results are observed by all participants — they need to live in a shared, per-league log. Player decisions (upgrades, transfers, training) stay in each player's private log. Requires a clear boundary between what's personal state and what's shared state.
+
+- [ ] **#M4 — NPC strength evolution scoped to league history**: `previousLeagueTable` currently lives on `GameState` (player-owned). NPC AI strength adjustments each season should derive from the league's own finish history, not a snapshot in one player's state. Depends on #M1 and #M2.
+
+- [ ] **#M5 — Global player ID namespace**: Player IDs are currently scoped to a single club (`inherited-${clubId}-${index}`, `free-agent-${index}-${seed}`). In a shared world, player IDs must be globally unique across leagues and clubs. Requires a world-level ID registry or UUID scheme before any cross-player transfer market is possible.
+
+- [ ] **#M6 — Server-side persistence**: localStorage is sufficient for single-player (one event log, one device). Multiplayer requires a shared state store — each league's event log must be readable by all participants. Decide: server-authoritative (simpler, no conflict resolution) vs. CRDT-style (complex, offline-first). Do not choose an approach without a concrete hosting plan.
+
+- [ ] **#M7 — Async turn-based sync**: Once leagues and event logs are properly separated (#M1–#M3), the turn-based multiplayer mechanic itself — submitting a week's decisions, waiting for all participants, advancing the sim — can be designed. This is the last issue in the chain, not the first.
 
 ### Phase 7: Isometric Stadium — SC2K Visual Overhaul
 
