@@ -134,6 +134,7 @@ export function buildState(events: GameEvent[]): GameState {
     scoutMission: null,
     forcedOut:    null,
     division:     'LEAGUE_TWO',
+    npcStrengths: {},
   };
 
   return events.reduce(reduceEvent, initialState);
@@ -192,6 +193,12 @@ function handleGameStarted(state: GameState, event: GameStartedEvent): GameState
   // Generate the manager pool for the season
   const managerPool = generateManagerPool(event.seed);
 
+  // Seed NPC strengths from static League Two team data for the initial season.
+  const initialNpcStrengths: Record<string, number> = {};
+  for (const team of getTeamsForDivision('LEAGUE_TWO')) {
+    initialNpcStrengths[team.id] = team.baseStrength;
+  }
+
   return {
     ...state,
     phase: 'PRE_SEASON',
@@ -212,6 +219,7 @@ function handleGameStarted(state: GameState, event: GameStartedEvent): GameState
     },
     freeAgentPool,
     managerPool,
+    npcStrengths: initialNpcStrengths,
   };
 }
 
@@ -764,6 +772,20 @@ function handlePreSeasonStarted(state: GameState, event: PreSeasonStartedEvent):
   // Snapshot the final standings before resetting — used to display "Last Season" in the UI.
   const previousLeagueTable = state.league;
 
+  // Evolve NPC strengths based on the previous season's final standings.
+  // Top 4 NPCs by position: +2 strength. Bottom 4 NPCs: -2 strength. Clamped 25–99.
+  const evolvedStrengths = { ...state.npcStrengths };
+  const npcEntries = previousLeagueTable.entries
+    .filter(e => e.clubId !== state.club.id)
+    .sort((a, b) => a.position - b.position);
+  const total = npcEntries.length;
+  npcEntries.forEach((entry, idx) => {
+    const rank = idx + 1;
+    const current = evolvedStrengths[entry.clubId] ?? 50;
+    const delta = rank <= 4 ? 2 : rank > total - 4 ? -2 : 0;
+    evolvedStrengths[entry.clubId] = Math.max(25, Math.min(99, current + delta));
+  });
+
   // Rebuild NPC entries from the player's current division (may have changed via
   // promotion/relegation). The player's own entry is preserved and stats cleared.
   const playerEntry = state.league.entries.find(e => e.clubId === state.club.id)!;
@@ -782,6 +804,14 @@ function handlePreSeasonStarted(state: GameState, event: PreSeasonStartedEvent):
   }));
   const freshEntries = sortLeagueTable([freshPlayerEntry, ...freshNpcEntries]);
 
+  // Seed strengths for any NPC team entering the league for the first time
+  // (e.g. after promotion — a new division's clubs won't be in evolvedStrengths yet).
+  for (const team of npcTeams) {
+    if (!(team.id in evolvedStrengths)) {
+      evolvedStrengths[team.id] = team.baseStrength;
+    }
+  }
+
   return {
     ...state,
     phase: 'PRE_SEASON',
@@ -789,6 +819,7 @@ function handlePreSeasonStarted(state: GameState, event: PreSeasonStartedEvent):
     currentWeek: 0,
     previousLeagueTable,
     league: { ...state.league, entries: freshEntries },
+    npcStrengths: evolvedStrengths,
     club: {
       ...state.club,
       squad: updatedSquad,

@@ -172,6 +172,14 @@ export interface GameState {
 
   /** Which division the club is currently in. Updated at season end. */
   division: Division;
+
+  /**
+   * Evolved NPC team base strengths. Maps clubId → effective baseStrength.
+   * Seeded from static team data on first appearance; adjusted each season
+   * based on final league position (top 4 NPCs: +2, bottom 4 NPCs: −2,
+   * clamped 25–99). Ensures long-running NPCs grow or decline over time.
+   */
+  npcStrengths: Record<string, number>;
 }
 
 /**
