@@ -206,6 +206,9 @@ function handleGameStarted(state: GameState, event: GameStartedEvent): GameState
   return {
     ...state,
     phase: 'PRE_SEASON',
+    // Curriculum level is set by the student's year group at game start — independent of division.
+    // Default to YEAR_7 for saves that pre-date this field (backward compat).
+    curriculum: CURRICULUM_LEVELS[event.curriculumLevel ?? 'YEAR_7'],
     club: {
       ...state.club,
       id: event.clubId,

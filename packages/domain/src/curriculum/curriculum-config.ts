@@ -539,6 +539,31 @@ export function isFeatureUnlocked(feature: keyof CurriculumConfig['features']): 
 }
 
 /**
+ * Canonical ordering of curriculum levels, lowest to highest.
+ * Use this instead of comparing string keys directly.
+ */
+export const CURRICULUM_LEVEL_ORDER: CurriculumLevel[] = [
+  'YEAR_7',
+  'YEAR_8',
+  'YEAR_9',
+  'GCSE_FOUNDATION',
+  'GCSE_HIGHER',
+];
+
+/**
+ * Maximum question difficulty (1–3) available at each curriculum level.
+ * Keys off the student's year group — completely independent of division.
+ * Exported so both generateChallenge and generateEventChallenge use the same source.
+ */
+export const MAX_DIFFICULTY_BY_LEVEL: Record<CurriculumLevel, 1 | 2 | 3> = {
+  YEAR_7:          1,
+  YEAR_8:          2,
+  YEAR_9:          3,
+  GCSE_FOUNDATION: 3,
+  GCSE_HIGHER:     3,
+};
+
+/**
  * Get all available curriculum levels for UI
  */
 export function getAllCurriculumLevels(): CurriculumConfig[] {

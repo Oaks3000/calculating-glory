@@ -11,6 +11,9 @@
 export * from './curriculum/curriculum-config';
 export * from './curriculum/curriculum-progression';
 
+// Question bank schema
+export * from './content/questions';
+
 // Command types and handlers
 export * from './commands/types';
 export * from './commands/handlers';

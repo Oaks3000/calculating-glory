@@ -1,4 +1,4 @@
-import { GameState, computeOverallRating } from '@calculating-glory/domain';
+import { GameState, computeOverallRating, MAX_DIFFICULTY_BY_LEVEL } from '@calculating-glory/domain';
 
 /** Shape of businessAcumen.recentPerformance, keyed by ChallengeTopic */
 export type TopicPerformance = {
@@ -588,13 +588,7 @@ export function generateChallenge(
   ];
 
   // ── Curriculum difficulty cap ─────────────────────────────────────────────────
-  const MAX_DIFFICULTY_BY_LEVEL: Record<string, number> = {
-    YEAR_7:          1,
-    YEAR_8:          2,
-    YEAR_9:          3,
-    GCSE_FOUNDATION: 3,
-    GCSE_HIGHER:     3,
-  };
+  // Keys off the student's year group (set at game start), NOT the current division.
   const maxDifficulty = MAX_DIFFICULTY_BY_LEVEL[state.curriculum?.level ?? 'YEAR_7'] ?? 3;
   const diffCapped = challenges.filter(c => c.difficulty <= maxDifficulty);
   const challengePool = diffCapped.length > 0 ? diffCapped : challenges;

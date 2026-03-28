@@ -1,4 +1,4 @@
-import { PendingClubEvent } from '@calculating-glory/domain';
+import { PendingClubEvent, CurriculumLevel, MAX_DIFFICULTY_BY_LEVEL } from '@calculating-glory/domain';
 import { MathChallenge } from './generateChallenge';
 
 function absGBP(pence: number): number {
@@ -20,9 +20,20 @@ function round1(n: number) {
  * Returns null if no suitable challenge can be constructed (SocialFeed should
  * fall back to the standard challenge bank in this case).
  */
+/**
+ * Clamp a raw difficulty value to what the student's curriculum level allows.
+ * Event challenges always produce percentage questions (difficulty 2), so for Year 7
+ * students we downgrade those to difficulty 1 with simpler working shown.
+ */
+function clampDifficulty(raw: 1 | 2 | 3, curriculumLevel: CurriculumLevel): 1 | 2 | 3 {
+  const max = MAX_DIFFICULTY_BY_LEVEL[curriculumLevel];
+  return Math.min(raw, max) as 1 | 2 | 3;
+}
+
 export function generateEventChallenge(
   event: PendingClubEvent,
-  transferBudget: number  // pence
+  transferBudget: number,       // pence
+  curriculumLevel: CurriculumLevel = 'YEAR_7'
 ): MathChallenge | null {
   const mathChoice = event.choices.find(c => c.requiresMath);
   if (!mathChoice || mathChoice.budgetEffect === undefined) return null;
@@ -45,7 +56,7 @@ export function generateEventChallenge(
     return {
       id:         `event-${event.id}`,
       topic:      'percentage',
-      difficulty: 2,
+      difficulty: clampDifficulty(2, curriculumLevel),
       context:
         `${event.title}: ${event.description} ` +
         `The quickest fix costs ${fmtGBP(comparable.budgetEffect)}, but ` +
@@ -77,7 +88,7 @@ export function generateEventChallenge(
     return {
       id:         `event-${event.id}`,
       topic:      'percentage',
-      difficulty: 2,
+      difficulty: clampDifficulty(2, curriculumLevel),
       context:
         `${event.title}: ${event.description} ` +
         `There's a standard offer of ${fmtGBP(comparable.budgetEffect)} on the table, ` +
@@ -109,7 +120,7 @@ export function generateEventChallenge(
     return {
       id:         `event-${event.id}`,
       topic:      'percentage',
-      difficulty: 2,
+      difficulty: clampDifficulty(2, curriculumLevel),
       context:
         `${event.title}: ${event.description} ` +
         `${mathChoice.description} I need you to put this in context for the board.`,
