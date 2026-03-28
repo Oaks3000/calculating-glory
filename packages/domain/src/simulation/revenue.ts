@@ -7,7 +7,7 @@
 
 import { Player } from '../types/player';
 import { computeOverallRating } from '../types/player';
-import { Division } from '../types/game-state-updated';
+import { Division, GameState } from '../types/game-state-updated';
 import { Facility } from '../types/facility';
 
 // ─── League Tier Revenue Multipliers ──────────────────────────────────────────
@@ -95,4 +95,34 @@ export function playerCharismaRevenue(player: Player): number {
  */
 export function squadCharismaRevenue(squad: Player[]): number {
   return squad.reduce((sum, p) => sum + playerCharismaRevenue(p), 0);
+}
+
+// ─── Weekly Financials Summary ────────────────────────────────────────────────
+
+/**
+ * Derives the three financial headline figures used by NPC messages and
+ * the financial health bar from the current game state.
+ *
+ * weeklyIncome  — facility + charisma revenue (pence/week)
+ * weeklyWages   — player + staff + manager wages (pence/week)
+ * runway        — weeks of transferBudget remaining at current deficit;
+ *                 Infinity when income ≥ wages (no deficit)
+ */
+export function computeWeeklyFinancials(state: GameState): {
+  weeklyIncome: number;
+  weeklyWages: number;
+  runway: number;
+} {
+  const weeklyIncome = facilityRevenue(state.club.facilities, state.division)
+    + squadCharismaRevenue(state.club.squad);
+
+  const playerWages  = state.club.squad.reduce((sum, p) => sum + p.wage, 0);
+  const staffWages   = state.club.staff.reduce((sum, s) => sum + s.salary, 0);
+  const managerWage  = state.club.manager?.wage ?? 0;
+  const weeklyWages  = playerWages + staffWages + managerWage;
+
+  const deficit = weeklyWages - weeklyIncome;
+  const runway  = deficit <= 0 ? Infinity : state.club.transferBudget / deficit;
+
+  return { weeklyIncome, weeklyWages, runway };
 }
