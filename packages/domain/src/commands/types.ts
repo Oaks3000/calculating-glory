@@ -74,6 +74,11 @@ export interface ResolveClubEventCommand {
   type: 'RESOLVE_CLUB_EVENT';
   eventId: string;
   choiceId: string;
+  /**
+   * Set by the frontend after evaluating the event's mathsChallenge.
+   * Undefined for events without a maths challenge (legacy events).
+   */
+  mathsCorrect?: boolean;
 }
 
 export interface StartSeasonCommand {

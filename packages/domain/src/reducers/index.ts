@@ -4,7 +4,7 @@
  * Pure functions that apply events to state.
  */
 
-import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent, ManagerHiredEvent, ManagerSackedEvent, PreSeasonStartedEvent, ScoutMissionStartedEvent, ScoutTargetFoundEvent, ScoutBidPlacedEvent, ScoutTransferCompletedEvent, OwnerForcedOutEvent, TakeoverAcceptedEvent } from '../events/types';
+import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent, ManagerHiredEvent, ManagerSackedEvent, PreSeasonStartedEvent, ScoutMissionStartedEvent, ScoutTargetFoundEvent, ScoutBidPlacedEvent, ScoutTransferCompletedEvent, OwnerForcedOutEvent, TakeoverAcceptedEvent, ParachuteOfferedEvent } from '../events/types';
 import { GameState, Division } from '../types/game-state-updated';
 import { Club } from '../types/club';
 import { LeagueTable, LeagueTableEntry, sortLeagueTable } from '../types/league';
@@ -89,6 +89,8 @@ export function reduceEvent(state: GameState, event: GameEvent): GameState {
       return handleScoutMissionCancelled(state);
     case 'OWNER_FORCED_OUT':
       return handleOwnerForcedOut(state, event);
+    case 'PARACHUTE_OFFERED':
+      return handleParachuteOffered(state, event);
     case 'TAKEOVER_ACCEPTED':
       return handleTakeoverAccepted(state, event);
     default:
@@ -135,6 +137,8 @@ export function buildState(events: GameEvent[]): GameState {
     forcedOut:    null,
     division:     'LEAGUE_TWO',
     npcStrengths: {},
+    resolvedEventWeeks: {},
+    mathsOutcomes: {},
   };
 
   return events.reduce(reduceEvent, initialState);
@@ -661,6 +665,19 @@ function handleClubEventResolved(state: GameState, event: ClubEventResolvedEvent
     }
   }
 
+  // Record the week this event+choice was resolved (for chain hop delayWeeks)
+  const resolvedKey = `${pendingEvent.templateId}:${event.choiceId}`;
+  const newResolvedEventWeeks = {
+    ...(state.resolvedEventWeeks ?? {}),
+    [resolvedKey]: event.resolvedWeek,
+  };
+
+  // Record maths quality for chain events (for mathsQuality prerequisite routing)
+  const newMathsOutcomes = { ...(state.mathsOutcomes ?? {}) };
+  if (event.mathsCorrect !== undefined) {
+    newMathsOutcomes[pendingEvent.templateId] = event.mathsCorrect ? 'correct' : 'wrong';
+  }
+
   return {
     ...state,
     club: {
@@ -670,7 +687,9 @@ function handleClubEventResolved(state: GameState, event: ClubEventResolvedEvent
       squad,
     },
     pendingEvents: newPendingEvents,
-    resolvedEventHistory: newHistory
+    resolvedEventHistory: newHistory,
+    resolvedEventWeeks: newResolvedEventWeeks,
+    mathsOutcomes: newMathsOutcomes,
   };
 }
 
@@ -812,6 +831,16 @@ function handlePreSeasonStarted(state: GameState, event: PreSeasonStartedEvent):
     }
   }
 
+  // Refresh free agent pool for the new season, scaled to the player's current division.
+  // Use a season+club seed so the pool is fresh but deterministic.
+  const gameStartEvent = state.events.find(e => e.type === 'GAME_STARTED') as
+    { type: 'GAME_STARTED'; seed: string } | undefined;
+  const baseSeed = gameStartEvent?.seed ?? 'default-seed';
+  const freshFreeAgentPool = generateFreeAgentPool(
+    `${baseSeed}-season-${event.season}`,
+    state.division,
+  );
+
   return {
     ...state,
     phase: 'PRE_SEASON',
@@ -820,6 +849,7 @@ function handlePreSeasonStarted(state: GameState, event: PreSeasonStartedEvent):
     previousLeagueTable,
     league: { ...state.league, entries: freshEntries },
     npcStrengths: evolvedStrengths,
+    freeAgentPool: freshFreeAgentPool,
     club: {
       ...state.club,
       squad: updatedSquad,
@@ -907,7 +937,18 @@ function handleOwnerForcedOut(state: GameState, event: OwnerForcedOutEvent): Gam
       takeoverClubId:   event.takeoverClubId,
       takeoverClubName: event.takeoverClubName,
       week:             event.week,
+      takeoverBudget:   event.takeoverBudget,
+      reputationMalus:  event.reputationMalus,
     },
+  };
+}
+
+function handleParachuteOffered(state: GameState, _event: ParachuteOfferedEvent): GameState {
+  // forcedOut remains populated — the offer screen reads from it.
+  // currentWeek was already updated by the preceding WEEK_ADVANCED event.
+  return {
+    ...state,
+    phase: 'PARACHUTE_OFFERED',
   };
 }
 
@@ -924,6 +965,10 @@ function handleTakeoverAccepted(state: GameState, event: TakeoverAcceptedEvent):
     event.takeoverClubId,
   );
 
+  const newReputation = Math.max(0, Math.min(100,
+    state.club.reputation + state.forcedOut.reputationMalus,
+  ));
+
   return {
     ...state,
     phase,
@@ -934,13 +979,14 @@ function handleTakeoverAccepted(state: GameState, event: TakeoverAcceptedEvent):
       ...state.club,
       id:             event.takeoverClubId,
       name:           event.takeoverClubName,
-      transferBudget: 5_000_000,  // £50,000
-      wageBudget:     2_000_000,  // £20,000/wk
+      transferBudget: state.forcedOut.takeoverBudget,
+      wageBudget:     Math.round(state.forcedOut.takeoverBudget / 5),
       squad:          newSquad,
       squadCapacity:  24,
       facilities:     getDefaultFacilities(),
       manager:        null,
       staff:          [],
+      reputation:     newReputation,
     },
   };
 }

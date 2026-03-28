@@ -7,7 +7,9 @@
 
 import { buildState, reduceEvent } from '../reducers';
 import { handleCommand } from '../commands/handlers';
-import { GameEvent, GameStartedEvent } from '../events/types';
+import { GameEvent, GameStartedEvent, PreSeasonStartedEvent } from '../events/types';
+import { GameState } from '../types/game-state-updated';
+import { LeagueTableEntry } from '../types/league';
 
 // Helper: create a basic GameStartedEvent
 function makeGameStarted(overrides: Partial<GameStartedEvent> = {}): GameStartedEvent {
@@ -286,5 +288,131 @@ describe('Season Flow: BEGIN_NEXT_SEASON command', () => {
     expect(newState.club.form).toEqual([]);
     expect(newState.club.trainingFocus).toBeNull();
     expect(newState.club.preferredFormation).toBeNull();
+  });
+});
+
+// ─── NPC Strength Evolution ───────────────────────────────────────────────────
+
+describe('NPC strength evolution on PRE_SEASON_STARTED', () => {
+  /**
+   * Build a GameState with a known league table and known npcStrengths,
+   * already in SEASON_END, then fire PRE_SEASON_STARTED and inspect
+   * the resulting npcStrengths.
+   *
+   * Layout (24 clubs):
+   *   pos 1: player-club
+   *   pos 2–5: top NPC clubs   → should get +2
+   *   pos 6–20: mid NPC clubs  → no change
+   *   pos 21–24: bottom NPC clubs → should get -2
+   */
+  function makeLeagueEntry(clubId: string, position: number): LeagueTableEntry {
+    return {
+      clubId, clubName: clubId, position,
+      played: 46, won: 0, drawn: 0, lost: 0,
+      goalsFor: 0, goalsAgainst: 0, goalDifference: 0,
+      points: 0, form: [],
+    };
+  }
+
+  function stateForEvolution(): GameState {
+    const s = buildState([makeGameStarted()]);
+
+    const entries: LeagueTableEntry[] = [
+      makeLeagueEntry('player-club', 1),
+      ...Array.from({ length: 23 }, (_, i) => makeLeagueEntry(`npc-${i + 2}`, i + 2)),
+    ];
+
+    const npcStrengths: Record<string, number> = {};
+    for (let i = 2; i <= 24; i++) npcStrengths[`npc-${i}`] = 50;
+
+    return {
+      ...s,
+      phase: 'SEASON_END',
+      season: 1,
+      currentWeek: 46,
+      club: { ...s.club, id: 'player-club' },
+      league: { ...s.league, entries },
+      npcStrengths,
+    };
+  }
+
+  function applyPreSeason(state: GameState): GameState {
+    const evt: PreSeasonStartedEvent = {
+      type: 'PRE_SEASON_STARTED',
+      timestamp: Date.now(),
+      season: 2,
+    };
+    return reduceEvent(state, evt);
+  }
+
+  test('top-4 NPCs (positions 2–5) gain +2 strength', () => {
+    const next = applyPreSeason(stateForEvolution());
+    expect(next.npcStrengths['npc-2']).toBe(52);
+    expect(next.npcStrengths['npc-3']).toBe(52);
+    expect(next.npcStrengths['npc-4']).toBe(52);
+    expect(next.npcStrengths['npc-5']).toBe(52);
+  });
+
+  test('bottom-4 NPCs (positions 21–24) lose -2 strength', () => {
+    const next = applyPreSeason(stateForEvolution());
+    expect(next.npcStrengths['npc-21']).toBe(48);
+    expect(next.npcStrengths['npc-22']).toBe(48);
+    expect(next.npcStrengths['npc-23']).toBe(48);
+    expect(next.npcStrengths['npc-24']).toBe(48);
+  });
+
+  test('mid-table NPCs (positions 6–20) are unchanged', () => {
+    const next = applyPreSeason(stateForEvolution());
+    for (let i = 6; i <= 20; i++) {
+      expect(next.npcStrengths[`npc-${i}`]).toBe(50);
+    }
+  });
+
+  test('player club is excluded from evolution', () => {
+    const next = applyPreSeason(stateForEvolution());
+    expect(next.npcStrengths['player-club']).toBeUndefined();
+  });
+
+  test('new division NPC clubs are seeded from baseStrength if not previously seen', () => {
+    const next = applyPreSeason(stateForEvolution());
+    // handlePreSeasonStarted rebuilds league from LEAGUE_TWO teams (state.division = LEAGUE_TWO).
+    // Those teams are seeded at game start, so they should all be present in npcStrengths.
+    const l2Teams = require('../data/league-two-teams').LEAGUE_TWO_TEAMS as Array<{ id: string; baseStrength: number }>;
+    for (const team of l2Teams) {
+      expect(next.npcStrengths[team.id]).toBeDefined();
+    }
+  });
+
+  test('clamps strength at minimum 25', () => {
+    const state = stateForEvolution();
+    state.npcStrengths['npc-24'] = 26;
+    const next = applyPreSeason(state);
+    expect(next.npcStrengths['npc-24']).toBe(25);
+  });
+
+  test('clamps strength at maximum 99', () => {
+    const state = stateForEvolution();
+    state.npcStrengths['npc-2'] = 98;
+    const next = applyPreSeason(state);
+    expect(next.npcStrengths['npc-2']).toBe(99);
+  });
+
+  test('evolution compounds correctly across two consecutive seasons', () => {
+    const s1 = applyPreSeason(stateForEvolution());
+    const s1End: GameState = {
+      ...s1,
+      phase: 'SEASON_END',
+      currentWeek: 46,
+      league: {
+        ...s1.league,
+        entries: [
+          makeLeagueEntry('player-club', 1),
+          ...Array.from({ length: 23 }, (_, i) => makeLeagueEntry(`npc-${i + 2}`, i + 2)),
+        ],
+      },
+    };
+    const s2 = applyPreSeason(s1End);
+    expect(s2.npcStrengths['npc-2']).toBe(54);   // 50 + 2 + 2
+    expect(s2.npcStrengths['npc-24']).toBe(46);  // 50 - 2 - 2
   });
 });

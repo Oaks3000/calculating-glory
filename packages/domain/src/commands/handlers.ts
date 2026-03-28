@@ -214,6 +214,26 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
   const season: number = command.season;
   const baseSeed = command.seed || 'calculating-glory';
 
+  // ── Limbo week: player was just forced out ─────────────────────────────────
+  // No matches are simulated. One week ticks by, then the parachute offer appears.
+  if (state.phase === 'FORCED_OUT' && state.forcedOut) {
+    const now = Date.now();
+    return {
+      events: [
+        { type: 'WEEK_ADVANCED', timestamp: now, week, season },
+        {
+          type:             'PARACHUTE_OFFERED',
+          timestamp:        now,
+          takeoverClubId:   state.forcedOut.takeoverClubId,
+          takeoverClubName: state.forcedOut.takeoverClubName,
+          takeoverBudget:   state.forcedOut.takeoverBudget,
+          reputationMalus:  state.forcedOut.reputationMalus,
+          week,
+        },
+      ],
+    };
+  }
+
   // Check for unresolved pending events before advancing
   if (state.pendingEvents.some(e => !e.resolved)) {
     return {
@@ -423,6 +443,10 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
         const gameStartEvent = state.events.find(e => e.type === 'GAME_STARTED') as
           { type: 'GAME_STARTED'; seed: string } | undefined;
         const seedStr = gameStartEvent?.seed ?? 'default-seed';
+        // Infer NPC club budget from their evolved strength (pence)
+        // Weakest (strength 30) → ~£30k; median (50) → ~£50k
+        const npcStrength = state.npcStrengths[bottomNPC.clubId] ?? 40;
+        const takeoverBudget = Math.round((npcStrength / 100) * 10_000_000);
         events.push({
           type:             'OWNER_FORCED_OUT',
           timestamp:        now,
@@ -433,6 +457,8 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
           takeoverClubName: bottomNPC.clubName,
           seed:             seedStr,
           week,
+          takeoverBudget,
+          reputationMalus:  -10,
         });
         return { events }; // Skip SEASON_ENDED — game transitions to FORCED_OUT phase
       }
@@ -461,7 +487,7 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
 }
 
 function handleResolveClubEvent(command: any, state: GameState): CommandResult {
-  const { eventId, choiceId } = command;
+  const { eventId, choiceId, mathsCorrect } = command;
 
   // Find the pending event
   const pendingEvent = state.pendingEvents.find(e => e.id === eventId);
@@ -494,6 +520,17 @@ function handleResolveClubEvent(command: any, state: GameState): CommandResult {
     };
   }
 
+  // For chain events with a maths challenge, select the appropriate budget effect
+  // based on whether the player answered correctly.
+  let budgetEffect = choice.budgetEffect;
+  if (pendingEvent.mathsChallenge && mathsCorrect !== undefined) {
+    if (mathsCorrect && choice.mathsCorrectBudgetEffect !== undefined) {
+      budgetEffect = choice.mathsCorrectBudgetEffect;
+    } else if (!mathsCorrect && choice.mathsWrongBudgetEffect !== undefined) {
+      budgetEffect = choice.mathsWrongBudgetEffect;
+    }
+  }
+
   // Propagate poach-specific fields from choice + event metadata
   const poachTargetId = pendingEvent.metadata?.poachTargetPlayerId;
   const playerRemovedId = choice.playerLeaves ? poachTargetId : undefined;
@@ -504,13 +541,16 @@ function handleResolveClubEvent(command: any, state: GameState): CommandResult {
       type: 'CLUB_EVENT_RESOLVED',
       timestamp: Date.now(),
       eventId,
+      templateId: pendingEvent.templateId,
       choiceId,
       clubId: state.club.id,
-      budgetEffect: choice.budgetEffect,
+      budgetEffect,
       reputationEffect: choice.reputationEffect,
       playerRemovedId,
       moraleTargetId,
       moraleEffect: choice.moraleEffect,
+      resolvedWeek: state.currentWeek,
+      mathsCorrect: pendingEvent.mathsChallenge !== undefined ? mathsCorrect : undefined,
     }
   ];
 
@@ -1046,7 +1086,7 @@ function handleRecordMathAttempt(command: any, _state: GameState): CommandResult
 }
 
 function handleAcceptTakeover(_command: any, state: GameState): CommandResult {
-  if (state.phase !== 'FORCED_OUT' || !state.forcedOut) {
+  if ((state.phase !== 'FORCED_OUT' && state.phase !== 'PARACHUTE_OFFERED') || !state.forcedOut) {
     return {
       error: {
         code: 'VALIDATION_FAILED',

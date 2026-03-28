@@ -70,6 +70,8 @@ function makeState(entries: LeagueTableEntry[], playerClubId: string = 'club-1')
     forcedOut: null,
     division: 'LEAGUE_TWO',
     npcStrengths: {},
+    resolvedEventWeeks: {},
+    mathsOutcomes: {},
   };
 }
 

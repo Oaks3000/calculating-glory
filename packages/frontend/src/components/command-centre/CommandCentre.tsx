@@ -66,6 +66,8 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
         events={events}
         clubId={state.club.id}
         leagueEntries={state.league.entries}
+        squad={state.club.squad}
+        form={state.club.form}
       />
 
       {/* ── Error toast ──────────────────────────────────────────────────── */}
