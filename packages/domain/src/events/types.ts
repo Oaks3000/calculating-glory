@@ -42,7 +42,8 @@ export type GameEvent =
   | ScoutTransferCompletedEvent
   | ScoutMissionCancelledEvent
   | OwnerForcedOutEvent
-  | TakeoverAcceptedEvent;
+  | TakeoverAcceptedEvent
+  | ParachuteOfferedEvent;
 
 export interface TransferCompletedEvent {
   type: 'TRANSFER_COMPLETED';
@@ -185,6 +186,7 @@ export interface ClubEventResolvedEvent {
   type: 'CLUB_EVENT_RESOLVED';
   timestamp: number;
   eventId: string;
+  templateId: string;
   choiceId: string;
   clubId: string;
   budgetEffect?: number;
@@ -195,6 +197,13 @@ export interface ClubEventResolvedEvent {
   moraleTargetId?: string;
   /** Poaching: morale delta to apply to moraleTargetId */
   moraleEffect?: number;
+  /** The week the event was resolved — stored for chain hop delay scheduling */
+  resolvedWeek: number;
+  /**
+   * Whether the player correctly answered the maths challenge.
+   * Undefined for events without a maths challenge.
+   */
+  mathsCorrect?: boolean;
 }
 
 export interface SeasonStartedEvent {
@@ -342,6 +351,24 @@ export interface OwnerForcedOutEvent {
   takeoverClubName: string;
   /** Seed string for generating the takeover club's starting squad */
   seed: string;
+  week: number;
+  /** Inferred starting budget for the takeover club (pence) */
+  takeoverBudget: number;
+  /** Reputation malus applied on acceptance (negative value) */
+  reputationMalus: number;
+}
+
+/**
+ * Emitted when the player advances through the limbo week (SIMULATE_WEEK in FORCED_OUT phase).
+ * Transitions phase to PARACHUTE_OFFERED — the takeover offer screen.
+ */
+export interface ParachuteOfferedEvent {
+  type: 'PARACHUTE_OFFERED';
+  timestamp: number;
+  takeoverClubId:   string;
+  takeoverClubName: string;
+  takeoverBudget:   number;
+  reputationMalus:  number;
   week: number;
 }
 

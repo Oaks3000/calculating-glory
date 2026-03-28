@@ -5,15 +5,23 @@
  *  - OWNER_FORCED_OUT trigger conditions (week ≥ 30, bottom 3, budget < £10k)
  *  - Non-trigger conditions (wrong week, good position, sufficient budget)
  *  - No double-trigger if already FORCED_OUT
- *  - OWNER_FORCED_OUT reducer: sets phase, populates forcedOut
- *  - ACCEPT_TAKEOVER command: validation, happy path
- *  - TAKEOVER_ACCEPTED reducer: new club id/name/budget, squad reset, forcedOut cleared
+ *  - OWNER_FORCED_OUT reducer: sets phase, populates forcedOut (inc. takeoverBudget/reputationMalus)
+ *  - SIMULATE_WEEK in FORCED_OUT phase: emits WEEK_ADVANCED + PARACHUTE_OFFERED, no matches
+ *  - reduceEvent PARACHUTE_OFFERED: transitions phase, keeps forcedOut populated
+ *  - ACCEPT_TAKEOVER command: works from FORCED_OUT and PARACHUTE_OFFERED phases
+ *  - TAKEOVER_ACCEPTED reducer: new club id/name/budget, squad reset, forcedOut cleared, rep malus
  *  - Business acumen carries over through takeover
  */
 
 import { handleCommand } from '../commands/handlers';
 import { buildState, reduceEvent } from '../reducers';
-import { GameEvent, GameStartedEvent, OwnerForcedOutEvent, TakeoverAcceptedEvent } from '../events/types';
+import {
+  GameEvent,
+  GameStartedEvent,
+  OwnerForcedOutEvent,
+  TakeoverAcceptedEvent,
+  ParachuteOfferedEvent,
+} from '../events/types';
 import { GameState } from '../types/game-state-updated';
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
@@ -77,6 +85,8 @@ function stateWithLeaguePosition(opts: {
       takeoverClubId:   'npc-club-24',
       takeoverClubName: 'NPC Club 24',
       week:             opts.week,
+      takeoverBudget:   4_000_000,
+      reputationMalus:  -10,
     } : null,
     club: {
       ...s.club,
@@ -158,6 +168,15 @@ describe('OWNER_FORCED_OUT trigger', () => {
     expect(result.events?.some(e => e.type === 'OWNER_FORCED_OUT')).toBe(true);
   });
 
+  test('emitted event includes takeoverBudget and reputationMalus', () => {
+    const state = stateWithLeaguePosition({ position: 24, budget: 0, week: 35 });
+    const result = handleCommand({ type: 'SIMULATE_WEEK', week: 35, season: 1, seed: 'test' }, state);
+    const fo = result.events?.find(e => e.type === 'OWNER_FORCED_OUT') as OwnerForcedOutEvent | undefined;
+    expect(fo).toBeDefined();
+    expect(fo!.takeoverBudget).toBeGreaterThan(0);
+    expect(fo!.reputationMalus).toBe(-10);
+  });
+
   test('takeover club is lowest-ranked NPC (not the player club)', () => {
     // Player is position 24 — so the lowest NPC would be position 23
     const s = baseState();
@@ -210,6 +229,8 @@ describe('reduceEvent OWNER_FORCED_OUT', () => {
       takeoverClubName: 'NPC Club 24',
       seed:             'test-seed',
       week:             30,
+      takeoverBudget:   4_000_000,
+      reputationMalus:  -10,
       ...overrides,
     };
   }
@@ -231,6 +252,8 @@ describe('reduceEvent OWNER_FORCED_OUT', () => {
     expect(next.forcedOut!.takeoverClubId).toBe('npc-club-24');
     expect(next.forcedOut!.takeoverClubName).toBe('NPC Club 24');
     expect(next.forcedOut!.week).toBe(32);
+    expect(next.forcedOut!.takeoverBudget).toBe(4_000_000);
+    expect(next.forcedOut!.reputationMalus).toBe(-10);
   });
 
   test('does not mutate original state', () => {
@@ -241,10 +264,63 @@ describe('reduceEvent OWNER_FORCED_OUT', () => {
   });
 });
 
-// ─── Command: ACCEPT_TAKEOVER ─────────────────────────────────────────────────
+// ─── SIMULATE_WEEK in FORCED_OUT phase ───────────────────────────────────────
 
-describe('ACCEPT_TAKEOVER command', () => {
-  function forcedOutState(week = 35): GameState {
+describe('SIMULATE_WEEK in FORCED_OUT phase (limbo week)', () => {
+  function forcedOutPhaseState(week = 35): GameState {
+    const s = baseState();
+    return {
+      ...s,
+      phase:       'FORCED_OUT',
+      currentWeek: week,
+      season:      1,
+      forcedOut: {
+        previousClubId:   'player-club',
+        previousClubName: 'Player FC',
+        previousPosition: 22,
+        takeoverClubId:   'npc-club-24',
+        takeoverClubName: 'NPC Club 24',
+        week,
+        takeoverBudget:   4_000_000,
+        reputationMalus:  -10,
+      },
+    };
+  }
+
+  test('emits WEEK_ADVANCED', () => {
+    const state  = forcedOutPhaseState(35);
+    const result = handleCommand({ type: 'SIMULATE_WEEK', week: 36, season: 1, seed: 'test' }, state);
+    expect(result.error).toBeUndefined();
+    expect(result.events?.some(e => e.type === 'WEEK_ADVANCED')).toBe(true);
+  });
+
+  test('emits PARACHUTE_OFFERED', () => {
+    const state  = forcedOutPhaseState(35);
+    const result = handleCommand({ type: 'SIMULATE_WEEK', week: 36, season: 1, seed: 'test' }, state);
+    const po = result.events?.find(e => e.type === 'PARACHUTE_OFFERED') as ParachuteOfferedEvent | undefined;
+    expect(po).toBeDefined();
+    expect(po!.takeoverClubId).toBe('npc-club-24');
+    expect(po!.takeoverBudget).toBe(4_000_000);
+    expect(po!.reputationMalus).toBe(-10);
+  });
+
+  test('does NOT emit any MATCH_SIMULATED events', () => {
+    const state  = forcedOutPhaseState(35);
+    const result = handleCommand({ type: 'SIMULATE_WEEK', week: 36, season: 1, seed: 'test' }, state);
+    expect(result.events?.some(e => e.type === 'MATCH_SIMULATED')).toBe(false);
+  });
+
+  test('does NOT emit SEASON_ENDED', () => {
+    const state  = forcedOutPhaseState(35);
+    const result = handleCommand({ type: 'SIMULATE_WEEK', week: 36, season: 1, seed: 'test' }, state);
+    expect(result.events?.some(e => e.type === 'SEASON_ENDED')).toBe(false);
+  });
+});
+
+// ─── Reducer: PARACHUTE_OFFERED ───────────────────────────────────────────────
+
+describe('reduceEvent PARACHUTE_OFFERED', () => {
+  function stateInForcedOut(week = 35): GameState {
     const s = baseState();
     return {
       ...s,
@@ -257,12 +333,69 @@ describe('ACCEPT_TAKEOVER command', () => {
         takeoverClubId:   'npc-club-24',
         takeoverClubName: 'NPC Club 24',
         week,
+        takeoverBudget:   4_000_000,
+        reputationMalus:  -10,
       },
     };
   }
 
-  test('returns TAKEOVER_ACCEPTED event on success', () => {
-    const state  = forcedOutState();
+  function makeParachuteEvent(overrides: Partial<ParachuteOfferedEvent> = {}): ParachuteOfferedEvent {
+    return {
+      type:             'PARACHUTE_OFFERED',
+      timestamp:        Date.now(),
+      takeoverClubId:   'npc-club-24',
+      takeoverClubName: 'NPC Club 24',
+      takeoverBudget:   4_000_000,
+      reputationMalus:  -10,
+      week:             36,
+      ...overrides,
+    };
+  }
+
+  test('transitions phase to PARACHUTE_OFFERED', () => {
+    const state = stateInForcedOut();
+    const next  = reduceEvent(state, makeParachuteEvent());
+    expect(next.phase).toBe('PARACHUTE_OFFERED');
+  });
+
+  test('keeps forcedOut populated', () => {
+    const state = stateInForcedOut();
+    const next  = reduceEvent(state, makeParachuteEvent());
+    expect(next.forcedOut).not.toBeNull();
+    expect(next.forcedOut!.takeoverClubId).toBe('npc-club-24');
+  });
+
+  test('does not clear club or squad', () => {
+    const state = stateInForcedOut();
+    const next  = reduceEvent(state, makeParachuteEvent());
+    expect(next.club.id).toBe(state.club.id);
+  });
+});
+
+// ─── Command: ACCEPT_TAKEOVER ─────────────────────────────────────────────────
+
+describe('ACCEPT_TAKEOVER command', () => {
+  function forcedOutState(phase: 'FORCED_OUT' | 'PARACHUTE_OFFERED' = 'FORCED_OUT', week = 35): GameState {
+    const s = baseState();
+    return {
+      ...s,
+      phase,
+      currentWeek: week,
+      forcedOut: {
+        previousClubId:   'player-club',
+        previousClubName: 'Player FC',
+        previousPosition: 22,
+        takeoverClubId:   'npc-club-24',
+        takeoverClubName: 'NPC Club 24',
+        week,
+        takeoverBudget:   4_000_000,
+        reputationMalus:  -10,
+      },
+    };
+  }
+
+  test('returns TAKEOVER_ACCEPTED event from FORCED_OUT phase', () => {
+    const state  = forcedOutState('FORCED_OUT');
     const result = handleCommand({ type: 'ACCEPT_TAKEOVER' }, state);
     expect(result.error).toBeUndefined();
     const evt = result.events?.find(e => e.type === 'TAKEOVER_ACCEPTED') as TakeoverAcceptedEvent | undefined;
@@ -271,7 +404,14 @@ describe('ACCEPT_TAKEOVER command', () => {
     expect(evt!.takeoverClubName).toBe('NPC Club 24');
   });
 
-  test('returns error if phase is not FORCED_OUT', () => {
+  test('returns TAKEOVER_ACCEPTED event from PARACHUTE_OFFERED phase', () => {
+    const state  = forcedOutState('PARACHUTE_OFFERED');
+    const result = handleCommand({ type: 'ACCEPT_TAKEOVER' }, state);
+    expect(result.error).toBeUndefined();
+    expect(result.events?.some(e => e.type === 'TAKEOVER_ACCEPTED')).toBe(true);
+  });
+
+  test('returns error if phase is not FORCED_OUT or PARACHUTE_OFFERED', () => {
     const state  = { ...baseState(), phase: 'EARLY_SEASON' as const };
     const result = handleCommand({ type: 'ACCEPT_TAKEOVER' }, state);
     expect(result.error).toBeDefined();
@@ -304,9 +444,13 @@ describe('reduceEvent TAKEOVER_ACCEPTED', () => {
     const s = baseState();
     return {
       ...s,
-      phase:           'FORCED_OUT',
+      phase:           'PARACHUTE_OFFERED',
       currentWeek:     week,
       boardConfidence: 80,
+      club: {
+        ...s.club,
+        reputation: 30,
+      },
       forcedOut: {
         previousClubId:   'player-club',
         previousClubName: 'Player FC',
@@ -314,6 +458,8 @@ describe('reduceEvent TAKEOVER_ACCEPTED', () => {
         takeoverClubId:   'npc-club-24',
         takeoverClubName: 'NPC Club 24',
         week,
+        takeoverBudget:   4_000_000,
+        reputationMalus:  -10,
       },
     };
   }
@@ -331,10 +477,27 @@ describe('reduceEvent TAKEOVER_ACCEPTED', () => {
     expect(next.club.name).toBe('NPC Club 24');
   });
 
-  test('sets transfer budget to £50,000 (5_000_000 pence)', () => {
+  test('sets transfer budget to forcedOut.takeoverBudget', () => {
     const state = forcedOutState();
     const next  = reduceEvent(state, makeTakeoverEvent());
-    expect(next.club.transferBudget).toBe(5_000_000);
+    expect(next.club.transferBudget).toBe(4_000_000);
+  });
+
+  test('applies reputationMalus to club reputation', () => {
+    const state = forcedOutState(); // reputation = 30, malus = -10
+    const next  = reduceEvent(state, makeTakeoverEvent());
+    expect(next.club.reputation).toBe(20);
+  });
+
+  test('clamps reputation to minimum 0', () => {
+    const s = forcedOutState();
+    const state: GameState = {
+      ...s,
+      club: { ...s.club, reputation: 5 },
+      forcedOut: { ...s.forcedOut!, reputationMalus: -20 },
+    };
+    const next = reduceEvent(state, makeTakeoverEvent());
+    expect(next.club.reputation).toBe(0);
   });
 
   test('resets board confidence to 20', () => {
@@ -381,7 +544,6 @@ describe('reduceEvent TAKEOVER_ACCEPTED', () => {
   test('business acumen carries over unchanged', () => {
     const state = forcedOutState();
     const next  = reduceEvent(state, makeTakeoverEvent());
-    // Should be identical reference / deep-equal to the original
     expect(next.businessAcumen).toEqual(state.businessAcumen);
   });
 
@@ -410,7 +572,7 @@ describe('reduceEvent TAKEOVER_ACCEPTED', () => {
 // ─── Full round-trip ──────────────────────────────────────────────────────────
 
 describe('forced-out full round-trip via buildState', () => {
-  test('applying OWNER_FORCED_OUT + TAKEOVER_ACCEPTED produces correct final state', () => {
+  test('applying OWNER_FORCED_OUT + PARACHUTE_OFFERED + TAKEOVER_ACCEPTED produces correct final state', () => {
     const fo: OwnerForcedOutEvent = {
       type:             'OWNER_FORCED_OUT',
       timestamp:        2000,
@@ -421,6 +583,18 @@ describe('forced-out full round-trip via buildState', () => {
       takeoverClubName: 'NPC Club 22',
       seed:             'forced-out-seed',
       week:             33,
+      takeoverBudget:   3_500_000,
+      reputationMalus:  -10,
+    };
+
+    const po: ParachuteOfferedEvent = {
+      type:             'PARACHUTE_OFFERED',
+      timestamp:        2500,
+      takeoverClubId:   'npc-club-22',
+      takeoverClubName: 'NPC Club 22',
+      takeoverBudget:   3_500_000,
+      reputationMalus:  -10,
+      week:             34,
     };
 
     const ta: TakeoverAcceptedEvent = {
@@ -429,18 +603,17 @@ describe('forced-out full round-trip via buildState', () => {
       takeoverClubId:   'npc-club-22',
       takeoverClubName: 'NPC Club 22',
       seed:             'forced-out-seed',
-      week:             33,
+      week:             34,
     };
 
-    const events: GameEvent[] = [GAME_STARTED, fo, ta];
+    const events: GameEvent[] = [GAME_STARTED, fo, po, ta];
     const state = buildState(events);
 
-    // Phase is EARLY_SEASON because currentWeek is 0 — no WEEK_ADVANCED events in this chain.
-    // The phase→week mapping is already covered by the unit tests above.
     expect(state.phase).not.toBe('FORCED_OUT');
+    expect(state.phase).not.toBe('PARACHUTE_OFFERED');
     expect(state.forcedOut).toBeNull();
     expect(state.club.id).toBe('npc-club-22');
-    expect(state.club.transferBudget).toBe(5_000_000);
+    expect(state.club.transferBudget).toBe(3_500_000);
     expect(state.boardConfidence).toBe(20);
   });
 });

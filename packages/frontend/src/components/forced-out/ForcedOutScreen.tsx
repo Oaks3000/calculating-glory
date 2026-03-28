@@ -12,80 +12,111 @@ function ordinal(n: number): string {
   return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
 }
 
-export function ForcedOutScreen({ state, dispatch }: ForcedOutScreenProps) {
-  const [step, setStep] = useState<'ousted' | 'offer'>('ousted');
-  const [error, setError]   = useState<string | null>(null);
+// ── Screen 1: Club Collapsed (limbo week) ─────────────────────────────────────
 
-  const fo = state.forcedOut;
-  if (!fo) return null;
+function ClubCollapsedScreen({ state, dispatch, fo }: {
+  state: GameState;
+  dispatch: (command: GameCommand) => { error?: string };
+  fo: NonNullable<GameState['forcedOut']>;
+}) {
+  const [error, setError] = useState<string | null>(null);
 
-  function handleAccept() {
-    const result = dispatch({ type: 'ACCEPT_TAKEOVER' });
+  function handleWaitOutWeek() {
+    const result = dispatch({
+      type: 'SIMULATE_WEEK',
+      week: state.currentWeek + 1,
+      season: state.season,
+    } as GameCommand);
     if (result.error) setError(result.error);
   }
 
-  // ── Step 1: Ousted ─────────────────────────────────────────────────────────
-  if (step === 'ousted') {
-    return (
-      <div className="min-h-screen bg-bg-deep text-txt-primary flex flex-col items-center justify-center px-4 py-12">
-        <div className="max-w-lg w-full space-y-6">
+  return (
+    <div className="min-h-screen bg-bg-deep text-txt-primary flex flex-col items-center justify-center px-4 py-12">
+      <div className="max-w-lg w-full space-y-6">
 
-          {/* Icon + headline */}
-          <div className="text-center space-y-3">
-            <div className="text-6xl">🔴</div>
-            <h1 className="text-3xl font-bold text-alert-red tracking-tight">
-              The Board Has Had Enough
-            </h1>
-            <p className="text-txt-muted text-sm">
-              Season {state.season} · Week {state.currentWeek}
-            </p>
-          </div>
-
-          {/* Situation summary */}
-          <div className="card border border-alert-red/30 bg-alert-red/5 space-y-3">
-            <p className="text-txt-primary text-sm leading-relaxed">
-              You took <span className="font-semibold text-txt-primary">{fo.previousClubName}</span> into
-              the season with ambitions of survival. Instead you find yourself{' '}
-              <span className="text-alert-red font-semibold">{ordinal(fo.previousPosition)} in the table</span>,
-              with just{' '}
-              <span className="text-alert-red font-semibold">{formatMoney(state.club.transferBudget)}</span> left
-              in the kitty.
-            </p>
-            <p className="text-txt-primary text-sm leading-relaxed">
-              The board has voted unanimously: you're out. Security has already changed the locks.
-            </p>
-          </div>
-
-          {/* Stats grid */}
-          <div className="grid grid-cols-3 gap-3">
-            <div className="card text-center">
-              <p className="text-xs2 text-txt-muted uppercase tracking-wide mb-1">Position</p>
-              <p className="text-2xl font-bold data-font text-alert-red">{ordinal(fo.previousPosition)}</p>
-            </div>
-            <div className="card text-center">
-              <p className="text-xs2 text-txt-muted uppercase tracking-wide mb-1">Week</p>
-              <p className="text-2xl font-bold data-font text-txt-primary">{state.currentWeek}</p>
-            </div>
-            <div className="card text-center">
-              <p className="text-xs2 text-txt-muted uppercase tracking-wide mb-1">Budget Left</p>
-              <p className="text-2xl font-bold data-font text-warn-amber">{formatMoney(state.club.transferBudget)}</p>
-            </div>
-          </div>
-
-          {/* CTA */}
-          <button
-            onClick={() => setStep('offer')}
-            className="w-full py-3 rounded-tag bg-data-blue text-white font-semibold text-sm hover:bg-data-blue/80 active:scale-95 transition-all"
-          >
-            See what comes next →
-          </button>
-
+        {/* Icon + headline */}
+        <div className="text-center space-y-3">
+          <div className="text-6xl">🔴</div>
+          <h1 className="text-3xl font-bold text-alert-red tracking-tight">
+            The Board Has Had Enough
+          </h1>
+          <p className="text-txt-muted text-sm">
+            Season {state.season} · Week {state.currentWeek}
+          </p>
         </div>
+
+        {/* Situation summary */}
+        <div className="card border border-alert-red/30 bg-alert-red/5 space-y-3">
+          <p className="text-txt-primary text-sm leading-relaxed">
+            You took <span className="font-semibold text-txt-primary">{fo.previousClubName}</span> into
+            the season with ambitions of survival. Instead you find yourself{' '}
+            <span className="text-alert-red font-semibold">{ordinal(fo.previousPosition)} in the table</span>,
+            with just{' '}
+            <span className="text-alert-red font-semibold">{formatMoney(state.club.transferBudget)}</span> left
+            in the kitty.
+          </p>
+          <p className="text-txt-primary text-sm leading-relaxed">
+            The board has voted unanimously: you're out. Security has already changed the locks.
+          </p>
+        </div>
+
+        {/* Stats grid */}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="card text-center">
+            <p className="text-xs2 text-txt-muted uppercase tracking-wide mb-1">Position</p>
+            <p className="text-2xl font-bold data-font text-alert-red">{ordinal(fo.previousPosition)}</p>
+          </div>
+          <div className="card text-center">
+            <p className="text-xs2 text-txt-muted uppercase tracking-wide mb-1">Week</p>
+            <p className="text-2xl font-bold data-font text-txt-primary">{state.currentWeek}</p>
+          </div>
+          <div className="card text-center">
+            <p className="text-xs2 text-txt-muted uppercase tracking-wide mb-1">Budget Left</p>
+            <p className="text-2xl font-bold data-font text-warn-amber">{formatMoney(state.club.transferBudget)}</p>
+          </div>
+        </div>
+
+        {/* Flavour */}
+        <div className="card border border-bg-raised bg-bg-raised/50 text-center">
+          <p className="text-xs text-txt-muted italic leading-relaxed">
+            Your club has been wound up. Football waits for no one.
+            The week passes, and the phone starts ringing...
+          </p>
+        </div>
+
+        {error && (
+          <p className="text-alert-red text-xs2 text-center">{error}</p>
+        )}
+
+        {/* CTA */}
+        <button
+          onClick={handleWaitOutWeek}
+          className="w-full py-3 rounded-tag bg-data-blue text-white font-semibold text-sm hover:bg-data-blue/80 active:scale-95 transition-all"
+        >
+          Wait out the week →
+        </button>
+
       </div>
-    );
+    </div>
+  );
+}
+
+// ── Screen 2: Parachute Offer ──────────────────────────────────────────────────
+
+function ParachuteOfferScreen({ state, dispatch, fo }: {
+  state: GameState;
+  dispatch: (command: GameCommand) => { error?: string };
+  fo: NonNullable<GameState['forcedOut']>;
+}) {
+  const [error, setError] = useState<string | null>(null);
+
+  function handleAccept() {
+    const result = dispatch({ type: 'ACCEPT_TAKEOVER' } as GameCommand);
+    if (result.error) setError(result.error);
   }
 
-  // ── Step 2: Takeover offer ─────────────────────────────────────────────────
+  const takeoverPosition = state.league.entries.find(e => e.clubId === fo.takeoverClubId)?.position ?? 24;
+
   return (
     <div className="min-h-screen bg-bg-deep text-txt-primary flex flex-col items-center justify-center px-4 py-12">
       <div className="max-w-lg w-full space-y-6">
@@ -121,14 +152,29 @@ export function ForcedOutScreen({ state, dispatch }: ForcedOutScreenProps) {
           <div className="grid grid-cols-2 gap-3">
             <div className="card text-center">
               <p className="text-xs2 text-txt-muted mb-1">Starting Budget</p>
-              <p className="text-lg font-bold data-font text-warn-amber">{formatMoney(5_000_000)}</p>
+              <p className="text-lg font-bold data-font text-warn-amber">{formatMoney(fo.takeoverBudget)}</p>
             </div>
             <div className="card text-center">
               <p className="text-xs2 text-txt-muted mb-1">League Position</p>
               <p className="text-lg font-bold data-font text-alert-red">
-                {ordinal(state.league.entries.find(e => e.clubId === fo.takeoverClubId)?.position ?? 24)}
+                {ordinal(takeoverPosition)}
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* Reputation hit */}
+        <div className="flex items-start gap-3 bg-alert-red/10 border border-alert-red/30 rounded-card p-3">
+          <span className="text-lg">📉</span>
+          <div>
+            <p className="text-xs2 font-semibold text-alert-red uppercase tracking-wide mb-0.5">
+              Reputation hit
+            </p>
+            <p className="text-xs2 text-txt-muted">
+              Being ousted mid-season costs you{' '}
+              <span className="text-alert-red font-semibold">{Math.abs(fo.reputationMalus)} reputation points</span>.
+              You'll need to rebuild your standing from the ground up.
+            </p>
           </div>
         </div>
 
@@ -163,23 +209,29 @@ export function ForcedOutScreen({ state, dispatch }: ForcedOutScreenProps) {
           <p className="text-alert-red text-xs2 text-center">{error}</p>
         )}
 
-        {/* CTAs */}
-        <div className="space-y-2">
-          <button
-            onClick={handleAccept}
-            className="w-full py-3 rounded-tag bg-pitch-green text-white font-semibold text-sm hover:bg-pitch-green/80 active:scale-95 transition-all"
-          >
-            Accept — take over {fo.takeoverClubName}
-          </button>
-          <button
-            onClick={() => setStep('ousted')}
-            className="w-full py-2 rounded-tag text-txt-muted text-xs2 hover:text-txt-primary transition-colors"
-          >
-            ← Back
-          </button>
-        </div>
+        {/* CTA */}
+        <button
+          onClick={handleAccept}
+          className="w-full py-3 rounded-tag bg-pitch-green text-white font-semibold text-sm hover:bg-pitch-green/80 active:scale-95 transition-all"
+        >
+          Accept — take over {fo.takeoverClubName}
+        </button>
 
       </div>
     </div>
   );
+}
+
+// ── Root component ─────────────────────────────────────────────────────────────
+
+export function ForcedOutScreen({ state, dispatch }: ForcedOutScreenProps) {
+  const fo = state.forcedOut;
+  if (!fo) return null;
+
+  if (state.phase === 'FORCED_OUT') {
+    return <ClubCollapsedScreen state={state} dispatch={dispatch} fo={fo} />;
+  }
+
+  // phase === 'PARACHUTE_OFFERED'
+  return <ParachuteOfferScreen state={state} dispatch={dispatch} fo={fo} />;
 }

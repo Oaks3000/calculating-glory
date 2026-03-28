@@ -20,7 +20,7 @@ export default function App() {
     return <SeasonEndScreen state={state} dispatch={dispatch} />;
   }
 
-  if (state.phase === 'FORCED_OUT') {
+  if (state.phase === 'FORCED_OUT' || state.phase === 'PARACHUTE_OFFERED') {
     return <ForcedOutScreen state={state} dispatch={dispatch} />;
   }
 

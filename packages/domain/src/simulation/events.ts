@@ -19,16 +19,42 @@ import { avgSquadMorale, isUnsettled } from './morale';
 import { computeOverallRating } from '../types/player';
 
 /**
- * Check whether a template's prerequisite has been met in the resolved history.
- * History entries are stored as "templateId:choiceId".
+ * Check whether a template's prerequisite has been met.
+ *
+ * Handles three checks:
+ *   1. Basic history match ("templateId:choiceId" in resolvedEventHistory)
+ *   2. delayWeeks: the prerequisite must have been resolved at least delayWeeks ago
+ *   3. mathsQuality: if set, the predecessor's maths outcome must match
  */
 function prerequisiteMet(
   template: ClubEventTemplate,
-  resolvedEventHistory: string[]
+  resolvedEventHistory: string[],
+  currentWeek: number,
+  resolvedEventWeeks: Record<string, number>,
+  mathsOutcomes: Record<string, 'correct' | 'wrong'>
 ): boolean {
   if (!template.prerequisite) return true;
-  const key = `${template.prerequisite.eventId}:${template.prerequisite.choiceId}`;
-  return resolvedEventHistory.includes(key);
+
+  const { eventId, choiceId, mathsQuality } = template.prerequisite;
+  const key = `${eventId}:${choiceId}`;
+
+  // 1. Must have been resolved
+  if (!resolvedEventHistory.includes(key)) return false;
+
+  // 2. delayWeeks: only fire after the required delay has passed
+  if (template.delayWeeks !== undefined && template.delayWeeks > 0) {
+    const resolvedWeek = resolvedEventWeeks[key];
+    if (resolvedWeek === undefined) return false;
+    if (currentWeek < resolvedWeek + template.delayWeeks) return false;
+  }
+
+  // 3. mathsQuality: only fire if maths quality matches
+  if (mathsQuality !== undefined) {
+    const quality = mathsOutcomes[eventId];
+    if (quality !== mathsQuality) return false;
+  }
+
+  return true;
 }
 
 /**
@@ -99,13 +125,11 @@ function isOnCooldown(
  * Used for testing.
  */
 export function getEligibleEvents(state: GameState): ClubEventTemplate[] {
+  const resolvedEventWeeks = state.resolvedEventWeeks ?? {};
+  const mathsOutcomes = state.mathsOutcomes ?? {};
   return CLUB_EVENT_TEMPLATES.filter(template => {
-    // Must have prerequisite met (or no prerequisite)
-    if (!prerequisiteMet(template, state.resolvedEventHistory)) return false;
-    // For templates WITH prerequisites: they're follow-ups, always include
-    // if prerequisite met (regardless of conditions/cooldown)
+    if (!prerequisiteMet(template, state.resolvedEventHistory, state.currentWeek, resolvedEventWeeks, mathsOutcomes)) return false;
     if (template.prerequisite) return true;
-    // Standalone: check conditions and cooldown
     if (!conditionsMet(template, state)) return false;
     return true;
   });
@@ -123,9 +147,12 @@ export function generateWeekEvents(
 ): PendingClubEvent[] {
   const rng = createRng(`${seed}-S${season}-W${week}-events`);
 
+  const resolvedEventWeeks = state.resolvedEventWeeks ?? {};
+  const mathsOutcomes = state.mathsOutcomes ?? {};
+
   // Filter to eligible templates
   const eligible = CLUB_EVENT_TEMPLATES.filter(template => {
-    if (!prerequisiteMet(template, state.resolvedEventHistory)) return false;
+    if (!prerequisiteMet(template, state.resolvedEventHistory, week, resolvedEventWeeks, mathsOutcomes)) return false;
     if (template.prerequisite) {
       // Follow-up event: include if not already pending and not recently resolved
       const alreadyPending = state.pendingEvents.some(
@@ -188,22 +215,29 @@ export function generateWeekEvents(
     }
 
     return ({
-    id: `evt-S${season}-W${week}-${index}`,
-    templateId: template.id,
-    week,
-    title,
-    description,
-    severity: template.severity,
-    choices: template.choices.map(c => ({
-      id: c.id,
-      label: c.label,
-      description: c.description,
-      budgetEffect: c.budgetEffect,
-      reputationEffect: c.reputationEffect,
-      performanceEffect: c.performanceEffect,
-      requiresMath: c.requiresMath
-    })),
-    resolved: false
+      id: `evt-S${season}-W${week}-${index}`,
+      templateId: template.id,
+      week,
+      title,
+      description,
+      severity: template.severity,
+      npc: template.npc,
+      chainId: template.chainId,
+      hopNumber: template.hopNumber,
+      chainLength: template.chainLength,
+      mathsChallenge: template.mathsChallenge,
+      choices: template.choices.map(c => ({
+        id: c.id,
+        label: c.label,
+        description: c.description,
+        budgetEffect: c.budgetEffect,
+        reputationEffect: c.reputationEffect,
+        performanceEffect: c.performanceEffect,
+        requiresMath: c.requiresMath,
+        mathsCorrectBudgetEffect: c.mathsCorrectBudgetEffect,
+        mathsWrongBudgetEffect: c.mathsWrongBudgetEffect,
+      })),
+      resolved: false,
     });
   });
 }

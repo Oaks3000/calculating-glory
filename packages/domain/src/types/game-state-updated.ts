@@ -11,6 +11,7 @@ import { LeagueTable } from './league';
 import { CurriculumConfig } from '../curriculum/curriculum-config';
 import { Player, Position } from './player';
 import { Manager } from './staff';
+import { MathsChallengeSpec, NpcId } from '../data/club-events';
 
 /**
  * A choice available within a club event
@@ -28,6 +29,16 @@ export interface ClubEventChoice {
   playerLeaves?: boolean;
   /** Poaching: morale delta applied to the poach target player (negative = unhappy) */
   moraleEffect?: number;
+  /**
+   * Chain events: budget effect used when the event's maths challenge was correct.
+   * Falls back to budgetEffect if not set.
+   */
+  mathsCorrectBudgetEffect?: number;
+  /**
+   * Chain events: budget effect used when the event's maths challenge was wrong.
+   * Falls back to budgetEffect if not set.
+   */
+  mathsWrongBudgetEffect?: number;
 }
 
 /**
@@ -42,6 +53,16 @@ export interface PendingClubEvent {
   severity: 'minor' | 'major';
   choices: ClubEventChoice[];
   resolved: boolean;
+  /** NPC who delivers this event */
+  npc?: NpcId;
+  /** Chain identifier (e.g. 'catering-crisis') */
+  chainId?: string;
+  /** Hop number within the chain (1-indexed) */
+  hopNumber?: number;
+  /** Total hops in the chain — used for "Hop X of Y" UI */
+  chainLength?: number;
+  /** Structured maths challenge to evaluate before choices apply */
+  mathsChallenge?: MathsChallengeSpec;
   /**
    * Optional metadata for specialised event types (e.g. NPC poaching).
    * Not present on standard club events.
@@ -180,6 +201,19 @@ export interface GameState {
    * clamped 25–99). Ensures long-running NPCs grow or decline over time.
    */
   npcStrengths: Record<string, number>;
+
+  /**
+   * Maps "templateId:choiceId" → the week that event+choice was resolved.
+   * Used by the chain hop scheduler to enforce delayWeeks between hops.
+   */
+  resolvedEventWeeks: Record<string, number>;
+
+  /**
+   * Maps templateId → maths quality for chain events that had a mathsChallenge.
+   * 'correct' | 'wrong' — used to route follow-up hop variants
+   * (e.g. a "re-inspection pass" hop vs "re-inspection fail" hop).
+   */
+  mathsOutcomes: Record<string, 'correct' | 'wrong'>;
 }
 
 /**
@@ -196,6 +230,10 @@ export interface ForcedOutState {
   takeoverClubName: string;
   /** The week the ousting happened */
   week: number;
+  /** The takeover club's inferred starting budget (pence) */
+  takeoverBudget: number;
+  /** Reputation malus applied on acceptance (negative) */
+  reputationMalus: number;
 }
 
 /**
@@ -223,11 +261,12 @@ export interface BusinessAcumen {
  */
 export type SeasonPhase =
   | 'PRE_SEASON'
-  | 'EARLY_SEASON'      // Weeks 1-15
-  | 'MID_SEASON'        // Weeks 16-30
-  | 'LATE_SEASON'       // Weeks 31-46
+  | 'EARLY_SEASON'        // Weeks 1-15
+  | 'MID_SEASON'          // Weeks 16-30
+  | 'LATE_SEASON'         // Weeks 31-46
   | 'SEASON_END'
-  | 'FORCED_OUT';       // Owner ousted — awaiting takeover acceptance
+  | 'FORCED_OUT'          // Owner ousted — limbo week, no matches simulated
+  | 'PARACHUTE_OFFERED';  // Limbo week passed — takeover offer presented
 
 /**
  * Command errors

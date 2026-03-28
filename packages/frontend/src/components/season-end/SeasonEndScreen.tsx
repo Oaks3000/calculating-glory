@@ -1,4 +1,4 @@
-import { GameState, GameCommand, formatMoney } from '@calculating-glory/domain';
+import { GameState, GameCommand, formatMoney, Division } from '@calculating-glory/domain';
 
 interface SeasonEndScreenProps {
   state: GameState;
@@ -7,9 +7,17 @@ interface SeasonEndScreenProps {
 
 // ─── Outcome helpers ───────────────────────────────────────────────────────────
 
-function getOutcome(position: number, promoted: boolean, relegated: boolean) {
-  if (promoted) return { label: 'PROMOTED', colour: 'text-pitch-green', bg: 'bg-pitch-green/10 border-pitch-green/40', emoji: '🏆', sub: 'Earning promotion to League One' };
-  if (relegated) return { label: 'RELEGATED', colour: 'text-alert-red', bg: 'bg-alert-red/10 border-alert-red/40', emoji: '📉', sub: 'Dropping out of League Two' };
+const DIVISION_NAMES: Record<Division, string> = {
+  LEAGUE_TWO:     'League Two',
+  LEAGUE_ONE:     'League One',
+  CHAMPIONSHIP:   'the Championship',
+  PREMIER_LEAGUE: 'the Premier League',
+};
+
+function getOutcome(position: number, promoted: boolean, relegated: boolean, division: Division) {
+  const divName = DIVISION_NAMES[division];
+  if (promoted) return { label: 'PROMOTED', colour: 'text-pitch-green', bg: 'bg-pitch-green/10 border-pitch-green/40', emoji: '🏆', sub: `Earning promotion to ${divName}` };
+  if (relegated) return { label: 'RELEGATED', colour: 'text-alert-red', bg: 'bg-alert-red/10 border-alert-red/40', emoji: '📉', sub: `Dropping down to ${divName}` };
   if (position <= 7) return { label: 'PLAYOFFS', colour: 'text-warn-amber', bg: 'bg-warn-amber/10 border-warn-amber/40', emoji: '⚔️', sub: 'Into the promotion playoffs' };
   return { label: 'MID-TABLE', colour: 'text-data-blue', bg: 'bg-data-blue/10 border-data-blue/40', emoji: '🤝', sub: 'A season of consolidation' };
 }
@@ -36,7 +44,7 @@ export function SeasonEndScreen({ state, dispatch }: SeasonEndScreenProps) {
   const promoted: boolean = (seasonEndedEvent as any)?.promoted ?? false;
   const relegated: boolean = (seasonEndedEvent as any)?.relegated ?? false;
 
-  const outcome = getOutcome(finalPosition, promoted, relegated);
+  const outcome = getOutcome(finalPosition, promoted, relegated, state.division);
 
   // Player's club league entry
   const clubEntry = league.entries.find(e => e.clubId === club.id);
