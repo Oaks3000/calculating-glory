@@ -4,10 +4,11 @@ interface ThreadCardProps {
   sender: string;
   preview: string;
   isUrgent?: boolean;
+  badge?: string;
   onClick: () => void;
 }
 
-export function ThreadCard({ icon, title, sender, preview, isUrgent, onClick }: ThreadCardProps) {
+export function ThreadCard({ icon, title, sender, preview, isUrgent, badge, onClick }: ThreadCardProps) {
   return (
     <button
       onClick={onClick}
@@ -28,6 +29,11 @@ export function ThreadCard({ icon, title, sender, preview, isUrgent, onClick }: 
           </span>
           {isUrgent && (
             <span className="shrink-0 w-2 h-2 rounded-full bg-alert-red" />
+          )}
+          {badge && !isUrgent && (
+            <span className="shrink-0 text-xs2 font-medium text-warn-amber bg-warn-amber/10 px-1.5 py-0.5 rounded-tag">
+              {badge}
+            </span>
           )}
         </div>
         <p className="text-xs2 text-txt-muted truncate">{sender}</p>
