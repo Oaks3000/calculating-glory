@@ -6,11 +6,36 @@ import { ViewToggle, ActiveView } from './components/shared/ViewToggle';
 import { PreSeasonScreen } from './components/pre-season/PreSeasonScreen';
 import { SeasonEndScreen } from './components/season-end/SeasonEndScreen';
 import { ForcedOutScreen } from './components/forced-out/ForcedOutScreen';
+import { MenuScreen } from './components/menu/MenuScreen';
 
 export default function App() {
   const { state, events, dispatch, isLoading, resetGame } = useGameState();
+  const [screen, setScreen] = useState<'menu' | 'game'>('menu');
   const [activeView, setActiveView] = useState<ActiveView>('command');
   const [error, setError] = useState<string | null>(null);
+
+  // A save exists if there's more than the initial GAME_STARTED event
+  const hasSave = events.length > 1;
+
+  function handleContinue() {
+    setScreen('game');
+  }
+
+  function handleNewGame() {
+    resetGame();
+    setScreen('game');
+  }
+
+  if (screen === 'menu') {
+    return (
+      <MenuScreen
+        state={state}
+        hasSave={hasSave}
+        onContinue={handleContinue}
+        onNewGame={handleNewGame}
+      />
+    );
+  }
 
   if (state.phase === 'PRE_SEASON') {
     return <PreSeasonScreen state={state} dispatch={dispatch} />;
