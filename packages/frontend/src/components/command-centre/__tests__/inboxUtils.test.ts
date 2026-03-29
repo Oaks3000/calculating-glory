@@ -243,6 +243,7 @@ describe('buildNotableMatches', () => {
       goalsAgainst: 10,
       goalDifference: 5,
       points: 17,
+      form: [],
     }));
   }
 
