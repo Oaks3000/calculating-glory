@@ -12,6 +12,7 @@ import { SocialFeed } from '../social-feed/SocialFeed';
 import { BackroomTeamSlideOver } from './BackroomTeamSlideOver';
 import { LearningProgressSlideOver } from './LearningProgressSlideOver';
 import { TransferMarketSlideOver } from '../transfer-market/TransferMarketSlideOver';
+import { FinancialHealthBar } from '../shared/FinancialHealthBar';
 
 interface CommandCentreProps {
   state: GameState;
@@ -69,6 +70,9 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
         squad={state.club.squad}
         form={state.club.form}
       />
+
+      {/* ── Financial Health Bar ─────────────────────────────────────────── */}
+      <FinancialHealthBar state={state} />
 
       {/* ── Error toast ──────────────────────────────────────────────────── */}
       {error && (

@@ -45,7 +45,7 @@ export * from './data/scout-target-generator';
 export { isUnsettled, avgSquadMorale, UNSETTLED_THRESHOLD } from './simulation/morale';
 
 // Simulation helpers
-export { playerCharismaRevenue, squadCharismaRevenue } from './simulation/revenue';
+export { playerCharismaRevenue, squadCharismaRevenue, computeWeeklyFinancials } from './simulation/revenue';
 
 // Attribute progression
 export {
