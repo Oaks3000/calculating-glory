@@ -33,9 +33,16 @@ export const QUESTION_BANK: QuestionBank = [
 export function pickQuestion(
   curriculumLevel: CurriculumLevel,
   options?: {
-    topic?: MathTopic;
+    /** Filter to questions matching any of the listed topics. */
+    topics?: MathTopic[];
+    /** Exclude a specific question by id (avoid back-to-back repeats). */
     excludeId?: string;
-    preferDifficulty?: 1 | 2 | 3;
+    /**
+     * Deterministic selection index. The filtered pool is indexed by
+     * `selectionIndex % pool.length`, avoiding Math.random().
+     * When omitted, falls back to Math.random().
+     */
+    selectionIndex?: number;
   }
 ): QuestionTemplate | null {
   const studentIdx = CURRICULUM_LEVEL_ORDER.indexOf(curriculumLevel);
@@ -46,21 +53,20 @@ export function pickQuestion(
     return qIdx <= studentIdx && q.difficulty <= maxDiff;
   });
 
-  if (options?.topic) {
-    pool = pool.filter(q => q.topic === options.topic);
+  if (options?.topics && options.topics.length > 0) {
+    const filtered = pool.filter(q => options.topics!.includes(q.topic));
+    if (filtered.length > 0) pool = filtered;
   }
   if (options?.excludeId) {
-    pool = pool.filter(q => q.id !== options.excludeId);
+    const deduped = pool.filter(q => q.id !== options.excludeId);
+    if (deduped.length > 0) pool = deduped;
   }
 
   if (pool.length === 0) return null;
 
-  // Prefer the requested difficulty, but fall back to any available
-  if (options?.preferDifficulty) {
-    const preferred = pool.filter(q => q.difficulty === options.preferDifficulty);
-    if (preferred.length > 0) pool = preferred;
-  }
+  const idx = options?.selectionIndex !== undefined
+    ? Math.abs(options.selectionIndex) % pool.length
+    : Math.floor(Math.random() * pool.length);
 
-  // Random pick (in production this should use seeded RNG)
-  return pool[Math.floor(Math.random() * pool.length)];
+  return pool[idx];
 }
