@@ -1,22 +1,23 @@
 ---
 project: "Calculating Glory"
 type: "build"
-lastUpdated: "2026-03-23"
+lastUpdated: "2026-03-29"
 ---
 
 # Calculating Glory - Next Steps
 
 ## Immediate (Next Session)
 
-1. **Multiple leagues** — League One NPC team data, division-aware match sim, promotion/relegation opponent pool swap. Division tracking is already on GameState.
+1. **Val financial threshold messages** — inbox card fires when runway bar crosses green→amber, amber→red, red→<5wks (and back); fires once per crossing; completes the Financial Health Bar end-to-end.
+2. **Morale news ticker milestone messages** — passive flavour lines ("Squad spirits high after a 3-match run"); wired to morale threshold crossing events.
 
 ## Short Term (Next 2–4 Weeks)
 
-1. **resetGame() UI** — `useGameState` exposes `resetGame()` but there's no "New Game" button anywhere in the UI yet.
-2. **NPC strength evolution** — use previousLeagueTable finish position to modestly adjust NPC AI strength each season (top 4 +2, bottom 4 −2, clamped 30–70). Complements the league persistence work.
-3. **Morale event surfacing** — news ticker milestone messages ("Squad spirits high after 3-match run") as passive flavour.
+1. **Balance pass** — full L2 → L1 play-through; observe growth/retirement rates, budget scaling, question difficulty progression; compare Year 7 vs Year 9 starting experience. Passive rather than a dedicated task — play and take notes.
+2. **Geometry challenges from Stadium View** — "Groundskeeper" NPC; AREA_AND_PERIMETER + ANGLES templates; triggered from Stadium tile clicks.
+3. **Curriculum advancement pacing** — 20-attempt / 85% threshold may need tuning after observing real students.
 
 ## Questions / Unknowns
 
-- **Second season balance** — growth/retirement numbers are untested in play; may need tuning after a real play-through.
-- **resetGame() UI** — no "New Game" button surfaced anywhere yet.
+- **Balance** — growth/retirement numbers are untested in play; may need tuning after first real play-through.
+- **Practice entry discoverability** — is the 🎯 Practice tile obvious enough for a new student, or does it need onboarding?

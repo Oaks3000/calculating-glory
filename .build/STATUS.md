@@ -2,63 +2,59 @@
 project: "Calculating Glory"
 type: "build"
 priority: 2
-phase: "Phase 6 — Live Season Depth"
-progress: 45
-lastUpdated: "2026-03-23"
-lastTouched: "2026-03-23"
+phase: "Phase 7 — Practice Mode & Polish"
+progress: 82
+lastUpdated: "2026-03-29"
+lastTouched: "2026-03-29"
 status: "in-progress"
 ---
 
 # Calculating Glory - Current Status
 
-**Phase:** Phase 6 — Live Season Depth (in progress)
-**Last Updated:** 2026-03-22
+**Phase:** Phase 6 complete → Phase 7 in progress
+**Last Updated:** 2026-03-29
 
 ## What's Done
 
 - Full TypeScript monorepo workspace (domain + frontend packages)
 - Event sourcing architecture: all event types, reducers, command handlers
-- 441 domain tests passing across 23 suites
 - Deterministic match simulation (Poisson, seeded RNG, attack/defence split)
 - Season fixtures: circle method round-robin, 24 teams, 46 weeks
 - Weekly club events: 15 templates, branching chains, pending resolution
-- Business acumen tracking, curriculum progression (5 levels, feature gating)
+- Business acumen tracking, curriculum progression (5 levels)
 - Full Command Centre hub + Stadium View (isometric SVG renderer, 10 facility types)
-- Navigation wiring — all core units route to correct slide-overs
-- Weekly Training Focus (`SET_TRAINING_FOCUS` command, training drill challenges)
-- **Phase 5.1–5.8** — full season flow: pre-season, transfers, match sim, NPC poaching, manager system, club-owned transfers, season end screen, owner forced out (PRs #33–#50 ✅)
-- **Scout Network facility** (PR #47 ✅) — truePotential visibility by facility level
-- **Morale system** (PR #48 ✅) — result deltas, contract anxiety, threshold events, contagion
-- **Scout missions** (PR #49 ✅) — targeted scouting, math challenge bid gate
-- **Computed overallRating** (PR #51 ✅) — pure function replacing stored field; charisma → commercial revenue (cubic curve, OVR-amplified)
-- **Player attribute progression + retirement** (PR #52 ✅) — 4 curve shapes, peak-height modifier 1–5, seasonal tick on PRE_SEASON_STARTED, truePotential redefined as career-arc cursor anchored to age 42
-- **Second season loop** (PR #53 ✅) — league table reset on PRE_SEASON_STARTED; reputation + board confidence deltas on season end; contextual SeasonEndScreen outcome text
-- **Facility revenue tier scaling** (PR #54 ✅) — Division type tracked on GameState; TIER_REVENUE_MULTIPLIER (1×→2×→4×→10× across L2/L1/Champ/PL); facilityRevenue() extracted to revenue.ts; 20 new tests
-- **localStorage persistence** (PR #54 ✅) — event log serialised to `cg-events-v1` on every dispatch; rehydrates on page load; resetGame() exposed for future New Game UI
-- **Hub tile routing fix** (PR #55 ✅) — Stadium tile badge now fires only on first-time facility unlocks (level 0 → affordable), not routine level-ups; Chats tile badge already targeted to math-challenge negotiations only
-- **Construction lag + frontend tests + NPC league persistence** (PR #66 ✅) — facility upgrades take 2–6 weeks; amber dashes + 🏗 icon in isometric view; 23 new component tests (FacilityCard + InboxCard); previousLeagueTable snapshotted at season reset with "Last Season" tab in UI
-- **publicPotential semantics** (PR #67 ✅) — `publicPotential` now derived from `getScoutedPotential(player, 0)` — noisy ±15 read of `truePotential` at L0 scout — in both squad-generator and free-agent-generator; Scout Network upgrades now meaningfully narrow the signal gap
+- Weekly Training Focus, morale system, scout missions, player progression + retirement
+- Second season loop, facility construction lag, localStorage persistence
+- NPC teams across all 4 divisions (League Two through Premier League)
+- NPC strength evolution using previous season table finish
+- Menu screen, Financial Health Bar, How-to-Play intro journey
+- Owner forced-out cascade + parachute re-entry flow
+- Morale event system, inbox cards, morale news ticker
+
+**Phase 6 Educational Depth — COMPLETE (PRs #72, #74, #75, #76)**
+- Two-axis decoupling: football division vs curriculum level fully independent
+- Year group picker in New Game flow (5 levels)
+- 60-question bank across 6 topics; `generateChallenge.ts` rewritten as bank adapter
+- `bankTopic` on events — 4 events wired to specific curriculum topics
+- Adaptive curriculum advancement: `checkMastery()` → Val Webb gold nudge card → `UPGRADE_CURRICULUM`
+
+**Phase 7 — Practice Mode (PR #77)**
+- 🎯 Practice HubTile — dedicated entry point in Command Centre (2×2 grid)
+- "Chats" renamed "Negotiations" for clarity
+- Practice slide-over: all 6 topics, weakest 3 badged "Recommended", Marcus Webb drill flow
 
 ## What's In Progress
 
-- Nothing — main is clean at PR #67 merge
+- Balance pass — first real play-through (passive observation)
 
 ## Blockers
 
 - None
 
-## Open Issues
-
-None
-
 ## Notes
 
 - Target device: Chromebook 1366×768 (keyboard + trackpad)
-- **Live URL**: https://oaks3000.github.io/calculating-glory/ — auto-deploys on every push to main via GitHub Actions
-- Repo is **public** (required for GitHub Pages free tier); plan to migrate to Railway or similar when multiplayer/auth is needed
+- **Live URL**: https://oaks3000.github.io/calculating-glory/ — auto-deploys on push to main
 - Dev server: `npm run dev --workspace=@calculating-glory/frontend`
-- Domain tests: `cd packages/domain && npm test` (run from worktree domain, not main project)
-- Frontend tests: `cd packages/frontend && npx vitest run`
-- Domain dist: worktree node_modules symlinks to worktree's own packages/domain — rebuild from worktree: `packages/domain && npm run build`
-- **Design principle confirmed**: promotion/relegation does NOT affect player stats — ability follows PlayerCurve only; promotion means competing in a harder league, not a stat boost
-- **Balance pass deferred** — punted to back of queue; observe passively during normal play-throughs
+- Domain tests: `cd packages/domain && npm test`
+- **Design principle**: two-axis model — football progression (division) never gates maths level; maths progression (curriculum) never gates football.
