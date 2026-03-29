@@ -28,6 +28,7 @@ export * from './simulation/rng';
 export * from './simulation/match';
 export * from './simulation/season';
 export * from './simulation/events';
+export * from './simulation/commentary';
 
 // Validation
 export * from './validation/rules';
