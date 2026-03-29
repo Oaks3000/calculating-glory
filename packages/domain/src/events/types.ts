@@ -44,7 +44,8 @@ export type GameEvent =
   | ScoutMissionCancelledEvent
   | OwnerForcedOutEvent
   | TakeoverAcceptedEvent
-  | ParachuteOfferedEvent;
+  | ParachuteOfferedEvent
+  | CurriculumUpgradedEvent;
 
 export interface TransferCompletedEvent {
   type: 'TRANSFER_COMPLETED';
@@ -373,6 +374,14 @@ export interface ParachuteOfferedEvent {
   takeoverBudget:   number;
   reputationMalus:  number;
   week: number;
+}
+
+/** Emitted when the player voluntarily upgrades their curriculum level */
+export interface CurriculumUpgradedEvent {
+  type: 'CURRICULUM_UPGRADED';
+  timestamp: number;
+  fromLevel: string;
+  toLevel: string;
 }
 
 /** Emitted when the player clicks "Accept" on the takeover offer screen */

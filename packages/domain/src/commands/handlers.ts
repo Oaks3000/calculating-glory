@@ -17,7 +17,8 @@ import { Player, computeOverallRating } from '../types/player';
 import { shouldRetire, getRetirementFlavour } from '../simulation/progression';
 import { getScoutLevel, isTransferWindowOpen, constructionDuration } from '../types/facility';
 import { generateScoutTarget, getScoutFee } from '../data/scout-target-generator';
-import { ScoutTargetFoundEvent, ScoutTransferCompletedEvent, TakeoverAcceptedEvent } from '../events/types';
+import { ScoutTargetFoundEvent, ScoutTransferCompletedEvent, TakeoverAcceptedEvent, CurriculumUpgradedEvent } from '../events/types';
+import { CURRICULUM_LEVEL_ORDER, CURRICULUM_LEVELS } from '../curriculum/curriculum-config';
 
 /**
  * Handle a game command
@@ -72,6 +73,8 @@ export function handleCommand(command: GameCommand, state: GameState): CommandRe
           reason: `intro-sponsor-deal-option-${command.choice.toLowerCase()}`,
         }],
       };
+    case 'UPGRADE_CURRICULUM':
+      return handleUpgradeCurriculum(command, state);
     default:
       return {
         error: {
@@ -1116,6 +1119,43 @@ function handleAcceptTakeover(_command: any, state: GameState): CommandResult {
     takeoverClubName: state.forcedOut.takeoverClubName,
     seed:             seedStr,
     week:             state.forcedOut.week,
+  };
+
+  return { events: [event] };
+}
+
+function handleUpgradeCurriculum(command: any, state: GameState): CommandResult {
+  const toLevel = command.toLevel as string;
+
+  // Validate toLevel is a known curriculum level
+  if (!CURRICULUM_LEVELS[toLevel as keyof typeof CURRICULUM_LEVELS]) {
+    return {
+      error: {
+        code: 'VALIDATION_FAILED',
+        message: `Unknown curriculum level: ${toLevel}`,
+      },
+    };
+  }
+
+  // Validate it's actually an advancement (not a downgrade)
+  const currentLevel = state.curriculum?.level ?? 'YEAR_7';
+  const currentIdx = CURRICULUM_LEVEL_ORDER.indexOf(currentLevel);
+  const targetIdx  = CURRICULUM_LEVEL_ORDER.indexOf(toLevel as any);
+
+  if (targetIdx <= currentIdx) {
+    return {
+      error: {
+        code: 'VALIDATION_FAILED',
+        message: 'Can only upgrade to a higher curriculum level',
+      },
+    };
+  }
+
+  const event: CurriculumUpgradedEvent = {
+    type:      'CURRICULUM_UPGRADED',
+    timestamp: Date.now(),
+    fromLevel: currentLevel,
+    toLevel,
   };
 
   return { events: [event] };

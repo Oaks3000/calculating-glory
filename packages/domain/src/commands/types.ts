@@ -31,7 +31,8 @@ export type GameCommand =
   | PlaceScoutBidCommand
   | CancelScoutMissionCommand
   | AcceptTakeoverCommand
-  | AcceptIntroSponsorDealCommand;
+  | AcceptIntroSponsorDealCommand
+  | UpgradeCurriculumCommand;
 
 export interface MakeTransferCommand {
   type: 'MAKE_TRANSFER';
@@ -158,6 +159,11 @@ export interface AcceptIntroSponsorDealCommand {
   choice: 'A' | 'B';
   /** Amount to credit in pence */
   amount: number;
+}
+
+export interface UpgradeCurriculumCommand {
+  type: 'UPGRADE_CURRICULUM';
+  toLevel: string;
 }
 
 export interface CommandResult {
