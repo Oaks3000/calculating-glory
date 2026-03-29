@@ -1,5 +1,10 @@
-import { useState } from 'react';
-import { CurriculumLevel } from '@calculating-glory/domain';
+import { useState, useRef, useEffect } from 'react';
+import {
+  CurriculumLevel,
+  generateMatchTimeline,
+  MatchTimeline,
+  MatchCommentaryContext,
+} from '@calculating-glory/domain';
 import { useGameState } from './hooks/useGameState';
 import { CommandCentre } from './components/command-centre/CommandCentre';
 import { StadiumView } from './components/stadium-view/StadiumView';
@@ -9,15 +14,72 @@ import { SeasonEndScreen } from './components/season-end/SeasonEndScreen';
 import { ForcedOutScreen } from './components/forced-out/ForcedOutScreen';
 import { MenuScreen } from './components/menu/MenuScreen';
 import { IntroScreen } from './components/intro/IntroScreen';
+import { OwnerBox } from './components/owner-box/OwnerBox';
 import { isIntroCompleted, clearIntroCompleted } from './lib/introState';
 
 type Screen = 'menu' | 'intro' | 'game';
+
+interface OwnerBoxData {
+  timeline: MatchTimeline;
+  playerTeamName: string;
+  opponentTeamName: string;
+}
 
 export default function App() {
   const { state, events, dispatch, isLoading, resetGame } = useGameState();
   const [screen, setScreen] = useState<Screen>('menu');
   const [activeView, setActiveView] = useState<ActiveView>('command');
   const [error, setError] = useState<string | null>(null);
+  const [ownerBoxData, setOwnerBoxData] = useState<OwnerBoxData | null>(null);
+  const processedEventCount = useRef<number | null>(null);
+
+  // Detect new MATCH_SIMULATED events after simulation completes
+  useEffect(() => {
+    if (isLoading) return;
+
+    if (processedEventCount.current === null) {
+      processedEventCount.current = events.length;
+      return;
+    }
+
+    if (events.length <= processedEventCount.current) return;
+
+    const newEvents = events.slice(processedEventCount.current);
+    processedEventCount.current = events.length;
+
+    // Find the most recent MATCH_SIMULATED in the new batch
+    const matchEvent = [...newEvents]
+      .reverse()
+      .find(e => e.type === 'MATCH_SIMULATED');
+    if (!matchEvent || matchEvent.type !== 'MATCH_SIMULATED') return;
+
+    const isHome = matchEvent.homeTeamId === state.club.id;
+    const opponentId = isHome ? matchEvent.awayTeamId : matchEvent.homeTeamId;
+    const opponentEntry = state.league.entries.find(e => e.clubId === opponentId);
+    const opponentTeamName = opponentEntry?.clubName ?? 'Opponents';
+
+    const gk = state.club.squad.find(p => p.position === 'GK');
+    const keeperName = gk ? gk.name.split(' ')[0] : 'Keeper';
+    const squadPlayerNames = state.club.squad.map(p => p.name.split(' ')[0]);
+
+    const ctx: MatchCommentaryContext = {
+      homeGoals: matchEvent.homeGoals,
+      awayGoals: matchEvent.awayGoals,
+      seed: matchEvent.seed,
+      isHome,
+      playerTeamName: state.club.name,
+      opponentTeamName,
+      squadPlayerNames,
+      keeperName,
+    };
+
+    setOwnerBoxData({
+      timeline: generateMatchTimeline(ctx),
+      playerTeamName: state.club.name,
+      opponentTeamName,
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [events, isLoading]);
 
   const hasSave = events.length > 1;
 
@@ -119,6 +181,15 @@ export default function App() {
             Simulating week…
           </div>
         </div>
+      )}
+
+      {ownerBoxData && (
+        <OwnerBox
+          timeline={ownerBoxData.timeline}
+          playerTeamName={ownerBoxData.playerTeamName}
+          opponentTeamName={ownerBoxData.opponentTeamName}
+          onComplete={() => setOwnerBoxData(null)}
+        />
       )}
     </div>
   );
