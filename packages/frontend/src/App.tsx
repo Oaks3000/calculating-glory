@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { CurriculumLevel } from '@calculating-glory/domain';
 import { useGameState } from './hooks/useGameState';
 import { CommandCentre } from './components/command-centre/CommandCentre';
 import { StadiumView } from './components/stadium-view/StadiumView';
@@ -7,22 +8,30 @@ import { PreSeasonScreen } from './components/pre-season/PreSeasonScreen';
 import { SeasonEndScreen } from './components/season-end/SeasonEndScreen';
 import { ForcedOutScreen } from './components/forced-out/ForcedOutScreen';
 import { MenuScreen } from './components/menu/MenuScreen';
+import { IntroScreen } from './components/intro/IntroScreen';
+import { isIntroCompleted, clearIntroCompleted } from './lib/introState';
+
+type Screen = 'menu' | 'intro' | 'game';
 
 export default function App() {
   const { state, events, dispatch, isLoading, resetGame } = useGameState();
-  const [screen, setScreen] = useState<'menu' | 'game'>('menu');
+  const [screen, setScreen] = useState<Screen>('menu');
   const [activeView, setActiveView] = useState<ActiveView>('command');
   const [error, setError] = useState<string | null>(null);
 
-  // A save exists if there's more than the initial GAME_STARTED event
   const hasSave = events.length > 1;
 
   function handleContinue() {
     setScreen('game');
   }
 
-  function handleNewGame() {
-    resetGame();
+  function handleNewGame(level: CurriculumLevel) {
+    clearIntroCompleted();
+    resetGame(level);
+    setScreen('intro');
+  }
+
+  function handleIntroComplete() {
     setScreen('game');
   }
 
@@ -33,6 +42,17 @@ export default function App() {
         hasSave={hasSave}
         onContinue={handleContinue}
         onNewGame={handleNewGame}
+      />
+    );
+  }
+
+  if (screen === 'intro') {
+    return (
+      <IntroScreen
+        state={state}
+        events={events}
+        dispatch={dispatch}
+        onComplete={handleIntroComplete}
       />
     );
   }
@@ -61,7 +81,6 @@ export default function App() {
         onResetGame={resetGame}
       />
 
-      {/* Error toast */}
       {error && (
         <div
           className="mx-4 mt-2 bg-alert-red/10 border border-alert-red/40 rounded-card px-4 py-2
@@ -93,7 +112,6 @@ export default function App() {
         />
       )}
 
-      {/* Loading overlay */}
       {isLoading && (
         <div className="fixed inset-0 bg-bg-deep/60 flex items-center justify-center z-50">
           <div className="card flex items-center gap-3 text-sm text-txt-primary">

@@ -62,6 +62,16 @@ export function handleCommand(command: GameCommand, state: GameState): CommandRe
       return handleCancelScoutMission(command, state);
     case 'ACCEPT_TAKEOVER':
       return handleAcceptTakeover(command, state);
+    case 'ACCEPT_INTRO_SPONSOR_DEAL':
+      return {
+        events: [{
+          type: 'BUDGET_UPDATED',
+          timestamp: Date.now(),
+          clubId: command.clubId,
+          amount: command.amount,
+          reason: `intro-sponsor-deal-option-${command.choice.toLowerCase()}`,
+        }],
+      };
     default:
       return {
         error: {
