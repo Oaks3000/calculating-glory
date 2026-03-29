@@ -19,7 +19,7 @@ interface UseGameStateReturn {
   state: GameState;
   events: GameEvent[];
   dispatch: (command: GameCommand) => { error?: string };
-  resetGame: (curriculumLevel: CurriculumLevel) => void;
+  resetGame: (curriculumLevel?: CurriculumLevel) => void;
   isLoading: boolean;
 }
 
@@ -52,7 +52,7 @@ export function useGameState(): UseGameStateReturn {
     return {};
   }, [state, events]);
 
-  const resetGame = useCallback((curriculumLevel: CurriculumLevel) => {
+  const resetGame = useCallback((curriculumLevel: CurriculumLevel = 'YEAR_7') => {
     clearSave();
     const { state: freshState, events: freshEvents } = createInitialGameState(curriculumLevel);
     setEvents(freshEvents);

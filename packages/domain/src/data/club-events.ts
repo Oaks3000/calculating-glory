@@ -8,6 +8,8 @@
  * All budget amounts are in pence.
  */
 
+import { MathTopic } from '../curriculum/curriculum-config';
+
 /** NPC voices that can deliver events */
 export type NpcId = 'val' | 'marcus' | 'dani' | 'kev';
 
@@ -57,6 +59,16 @@ export interface ClubEventTemplate {
    * follow-up hop variants.
    */
   mathsChallenge?: MathsChallengeSpec;
+  /**
+   * When set, the math negotiation choice on this event pulls a question from
+   * the question bank for this topic, rather than generating an inline
+   * financial-context percentage question.
+   *
+   * Use when the event's math story maps to a specific curriculum topic
+   * (algebra, ratios, data interpretation, etc.) rather than a simple
+   * percentage comparison between two budget effects.
+   */
+  bankTopic?: MathTopic;
   choices: {
     id: string;
     label: string;
@@ -232,6 +244,7 @@ export const CLUB_EVENT_TEMPLATES: ClubEventTemplate[] = [
     description:
       'Your accountant has found a potential tax break. There might be money to reclaim.',
     severity: 'minor',
+    bankTopic: 'BASIC_ALGEBRA',
     choices: [
       {
         id: 'claim-it',
@@ -281,6 +294,7 @@ export const CLUB_EVENT_TEMPLATES: ClubEventTemplate[] = [
     description:
       'The coaching staff are threatening to strike over wages. This could disrupt preparation.',
     severity: 'major',
+    bankTopic: 'RATIOS',
     choices: [
       {
         id: 'give-raise',
@@ -466,6 +480,7 @@ export const CLUB_EVENT_TEMPLATES: ClubEventTemplate[] = [
     description:
       'Your food upgrades are proving popular! A catering company wants to partner with the club.',
     severity: 'minor',
+    bankTopic: 'DATA_INTERPRETATION',
     prerequisite: {
       eventId: 'hot-dog-complaint',
       choiceId: 'upgrade'
@@ -494,6 +509,7 @@ export const CLUB_EVENT_TEMPLATES: ClubEventTemplate[] = [
     description:
       'Your investor wants a say in transfer decisions. You need to manage this carefully.',
     severity: 'major',
+    bankTopic: 'DATA_INTERPRETATION',
     prerequisite: {
       eventId: 'investment-offer',
       choiceId: 'accept'

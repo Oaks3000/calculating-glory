@@ -12,6 +12,7 @@ import { CurriculumConfig } from '../curriculum/curriculum-config';
 import { Player, Position } from './player';
 import { Manager } from './staff';
 import { MathsChallengeSpec, NpcId } from '../data/club-events';
+import { MathTopic } from '../curriculum/curriculum-config';
 
 /**
  * A choice available within a club event
@@ -63,6 +64,12 @@ export interface PendingClubEvent {
   chainLength?: number;
   /** Structured maths challenge to evaluate before choices apply */
   mathsChallenge?: MathsChallengeSpec;
+  /**
+   * When set, the math negotiation choice on this event should pull a
+   * question from the question bank for this topic rather than generating
+   * an inline financial-context percentage question.
+   */
+  bankTopic?: MathTopic;
   /**
    * Optional metadata for specialised event types (e.g. NPC poaching).
    * Not present on standard club events.

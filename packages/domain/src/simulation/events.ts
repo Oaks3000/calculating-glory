@@ -226,6 +226,7 @@ export function generateWeekEvents(
       hopNumber: template.hopNumber,
       chainLength: template.chainLength,
       mathsChallenge: template.mathsChallenge,
+      bankTopic: template.bankTopic,
       choices: template.choices.map(c => ({
         id: c.id,
         label: c.label,

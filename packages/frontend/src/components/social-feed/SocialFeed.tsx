@@ -123,7 +123,7 @@ export function SocialFeed({ state, dispatch, linkedEvent }: SocialFeedProps) {
     const mathChoice = event.choices.find(c => c.requiresMath);
     if (!mathChoice) return;
 
-    const challenge = generateEventChallenge(event, state.club.transferBudget, state.curriculum?.level);
+    const challenge = generateEventChallenge(event, state);
     if (!challenge) return;
 
     setActiveLinkedEvent({ event, mathChoiceId: mathChoice.id });
