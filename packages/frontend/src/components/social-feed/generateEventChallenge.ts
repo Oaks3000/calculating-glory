@@ -1,5 +1,13 @@
-import { PendingClubEvent, CurriculumLevel, MAX_DIFFICULTY_BY_LEVEL } from '@calculating-glory/domain';
-import { MathChallenge } from './generateChallenge';
+import {
+  PendingClubEvent,
+  GameState,
+  CurriculumLevel,
+  MAX_DIFFICULTY_BY_LEVEL,
+  pickQuestion,
+  resolveTemplate,
+  extractVariables,
+} from '@calculating-glory/domain';
+import { MathChallenge, ChallengeTopic, MATH_TOPIC_TO_CHALLENGE } from './generateChallenge';
 
 function absGBP(pence: number): number {
   return Math.abs(pence) / 100;
@@ -14,32 +22,80 @@ function round1(n: number) {
 }
 
 /**
- * Given a pending event that has a requiresMath choice, generate a MathChallenge
- * whose question is derived from the actual financial stakes of that negotiation.
- *
- * Returns null if no suitable challenge can be constructed (SocialFeed should
- * fall back to the standard challenge bank in this case).
- */
-/**
  * Clamp a raw difficulty value to what the student's curriculum level allows.
- * Event challenges always produce percentage questions (difficulty 2), so for Year 7
- * students we downgrade those to difficulty 1 with simpler working shown.
  */
 function clampDifficulty(raw: 1 | 2 | 3, curriculumLevel: CurriculumLevel): 1 | 2 | 3 {
   const max = MAX_DIFFICULTY_BY_LEVEL[curriculumLevel];
   return Math.min(raw, max) as 1 | 2 | 3;
 }
 
+/**
+ * Derive a deterministic selection index from an event id string.
+ * Used so bank-topic events always pick the same question for the same event.
+ */
+function idToSeed(id: string): number {
+  return id.split('').reduce((acc, ch) => acc + ch.charCodeAt(0), 0);
+}
+
+/**
+ * Given a pending event that has a requiresMath choice, generate a MathChallenge.
+ *
+ * Two paths:
+ *
+ *   Bank path  — when event.bankTopic is set, a question is pulled from the
+ *                question bank for that topic and resolved against live game
+ *                state. Used for events where the maths story maps to a
+ *                specific curriculum topic (algebra, ratios, data
+ *                interpretation) rather than a simple budget comparison.
+ *
+ *   Financial context path — the original behaviour: derive a percentage
+ *                question from the actual budget stakes of the negotiation
+ *                (saving %, increase %, or % of transfer budget). Used for
+ *                all events without a bankTopic tag.
+ *
+ * Returns null if no suitable challenge can be constructed (SocialFeed should
+ * fall back to the standard challenge bank in that case).
+ */
 export function generateEventChallenge(
   event: PendingClubEvent,
-  transferBudget: number,       // pence
-  curriculumLevel: CurriculumLevel = 'YEAR_7'
+  state: GameState,
 ): MathChallenge | null {
+  const curriculumLevel = state.curriculum?.level ?? 'YEAR_7';
+
+  // ── Bank path: event has a specific topic tag ─────────────────────────────
+  if (event.bankTopic) {
+    const mathChoice = event.choices.find(c => c.requiresMath);
+    if (!mathChoice) return null;
+
+    const template = pickQuestion(curriculumLevel, {
+      topics: [event.bankTopic],
+      selectionIndex: idToSeed(event.id),
+    });
+    if (!template) return null;
+
+    const vars     = extractVariables(state);
+    const resolved = resolveTemplate(template, vars);
+
+    return {
+      id:          `event-${event.id}`,
+      topic:       (MATH_TOPIC_TO_CHALLENGE[resolved.topic] ?? 'percentage') as ChallengeTopic,
+      difficulty:  clampDifficulty(resolved.difficulty, curriculumLevel),
+      question:    resolved.question,
+      answer:      resolved.answer,
+      unit:        resolved.unit,
+      hints:       resolved.hints,
+      explanation: resolved.explanation,
+      context:     `${event.title}: ${event.description}`,
+    };
+  }
+
+  // ── Financial context path: derive question from budget effects ───────────
   const mathChoice = event.choices.find(c => c.requiresMath);
   if (!mathChoice || mathChoice.budgetEffect === undefined) return null;
 
-  const mathEffect = mathChoice.budgetEffect;   // signed pence
-  const mathAmount = absGBP(mathEffect);         // unsigned £
+  const transferBudget = state.club.transferBudget;
+  const mathEffect     = mathChoice.budgetEffect;   // signed pence
+  const mathAmount     = absGBP(mathEffect);        // unsigned £
 
   // Find a comparable non-math choice with the same budget sign (cost vs income)
   const comparable = event.choices.find(
@@ -47,7 +103,7 @@ export function generateEventChallenge(
          Math.sign(c.budgetEffect) === Math.sign(mathEffect)
   );
 
-  // ── COST scenario: math route costs less than the standard option ───────────
+  // ── COST scenario: math route costs less than the standard option ─────────
   if (comparable?.budgetEffect !== undefined && mathEffect < 0) {
     const cmpAmount = absGBP(comparable.budgetEffect);
     const saving    = cmpAmount - mathAmount;
@@ -79,7 +135,7 @@ export function generateEventChallenge(
     };
   }
 
-  // ── INCOME scenario: math route earns more than the standard option ─────────
+  // ── INCOME scenario: math route earns more than the standard option ───────
   if (comparable?.budgetEffect !== undefined && mathEffect > 0) {
     const cmpAmount   = absGBP(comparable.budgetEffect);
     const increase    = mathAmount - cmpAmount;
@@ -111,7 +167,7 @@ export function generateEventChallenge(
     };
   }
 
-  // ── FALLBACK: no comparable budget choice — express as % of transfer budget ─
+  // ── FALLBACK: no comparable budget choice — express as % of transfer budget
   if (mathEffect > 0) {
     const budgetPounds = transferBudget / 100;
     const dealPct      = round1((mathAmount / budgetPounds) * 100);

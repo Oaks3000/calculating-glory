@@ -60,8 +60,9 @@ const CHALLENGE_TOPIC_TO_MATH_TOPICS: Record<ChallengeTopic, MathTopic[]> = {
 /**
  * Maps domain MathTopic → the ChallengeTopic it belongs to.
  * Used to tag resolved challenges for the frontend display system.
+ * Exported so generateEventChallenge can reuse the same mapping.
  */
-const MATH_TOPIC_TO_CHALLENGE: Partial<Record<MathTopic, ChallengeTopic>> = {
+export const MATH_TOPIC_TO_CHALLENGE: Partial<Record<MathTopic, ChallengeTopic>> = {
   BASIC_ARITHMETIC:     'percentage',
   DECIMALS:             'decimals',
   PERCENTAGES:          'percentage',
