@@ -6,24 +6,36 @@ import {
   buildState,
   GameEvent,
   GameState,
+  CurriculumLevel,
+  CURRICULUM_LEVELS,
 } from '@calculating-glory/domain';
 import { loadEvents } from './persistence';
 
 const CLUB_ID = 'calculating-glory-fc';
 const CLUB_NAME = 'Calculating Glory FC';
 const SEED = 'calculating-glory-mvp-v1';
-const START_BUDGET = 50000000; // £500,000
 
-export function createInitialGameState(): { state: GameState; events: GameEvent[] } {
+/**
+ * Create a fresh game state for the given curriculum level.
+ * The starting budget is derived from the curriculum config's budgetScale,
+ * so a Year 7 student starts with £500k and a GCSE Higher student starts with £50M.
+ * Division progression is completely separate — both start in League Two.
+ */
+export function createInitialGameState(
+  curriculumLevel: CurriculumLevel = 'YEAR_7'
+): { state: GameState; events: GameEvent[] } {
+  const config = CURRICULUM_LEVELS[curriculumLevel];
+
   const events: GameEvent[] = [
     {
       type: 'GAME_STARTED',
       timestamp: Date.now(),
       clubId: CLUB_ID,
       clubName: CLUB_NAME,
-      initialBudget: START_BUDGET,
+      initialBudget: config.budgetScale.transferBudget,
       difficulty: 'MEDIUM',
       seed: SEED,
+      curriculumLevel,
     },
   ];
 

@@ -10,6 +10,7 @@ import {
   GameCommand,
   GameEvent,
   GameState,
+  CurriculumLevel,
 } from '@calculating-glory/domain';
 import { loadOrCreateGameState, createInitialGameState } from '../lib/initialGame';
 import { saveEvents, clearSave } from '../lib/persistence';
@@ -18,7 +19,7 @@ interface UseGameStateReturn {
   state: GameState;
   events: GameEvent[];
   dispatch: (command: GameCommand) => { error?: string };
-  resetGame: () => void;
+  resetGame: (curriculumLevel: CurriculumLevel) => void;
   isLoading: boolean;
 }
 
@@ -51,9 +52,9 @@ export function useGameState(): UseGameStateReturn {
     return {};
   }, [state, events]);
 
-  const resetGame = useCallback(() => {
+  const resetGame = useCallback((curriculumLevel: CurriculumLevel) => {
     clearSave();
-    const { state: freshState, events: freshEvents } = createInitialGameState();
+    const { state: freshState, events: freshEvents } = createInitialGameState(curriculumLevel);
     setEvents(freshEvents);
     setState(freshState);
   }, []);

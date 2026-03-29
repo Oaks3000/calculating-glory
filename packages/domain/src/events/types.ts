@@ -10,6 +10,7 @@ import { Staff, Manager } from '../types/staff';
 import { PendingClubEvent } from '../types/game-state-updated';
 import { TrainingFocus } from '../types/facility';
 import { Formation } from '../types/formation';
+import { CurriculumLevel } from '../curriculum/curriculum-config';
 
 export type GameEvent =
   | GameStartedEvent
@@ -140,6 +141,8 @@ export interface GameStartedEvent {
   initialBudget: number; // in pence
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   seed: string; // For deterministic league generation
+  /** Curriculum level selected by the student at game start. Controls maths difficulty — independent of division. */
+  curriculumLevel?: CurriculumLevel;
 }
 
 export interface PlayerSoldEvent {
