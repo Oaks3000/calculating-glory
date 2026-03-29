@@ -97,9 +97,10 @@ interface SocialFeedProps {
   events: GameEvent[];
   dispatch: (cmd: GameCommand) => { error?: string };
   linkedEvent?: PendingClubEvent | null;
+  practiceMode?: boolean;
 }
 
-export function SocialFeed({ state, events, dispatch, linkedEvent }: SocialFeedProps) {
+export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode }: SocialFeedProps) {
   const [view, setView]                             = useState<SocialView>(linkedEvent ? 'thread' : 'inbox');
   const [messages, setMessages]                     = useState<Message[]>([]);
   const [currentChallenge, setCurrentChallenge]     = useState<MathChallenge | null>(null);
@@ -396,6 +397,7 @@ export function SocialFeed({ state, events, dispatch, linkedEvent }: SocialFeedP
         state={state}
         onSelectNegotiation={handleSelectNegotiation}
         onSelectPractice={handleSelectPractice}
+        practiceOnly={practiceMode}
       />
     );
   }

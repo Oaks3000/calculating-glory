@@ -66,57 +66,67 @@ function negotiationPreview(event: PendingClubEvent): string {
   return event.description.slice(0, 80) + (event.description.length > 80 ? '…' : '');
 }
 
+const ALL_TOPICS: ChallengeTopic[] = [
+  'percentage', 'decimals', 'ratios', 'algebra', 'statistics', 'geometry',
+];
+
 // ── Component ──────────────────────────────────────────────────────────────
 
 interface InboxViewProps {
   state: GameState;
   onSelectNegotiation: (event: PendingClubEvent) => void;
   onSelectPractice: (topic: ChallengeTopic) => void;
+  practiceOnly?: boolean;
 }
 
-export function InboxView({ state, onSelectNegotiation, onSelectPractice }: InboxViewProps) {
+export function InboxView({ state, onSelectNegotiation, onSelectPractice, practiceOnly }: InboxViewProps) {
   const mathEvents = state.pendingEvents.filter(
     e => !e.resolved && e.choices.some(c => c.requiresMath)
   );
 
-  const practiceTopics = weakestTopics(state.businessAcumen.recentPerformance);
+  const weakSet = new Set(weakestTopics(state.businessAcumen.recentPerformance));
+  const practiceTopics = practiceOnly ? ALL_TOPICS : [...weakSet];
 
   return (
     <div className="flex flex-col h-full overflow-y-auto px-3 py-4 gap-5">
 
-      {/* ── Active Negotiations ─────────────────────────────────────────── */}
-      <section>
-        <p className="text-xs font-semibold text-txt-muted uppercase tracking-wider mb-2 px-1">
-          Active Negotiations
-        </p>
-        {mathEvents.length === 0 ? (
-          <p className="text-xs2 text-txt-muted px-2 py-3 text-center italic">
-            No active negotiations — all clear for now.
+      {/* ── Active Negotiations (hidden in practiceOnly mode) ───────────── */}
+      {!practiceOnly && (
+        <section>
+          <p className="text-xs font-semibold text-txt-muted uppercase tracking-wider mb-2 px-1">
+            Active Negotiations
           </p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {mathEvents.map(evt => (
-              <ThreadCard
-                key={evt.id}
-                icon="💼"
-                title={evt.title}
-                sender="Agent Rodriguez"
-                preview={negotiationPreview(evt)}
-                isUrgent={evt.severity === 'major'}
-                onClick={() => onSelectNegotiation(evt)}
-              />
-            ))}
-          </div>
-        )}
-      </section>
+          {mathEvents.length === 0 ? (
+            <p className="text-xs2 text-txt-muted px-2 py-3 text-center italic">
+              No active negotiations — all clear for now.
+            </p>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {mathEvents.map(evt => (
+                <ThreadCard
+                  key={evt.id}
+                  icon="💼"
+                  title={evt.title}
+                  sender="Agent Rodriguez"
+                  preview={negotiationPreview(evt)}
+                  isUrgent={evt.severity === 'major'}
+                  onClick={() => onSelectNegotiation(evt)}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* ── Practice Sessions ────────────────────────────────────────────── */}
       <section>
         <p className="text-xs font-semibold text-txt-muted uppercase tracking-wider mb-2 px-1">
-          Practice Sessions
+          {practiceOnly ? 'Choose a Topic' : 'Practice Sessions'}
         </p>
         <p className="text-xs2 text-txt-muted px-1 mb-2 leading-relaxed">
-          Marcus has flagged your weakest areas. Work through these to sharpen up before your next negotiation.
+          {practiceOnly
+            ? 'Pick any topic and Marcus will run you through a drill. No stakes — just reps.'
+            : 'Marcus has flagged your weakest areas. Work through these to sharpen up before your next negotiation.'}
         </p>
         <div className="flex flex-col gap-2">
           {practiceTopics.map(topic => (
@@ -126,6 +136,7 @@ export function InboxView({ state, onSelectNegotiation, onSelectPractice }: Inbo
               title={TOPIC_CONFIG[topic].label}
               sender="Marcus Webb, Club Analyst"
               preview={TOPIC_CONFIG[topic].preview}
+              badge={weakSet.has(topic) ? 'Recommended' : undefined}
               onClick={() => onSelectPractice(topic)}
             />
           ))}

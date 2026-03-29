@@ -26,6 +26,7 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
   const [error, setError]                     = useState<string | null>(null);
   const [socialOpen, setSocialOpen]           = useState(false);
   const [socialLinkedEvent, setSocialLinked]  = useState<PendingClubEvent | null>(null);
+  const [practiceOpen, setPracticeOpen]       = useState(false);
   const [inboxOpen, setInboxOpen]             = useState(false);
   const [backroomOpen, setBackroomOpen]       = useState(false);
   const [learningOpen, setLearningOpen]       = useState(false);
@@ -116,8 +117,8 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
           {/* RIGHT row 1: DataTiles */}
           <DataTiles state={state} gridMode onBackroomClick={() => setBackroomOpen(true)} onAcumenClick={() => setLearningOpen(true)} />
 
-          {/* RIGHT row 2: Stadium & Facilities + Chats + Transfers */}
-          <div className="grid grid-cols-3 gap-2">
+          {/* RIGHT row 2: 2×2 hub tile grid */}
+          <div className="grid grid-cols-2 gap-2">
             <HubTile
               icon="🏟"
               label="Stadium & Facilities"
@@ -131,14 +132,21 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
             />
             <HubTile
               icon="💬"
-              label="Chats"
+              label="Negotiations"
               sub={
                 unresolvedEvents.some(e => e.choices.some(c => c.requiresMath))
-                  ? 'Negotiations waiting'
-                  : 'Practice sessions available'
+                  ? 'Deals waiting'
+                  : 'No active deals'
               }
               hasEvent={unresolvedEvents.some(e => e.choices.some(c => c.requiresMath))}
               onClick={() => { setSocialLinked(null); setSocialOpen(true); }}
+            />
+            <HubTile
+              icon="🎯"
+              label="Practice"
+              sub="Drill with Marcus Webb"
+              hasEvent={false}
+              onClick={() => setPracticeOpen(true)}
             />
             <HubTile
               icon="🔄"
@@ -209,6 +217,22 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
             events={events}
             dispatch={dispatch}
             linkedEvent={socialLinkedEvent}
+          />
+        )}
+      </SlideOver>
+
+      {/* ── Practice slide-over ──────────────────────────────────────────── */}
+      <SlideOver
+        isOpen={practiceOpen}
+        onClose={() => setPracticeOpen(false)}
+        title="Practice — Marcus Webb"
+      >
+        {practiceOpen && (
+          <SocialFeed
+            state={state}
+            events={events}
+            dispatch={dispatch}
+            practiceMode
           />
         )}
       </SlideOver>
