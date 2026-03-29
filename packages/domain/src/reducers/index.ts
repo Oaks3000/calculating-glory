@@ -4,7 +4,7 @@
  * Pure functions that apply events to state.
  */
 
-import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent, ManagerHiredEvent, ManagerSackedEvent, PreSeasonStartedEvent, ScoutMissionStartedEvent, ScoutTargetFoundEvent, ScoutBidPlacedEvent, ScoutTransferCompletedEvent, OwnerForcedOutEvent, TakeoverAcceptedEvent, ParachuteOfferedEvent } from '../events/types';
+import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent, ManagerHiredEvent, ManagerSackedEvent, PreSeasonStartedEvent, ScoutMissionStartedEvent, ScoutTargetFoundEvent, ScoutBidPlacedEvent, ScoutTransferCompletedEvent, OwnerForcedOutEvent, TakeoverAcceptedEvent, ParachuteOfferedEvent, CurriculumUpgradedEvent } from '../events/types';
 import { GameState, Division } from '../types/game-state-updated';
 import { Club } from '../types/club';
 import { LeagueTable, LeagueTableEntry, sortLeagueTable } from '../types/league';
@@ -93,6 +93,8 @@ export function reduceEvent(state: GameState, event: GameEvent): GameState {
       return handleParachuteOffered(state, event);
     case 'TAKEOVER_ACCEPTED':
       return handleTakeoverAccepted(state, event);
+    case 'CURRICULUM_UPGRADED':
+      return handleCurriculumUpgraded(state, event);
     default:
       return state;
   }
@@ -1026,5 +1028,16 @@ function createEmptyLeague(): LeagueTable {
     automaticPromotion: 3,
     playoffPositions: [4, 5, 6, 7],
     relegation: [23, 24]
+  };
+}
+
+function handleCurriculumUpgraded(state: GameState, event: CurriculumUpgradedEvent): GameState {
+  const toLevel = event.toLevel as keyof typeof CURRICULUM_LEVELS;
+  const newCurriculum = CURRICULUM_LEVELS[toLevel];
+  if (!newCurriculum) return state;
+
+  return {
+    ...state,
+    curriculum: newCurriculum,
   };
 }

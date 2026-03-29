@@ -10,6 +10,7 @@
 // Curriculum system
 export * from './curriculum/curriculum-config';
 export * from './curriculum/curriculum-progression';
+export * from './curriculum/mastery';
 
 // Question bank schema
 export * from './content/questions';

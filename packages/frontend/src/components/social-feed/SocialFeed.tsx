@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { GameState, GameCommand, PendingClubEvent } from '@calculating-glory/domain';
+import { GameState, GameCommand, GameEvent, PendingClubEvent, CurriculumLevel, checkMastery, curriculumDisplayName, CURRICULUM_LEVELS } from '@calculating-glory/domain';
 import { ChatBubble } from './ChatBubble';
 import { NegotiationKeyboard } from './NegotiationKeyboard';
 import { MathChallengeCard } from './MathChallengeCard';
@@ -94,11 +94,12 @@ function getPerformance(state: GameState): TopicPerformance {
 
 interface SocialFeedProps {
   state: GameState;
+  events: GameEvent[];
   dispatch: (cmd: GameCommand) => { error?: string };
   linkedEvent?: PendingClubEvent | null;
 }
 
-export function SocialFeed({ state, dispatch, linkedEvent }: SocialFeedProps) {
+export function SocialFeed({ state, events, dispatch, linkedEvent }: SocialFeedProps) {
   const [view, setView]                             = useState<SocialView>(linkedEvent ? 'thread' : 'inbox');
   const [messages, setMessages]                     = useState<Message[]>([]);
   const [currentChallenge, setCurrentChallenge]     = useState<MathChallenge | null>(null);
@@ -111,6 +112,7 @@ export function SocialFeed({ state, dispatch, linkedEvent }: SocialFeedProps) {
   const [activeLinkedEvent, setActiveLinkedEvent]   = useState<LinkedEvent | null>(null);
   const [practiceTopicOverride, setPracticeTopic]   = useState<ChallengeTopic | null>(null);
   const [wasNegotiation, setWasNegotiation]         = useState(false);
+  const [masteryNudge, setMasteryNudge]             = useState<CurriculumLevel | null>(null);
   const bottomRef   = useRef<HTMLDivElement>(null);
   const seededRef   = useRef(false);
 
@@ -220,6 +222,23 @@ export function SocialFeed({ state, dispatch, linkedEvent }: SocialFeedProps) {
       startTime:      now - 5000,
       endTime:        now,
     });
+
+    // Check mastery after every answer (append synthetic event to get up-to-date picture)
+    if (!masteryNudge) {
+      const syntheticAttempt = {
+        type: 'MATH_ATTEMPT_RECORDED' as const,
+        timestamp: now,
+        studentId: state.club.id,
+        topic: currentChallenge.topic,
+        difficulty: currentChallenge.difficulty,
+        correct,
+        timeSpent: 5000,
+      };
+      const updatedEvents = [...events, syntheticAttempt];
+      const currentLevel = state.curriculum?.level ?? 'YEAR_7';
+      const nudgeLevel = checkMastery(updatedEvents, currentLevel);
+      if (nudgeLevel) setMasteryNudge(nudgeLevel);
+    }
 
     if (correct) {
       setAwaitingAnswer(false);
@@ -493,6 +512,42 @@ export function SocialFeed({ state, dispatch, linkedEvent }: SocialFeedProps) {
           </div>
         ) : solved ? (
           <div className="p-3 flex flex-col gap-2">
+            {/* Mastery nudge — shown when student has hit the advancement threshold */}
+            {masteryNudge && (
+              <div className="rounded-card border border-accent-gold/40 bg-accent-gold/10 p-3 flex flex-col gap-2">
+                <p className="text-xs font-semibold text-accent-gold">
+                  Val Webb · Level Up?
+                </p>
+                <p className="text-xs2 text-txt-primary">
+                  You've been nailing {curriculumDisplayName(state.curriculum?.level ?? 'YEAR_7')} maths
+                  consistently. Ready to step up to {curriculumDisplayName(masteryNudge)}?
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      dispatch({ type: 'UPGRADE_CURRICULUM', toLevel: masteryNudge });
+                      setMasteryNudge(null);
+                      addMsg({
+                        kind: 'npc',
+                        text: `Brilliant — we've stepped things up to ${curriculumDisplayName(masteryNudge)}. The questions will be tougher now, but so will the rewards.`,
+                        sender: 'Val Webb',
+                      });
+                    }}
+                    className="flex-1 py-1.5 rounded-card bg-accent-gold text-white text-xs font-semibold
+                               hover:bg-accent-gold/80 active:scale-95 transition-all duration-150"
+                  >
+                    Step up to {CURRICULUM_LEVELS[masteryNudge].displayName}
+                  </button>
+                  <button
+                    onClick={() => setMasteryNudge(null)}
+                    className="px-3 py-1.5 rounded-card border border-bg-raised text-txt-muted text-xs
+                               hover:text-txt-primary transition-colors"
+                  >
+                    Not yet
+                  </button>
+                </div>
+              </div>
+            )}
             {!linkedEvent && !wasNegotiation && (
               <button
                 onClick={handleNextChallenge}

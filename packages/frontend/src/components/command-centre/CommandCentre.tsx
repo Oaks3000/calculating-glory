@@ -206,6 +206,7 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
         {socialOpen && (
           <SocialFeed
             state={state}
+            events={events}
             dispatch={dispatch}
             linkedEvent={socialLinkedEvent}
           />
