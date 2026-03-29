@@ -30,7 +30,8 @@ export type GameCommand =
   | StartScoutMissionCommand
   | PlaceScoutBidCommand
   | CancelScoutMissionCommand
-  | AcceptTakeoverCommand;
+  | AcceptTakeoverCommand
+  | AcceptIntroSponsorDealCommand;
 
 export interface MakeTransferCommand {
   type: 'MAKE_TRANSFER';
@@ -149,6 +150,14 @@ export interface CancelScoutMissionCommand {
 
 export interface AcceptTakeoverCommand {
   type: 'ACCEPT_TAKEOVER';
+}
+
+export interface AcceptIntroSponsorDealCommand {
+  type: 'ACCEPT_INTRO_SPONSOR_DEAL';
+  clubId: string;
+  choice: 'A' | 'B';
+  /** Amount to credit in pence */
+  amount: number;
 }
 
 export interface CommandResult {

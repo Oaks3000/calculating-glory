@@ -1,11 +1,14 @@
-import { GameState, formatMoney } from '@calculating-glory/domain';
+import { useState } from 'react';
+import { GameState, formatMoney, CurriculumLevel, CURRICULUM_LEVELS } from '@calculating-glory/domain';
 
 interface Props {
   state: GameState;
   hasSave: boolean;
   onContinue: () => void;
-  onNewGame: () => void;
+  onNewGame: (level: CurriculumLevel) => void;
 }
+
+type MenuStep = 'main' | 'yearGroup';
 
 function phaseLabel(phase: GameState['phase']): string {
   switch (phase) {
@@ -18,7 +21,61 @@ function phaseLabel(phase: GameState['phase']): string {
   }
 }
 
+const LEVEL_ORDER: CurriculumLevel[] = ['YEAR_7', 'YEAR_8'];
+
 export function MenuScreen({ state, hasSave, onContinue, onNewGame }: Props) {
+  const [menuStep, setMenuStep] = useState<MenuStep>('main');
+  const [selected, setSelected] = useState<CurriculumLevel>('YEAR_7');
+
+  if (menuStep === 'yearGroup') {
+    return (
+      <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center px-6">
+        <div className="w-full max-w-xs">
+          <button
+            onClick={() => setMenuStep('main')}
+            className="text-xs text-txt-muted hover:text-txt-primary mb-6 flex items-center gap-1 transition-colors duration-150"
+          >
+            ← Back
+          </button>
+
+          <h2 className="text-xl font-bold text-txt-primary mb-1">Choose your year group</h2>
+          <p className="text-sm text-txt-muted mb-6 leading-relaxed">
+            This sets your maths difficulty and starting budget. You can always start again.
+          </p>
+
+          <div className="flex flex-col gap-2 mb-6">
+            {LEVEL_ORDER.map(level => {
+              const config = CURRICULUM_LEVELS[level];
+              const isSelected = selected === level;
+              return (
+                <button
+                  key={level}
+                  onClick={() => setSelected(level)}
+                  className={`px-4 py-3 rounded-card border text-left transition-all duration-150
+                    ${isSelected
+                      ? 'border-data-blue bg-data-blue/10 text-txt-primary'
+                      : 'border-bg-raised bg-bg-surface text-txt-muted hover:border-data-blue/40 hover:text-txt-primary'
+                    }`}
+                >
+                  <div className="font-semibold text-sm">{config.displayName}</div>
+                  <div className="text-xs mt-0.5 opacity-70">{config.displayName} maths level</div>
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={() => onNewGame(selected)}
+            className="w-full bg-data-blue hover:bg-data-blue/90 active:scale-[0.99] text-white
+                       font-semibold text-sm rounded-card py-3 transition-all duration-150"
+          >
+            Start game →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center px-6">
 
@@ -38,7 +95,6 @@ export function MenuScreen({ state, hasSave, onContinue, onNewGame }: Props) {
       {/* Action buttons */}
       <div className="flex flex-col gap-3 w-full max-w-xs">
 
-        {/* Continue — only shown when save exists */}
         {hasSave && (
           <button
             onClick={onContinue}
@@ -65,9 +121,8 @@ export function MenuScreen({ state, hasSave, onContinue, onNewGame }: Props) {
           </button>
         )}
 
-        {/* New Game */}
         <button
-          onClick={onNewGame}
+          onClick={() => setMenuStep('yearGroup')}
           className={`w-full rounded-card px-6 py-4 text-left transition-all duration-150 group
             ${hasSave
               ? 'bg-bg-surface hover:bg-bg-raised border border-bg-raised text-txt-primary'
@@ -87,7 +142,6 @@ export function MenuScreen({ state, hasSave, onContinue, onNewGame }: Props) {
 
       </div>
 
-      {/* Footer */}
       <div className="mt-16 text-txt-muted text-xs text-center opacity-40">
         Calculating Glory
       </div>
