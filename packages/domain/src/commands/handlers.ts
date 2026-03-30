@@ -11,7 +11,8 @@ import { validateTransfer, validateFacilityUpgrade, validateStaffHire } from '..
 import { simulateMatch, clubToTeam, generateAITeam, Team } from '../simulation/match';
 import { generateSeasonFixtures, getWeekFixtures, matchSeed } from '../simulation/season';
 import { createRng } from '../simulation/rng';
-import { generateWeekEvents, generatePoachAttempts, generateMoraleThresholdEvents } from '../simulation/events';
+import { generateWeekEvents, generatePoachAttempts, generateMoraleThresholdEvents, generateFinancialThresholdEvents } from '../simulation/events';
+import { computeWeeklyFinancials, computeRunwayBand } from '../simulation/revenue';
 import { getTeamsForDivision } from '../data/division-teams';
 import { Player, computeOverallRating } from '../types/player';
 import { shouldRetire, getRetirementFlavour } from '../simulation/progression';
@@ -357,6 +358,41 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
         clubId: state.club.id,
         pendingEvent
       });
+    }
+  }
+
+  // ── Financial threshold detection ────────────────────────────────────────────
+
+  // Detect runway band crossings and emit Val's inbox card + a RUNWAY_BAND_CHANGED event.
+  // Financial threshold events fire independently of morale/club event stacking rules
+  // because they signal a genuine change in state (not just a nudge).
+  {
+    const { weeklyIncome, weeklyWages, runway } = computeWeeklyFinancials(state);
+    const isSurplus  = weeklyIncome >= weeklyWages;
+    const currentBand = computeRunwayBand(isFinite(runway) ? runway : Infinity, isSurplus);
+    const previousBand = state.lastRunwayBand ?? currentBand;
+
+    if (currentBand !== previousBand) {
+      events.push({
+        type: 'RUNWAY_BAND_CHANGED',
+        timestamp: now,
+        band: currentBand,
+      });
+
+      const financialEvents = generateFinancialThresholdEvents(
+        state, week, season, currentBand, isFinite(runway) ? runway : Infinity
+      );
+      for (const pendingEvent of financialEvents) {
+        events.push({
+          type: 'CLUB_EVENT_OCCURRED',
+          timestamp: now,
+          eventId: pendingEvent.id,
+          templateId: pendingEvent.templateId,
+          week,
+          clubId: state.club.id,
+          pendingEvent,
+        });
+      }
     }
   }
 

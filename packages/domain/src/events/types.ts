@@ -45,7 +45,8 @@ export type GameEvent =
   | OwnerForcedOutEvent
   | TakeoverAcceptedEvent
   | ParachuteOfferedEvent
-  | CurriculumUpgradedEvent;
+  | CurriculumUpgradedEvent
+  | RunwayBandChangedEvent;
 
 export interface TransferCompletedEvent {
   type: 'TRANSFER_COMPLETED';
@@ -392,4 +393,11 @@ export interface TakeoverAcceptedEvent {
   takeoverClubName: string;
   seed: string;
   week: number;
+}
+
+/** Emitted whenever the runway band crosses a threshold (for Val's inbox messages). */
+export interface RunwayBandChangedEvent {
+  type: 'RUNWAY_BAND_CHANGED';
+  timestamp: number;
+  band: 'SURPLUS' | 'GREEN' | 'AMBER' | 'RED' | 'CRITICAL';
 }

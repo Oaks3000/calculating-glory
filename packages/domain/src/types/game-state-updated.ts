@@ -187,6 +187,13 @@ export interface GameState {
   moraleEventCooldowns: Record<string, number>;
 
   /**
+   * The runway band recorded at the end of the last simulated week.
+   * Used to detect threshold crossings (e.g. GREEN → AMBER) for Val's inbox messages.
+   * Undefined until the first RUNWAY_BAND_CHANGED event is emitted.
+   */
+  lastRunwayBand?: 'SURPLUS' | 'GREEN' | 'AMBER' | 'RED' | 'CRITICAL';
+
+  /**
    * Active scout mission, if any.
    * Only one mission can be active at a time.
    */
