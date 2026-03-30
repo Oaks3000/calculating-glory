@@ -107,7 +107,7 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
     switch (step) {
       case 1: return (
         <NpcMessage {...NPC.val} delay>
-          Morning. I'm Val — I handle the money. I should warn you: the previous owner didn't leave us in great shape. Let me show you where we stand.
+          Morning. I'm Val — I handle the money at {clubName}. I should warn you: the previous owner didn't leave us in great shape. Let me show you where we stand.
         </NpcMessage>
       );
       case 2: return (

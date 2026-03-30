@@ -13,6 +13,7 @@ import { loadEvents } from './persistence';
 
 const CLUB_ID = 'calculating-glory-fc';
 const CLUB_NAME = 'Calculating Glory FC';
+const STADIUM_NAME = 'Glory Park';
 const SEED = 'calculating-glory-mvp-v1';
 
 /**
@@ -32,6 +33,7 @@ export function createInitialGameState(
       timestamp: Date.now(),
       clubId: CLUB_ID,
       clubName: CLUB_NAME,
+      stadiumName: STADIUM_NAME,
       initialBudget: config.budgetScale.transferBudget,
       difficulty: 'MEDIUM',
       seed: SEED,

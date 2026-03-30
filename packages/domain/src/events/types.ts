@@ -141,6 +141,8 @@ export interface GameStartedEvent {
   timestamp: number;
   clubId: string;
   clubName: string;
+  /** Optional stadium name. Derived from clubName if omitted (backward compat). */
+  stadiumName?: string;
   initialBudget: number; // in pence
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
   seed: string; // For deterministic league generation

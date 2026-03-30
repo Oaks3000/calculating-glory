@@ -122,7 +122,8 @@ export function generateMatchTimeline(ctx: MatchCommentaryContext): MatchTimelin
       .replace(/\[SCORER\]/g,   scorer ?? 'the lad')
       .replace(/\[PLAYER\]/g,   scorer ?? 'the lad')
       .replace(/\[KEEPER\]/g,   ctx.keeperName || 'the keeper')
-      .replace(/\[OPPONENT\]/g, ctx.opponentTeamName);
+      .replace(/\[OPPONENT\]/g, ctx.opponentTeamName)
+      .replace(/\[TEAM\]/g,     ctx.playerTeamName);
   }
 
   function randomPlayerName(): string {

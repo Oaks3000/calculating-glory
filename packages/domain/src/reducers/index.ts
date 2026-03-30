@@ -153,6 +153,18 @@ export function buildState(events: GameEvent[]): GameState {
 
 // Helper functions for each event type
 
+/**
+ * Derives a stadium name from the club name.
+ * e.g. "Calculating Glory FC" → "Calculating Glory Park"
+ *      "Riverside United"     → "Riverside Park"
+ */
+function deriveStadiumName(clubName: string): string {
+  const stripped = clubName
+    .replace(/\s*(F\.?C\.?|A\.?F\.?C\.?|United|City|Town|Rovers|Wanderers|Athletic|Albion|Rangers|Celtic)\s*$/i, '')
+    .trim();
+  return `${stripped || clubName} Park`;
+}
+
 function handleGameStarted(state: GameState, event: GameStartedEvent): GameState {
   // Create the player's club entry
   const playerClubEntry: LeagueTableEntry = {
@@ -226,6 +238,13 @@ function handleGameStarted(state: GameState, event: GameStartedEvent): GameState
       squad: inheritedSquad,
       squadCapacity: 24,
       manager: null,
+      stadium: {
+        ...state.club.stadium,
+        name: event.stadiumName ?? deriveStadiumName(event.clubName),
+        capacity: state.club.stadium.capacity || 5000,
+        averageAttendance: state.club.stadium.averageAttendance || 1200,
+        ticketPrice: state.club.stadium.ticketPrice || 1500,
+      },
     },
     league: {
       ...state.league,

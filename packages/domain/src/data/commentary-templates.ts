@@ -25,6 +25,8 @@ export const KEV_TEMPLATES = {
     "We're live. Come on lads.",
     "Off we go. Season doesn't stop for anyone.",
     "Here we go again. Come on.",
+    "Come on [TEAM]! Let's go!",
+    "Kickoff. [TEAM] need three points today.",
   ],
 
   quiet_neutral: [
@@ -129,6 +131,8 @@ export const KEV_TEMPLATES = {
     "[SCORER]!!! TAKE A BOW!!! GET IN!!!",
     "IN OFF THE POST! [SCORER]! DOESN'T MATTER HOW!",
     "HEADER! [SCORER]! BRILLIANT! ABSOLUTELY BRILLIANT!",
+    "GOAL! [SCORER]! [TEAM] ARE IN FRONT!",
+    "YES! [SCORER]! THAT'S WHAT [TEAM] ARE ABOUT!",
   ],
 
   goal_player_aftermath: [
@@ -142,6 +146,8 @@ export const KEV_TEMPLATES = {
     "That's the goal of the season right there.",
     "Scenes. Absolute scenes.",
     "They'll be talking about that one.",
+    "[TEAM] fans absolutely loving that.",
+    "That's [TEAM] at their best.",
   ],
 
   opponent_goal_reaction: [
@@ -259,6 +265,8 @@ export const KEV_TEMPLATES = {
     "That's it! The fans are loving it! Well done boys!",
     "FT! Get in! Three points! Brilliant!",
     "Full time and we WIN! What a day!",
+    "FULL TIME! [TEAM] WIN! Three points!",
+    "That's [TEAM]! Full time! Get in!",
   ],
 
   full_time_draw: [
