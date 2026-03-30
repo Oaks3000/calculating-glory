@@ -10,6 +10,7 @@
 
 import { useState } from 'react';
 import { MathChallenge } from '../social-feed/generateChallenge';
+import { DIAGRAM_LIBRARY } from './DiagramLibrary';
 
 interface GeometryDrillCardProps {
   challenge: MathChallenge;
@@ -76,6 +77,13 @@ export function GeometryDrillCard({ challenge, onRefresh, onAttempt }: GeometryD
           "{challenge.context}"
         </p>
       </div>
+
+      {/* Diagram — rendered only when the question template provides a diagram key */}
+      {challenge.diagram && DIAGRAM_LIBRARY[challenge.diagram] && (
+        <div className="mx-4 mt-3 flex justify-center rounded-tag bg-bg-raised p-3">
+          {DIAGRAM_LIBRARY[challenge.diagram]}
+        </div>
+      )}
 
       {/* Question */}
       <div className="px-4 pt-3 pb-0">

@@ -96,6 +96,17 @@ export interface QuestionTemplate {
   hints: [string, string, string];
   explanation: string;
   context?: string;
+
+  /**
+   * Optional key into the frontend DiagramLibrary.
+   * When set, GeometryDrillCard renders the corresponding SVG diagram
+   * above the question text. The key is a stable string identifier
+   * (e.g. 'circle-chord', 'cone-cross-section') — the actual SVG lives
+   * in the frontend and is never stored in domain.
+   *
+   * Leave undefined for questions that work as pure text.
+   */
+  diagram?: string;
 }
 
 /**
