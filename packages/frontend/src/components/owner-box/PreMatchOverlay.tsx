@@ -2,6 +2,7 @@ import {
   GameState,
   generateSeasonFixtures,
   getWeekFixtures,
+  LeagueTable,
 } from '@calculating-glory/domain';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -19,14 +20,9 @@ function FormDot({ result }: { result: 'W' | 'D' | 'L' }) {
     result === 'W' ? 'bg-pitch-green' :
     result === 'D' ? 'bg-warn-amber' :
     'bg-alert-red';
-  const label =
-    result === 'W' ? 'Win' :
-    result === 'D' ? 'Draw' : 'Loss';
+  const label = result === 'W' ? 'Win' : result === 'D' ? 'Draw' : 'Loss';
   return (
-    <span
-      title={label}
-      className={`w-4 h-4 rounded-full ${colour} inline-block`}
-    />
+    <span title={label} className={`w-4 h-4 rounded-full ${colour} inline-block`} />
   );
 }
 
@@ -43,6 +39,38 @@ function FormRow({ form, label }: { form: ('W' | 'D' | 'L')[]; label: string }) 
       </div>
     </div>
   );
+}
+
+// ── Season milestone banner ────────────────────────────────────────────────────
+
+const MILESTONE_CONFIG: Record<number, { label: string; colour: string; bg: string; sub: string }> = {
+  23: { label: 'HALFWAY POINT',  colour: 'text-data-blue',   bg: 'bg-data-blue/10 border-data-blue/30',   sub: 'The season is exactly half done. Where do you stand?' },
+  37: { label: 'THE RUN-IN',     colour: 'text-warn-amber',  bg: 'bg-warn-amber/10 border-warn-amber/30', sub: '10 games to go — every point counts now.' },
+  46: { label: 'FINAL DAY',      colour: 'text-alert-red',   bg: 'bg-alert-red/10 border-alert-red/30',   sub: 'The last game of the season. Everything still to play for.' },
+};
+
+// ── Six-pointer detection ─────────────────────────────────────────────────────
+
+function getSixPointerLabel(
+  myPos: number,
+  opponentPos: number,
+  league: LeagueTable,
+): string | null {
+  const promoBottom  = league.automaticPromotion;       // 3
+  const playoffBottom = league.playoffPositions[3];     // 7
+  const relegStart   = league.relegation[0];            // 22
+
+  const bothInPromo    = myPos <= playoffBottom && opponentPos <= playoffBottom;
+  const bothNearRelev  = myPos >= relegStart - 2 && opponentPos >= relegStart - 2;
+  const closePromo     = myPos <= playoffBottom + 2 && opponentPos <= promoBottom + 1;
+  const closeToDrop    = Math.abs(myPos - relegStart) <= 3 && Math.abs(opponentPos - relegStart) <= 3;
+
+  if (myPos <= promoBottom && opponentPos <= promoBottom) return 'TOP-OF-THE-TABLE CLASH';
+  if (bothInPromo)   return 'PROMOTION SIX-POINTER';
+  if (closePromo)    return 'HUGE PLAYOFF BATTLE';
+  if (bothNearRelev) return 'RELEGATION BATTLE';
+  if (closeToDrop)   return 'MUST-NOT-LOSE FIXTURE';
+  return null;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -65,10 +93,15 @@ export function PreMatchOverlay({ state, onKickOff, onCancel }: PreMatchOverlayP
   const opponentName = opponentEntry?.clubName ?? 'Unknown';
 
   const myEntry = state.league.entries.find(e => e.clubId === state.club.id);
-  const myPosition = myEntry?.position ?? '—';
-  const opponentPosition = opponentEntry?.position ?? '—';
+  const myPos = myEntry?.position ?? 0;
+  const opponentPos = opponentEntry?.position ?? 0;
   const myForm = myEntry?.form ?? [];
   const opponentForm = opponentEntry?.form ?? [];
+
+  const milestone = MILESTONE_CONFIG[nextWeek] ?? null;
+  const sixPointer = myPos > 0 && opponentPos > 0
+    ? getSixPointerLabel(myPos, opponentPos, state.league)
+    : null;
 
   return (
     <div className="fixed inset-0 bg-bg-deep flex flex-col z-50">
@@ -87,17 +120,33 @@ export function PreMatchOverlay({ state, onKickOff, onCancel }: PreMatchOverlayP
       </div>
 
       {/* ── Main content ───────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-8 px-6">
+      <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6">
+
+        {/* Milestone banner */}
+        {milestone && (
+          <div className={`w-full max-w-sm rounded-card border px-4 py-2.5 text-center ${milestone.bg}`}>
+            <p className={`text-xs font-bold uppercase tracking-widest ${milestone.colour}`}>
+              {milestone.label}
+            </p>
+            <p className="text-xs text-txt-muted mt-0.5">{milestone.sub}</p>
+          </div>
+        )}
+
+        {/* Six-pointer badge */}
+        {!milestone && sixPointer && (
+          <div className="w-full max-w-sm rounded-card border border-alert-red/30 bg-alert-red/5 px-4 py-2 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest text-alert-red">{sixPointer}</p>
+          </div>
+        )}
 
         {/* Teams header */}
         <div className="flex items-center gap-6 w-full max-w-sm">
-          {/* Home team */}
           <div className="flex-1 text-right">
             <p className={`font-bold text-base ${isHome ? 'text-txt-primary' : 'text-txt-muted'}`}>
               {state.club.name}
             </p>
             <p className="text-xs text-txt-muted">
-              {isHome ? 'Home' : 'Away'} · {myPosition === '—' ? '' : `${myPosition}${ordinal(Number(myPosition))}`}
+              {isHome ? 'Home' : 'Away'}{myPos > 0 ? ` · ${myPos}${ordinal(myPos)}` : ''}
             </p>
           </div>
 
@@ -105,18 +154,16 @@ export function PreMatchOverlay({ state, onKickOff, onCancel }: PreMatchOverlayP
             <div className="text-2xl font-bold text-txt-muted">vs</div>
           </div>
 
-          {/* Away team */}
           <div className="flex-1 text-left">
             <p className={`font-bold text-base ${!isHome ? 'text-txt-primary' : 'text-txt-muted'}`}>
               {opponentName}
             </p>
             <p className="text-xs text-txt-muted">
-              {!isHome ? 'Home' : 'Away'} · {opponentPosition === '—' ? '' : `${opponentPosition}${ordinal(Number(opponentPosition))}`}
+              {!isHome ? 'Home' : 'Away'}{opponentPos > 0 ? ` · ${opponentPos}${ordinal(opponentPos)}` : ''}
             </p>
           </div>
         </div>
 
-        {/* Divider */}
         <div className="w-full max-w-sm border-t border-bg-raised" />
 
         {/* Form rows */}
@@ -126,9 +173,9 @@ export function PreMatchOverlay({ state, onKickOff, onCancel }: PreMatchOverlayP
           <FormRow form={opponentForm} label={opponentName} />
         </div>
 
-        {/* Pre-match flavour */}
+        {/* Flavour */}
         <p className="text-sm text-txt-muted text-center max-w-xs">
-          {getFlavorText(myForm, opponentForm, isHome)}
+          {getFlavorText(myForm, opponentForm, isHome, !!sixPointer)}
         </p>
       </div>
 
@@ -162,14 +209,17 @@ function getFlavorText(
   myForm: ('W' | 'D' | 'L')[],
   opponentForm: ('W' | 'D' | 'L')[],
   isHome: boolean,
+  isSixPointer: boolean,
 ): string {
-  const recentMine = myForm.slice(-3);
-  const recentOpp = opponentForm.slice(-3);
-  const myWins = recentMine.filter(r => r === 'W').length;
-  const oppWins = recentOpp.filter(r => r === 'W').length;
+  const recent3 = myForm.slice(-3);
+  const opp3 = opponentForm.slice(-3);
+  const myWins = recent3.filter(r => r === 'W').length;
+  const myLosses = recent3.filter(r => r === 'L').length;
+  const oppWins = opp3.filter(r => r === 'W').length;
 
+  if (isSixPointer) return 'This one could define your season. No pressure.';
   if (myWins === 3) return 'You\'re on fire — can you make it four in a row?';
-  if (myWins === 0 && recentMine.length >= 3) return 'The players need you behind them today.';
+  if (myLosses === 3) return 'The players need you behind them today.';
   if (oppWins === 3) return 'They\'re in great form. A big test for the squad.';
   if (isHome) return 'The fans expect a performance at home today.';
   return 'Nothing to lose on the road. Go and get something.';

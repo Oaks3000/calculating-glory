@@ -1,4 +1,71 @@
-import { GameState, GameCommand, formatMoney, Division } from '@calculating-glory/domain';
+import { GameState, GameCommand, formatMoney, Division, computeOverallRating, MatchSimulatedEvent } from '@calculating-glory/domain';
+
+// ─── Season highlights helpers ────────────────────────────────────────────────
+
+interface SeasonHighlights {
+  biggestWin: { opponentName: string; playerGoals: number; opponentGoals: number; week: number } | null;
+  longestWinStreak: number;
+  longestUnbeaten: number;
+  playerOfSeason: { name: string; ovr: number; position: string } | null;
+}
+
+function computeSeasonHighlights(state: GameState): SeasonHighlights {
+  const { club, league, season, events } = state;
+
+  // All MATCH_SIMULATED events for this season involving the player's club
+  const clubMatches = (events as MatchSimulatedEvent[])
+    .filter(e =>
+      (e as any).type === 'MATCH_SIMULATED' &&
+      (e.matchId ?? '').startsWith(`S${season}-`) &&
+      (e.homeTeamId === club.id || e.awayTeamId === club.id),
+    )
+    .sort((a, b) => {
+      const weekA = parseInt((a.matchId ?? '0').split('-W')[1] ?? '0');
+      const weekB = parseInt((b.matchId ?? '0').split('-W')[1] ?? '0');
+      return weekA - weekB;
+    });
+
+  // Build ordered results
+  const results = clubMatches.map(m => {
+    const isHome = m.homeTeamId === club.id;
+    const pGoals = isHome ? m.homeGoals : m.awayGoals;
+    const oGoals = isHome ? m.awayGoals : m.homeGoals;
+    const opponentId = isHome ? m.awayTeamId : m.homeTeamId;
+    const weekNum = parseInt((m.matchId ?? '0').split('-W')[1] ?? '0');
+    const result: 'W' | 'D' | 'L' = pGoals > oGoals ? 'W' : pGoals < oGoals ? 'L' : 'D';
+    return { result, pGoals, oGoals, goalDiff: pGoals - oGoals, opponentId, week: weekNum };
+  });
+
+  // Biggest win by goal difference
+  const wins = results.filter(r => r.result === 'W').sort((a, b) => b.goalDiff - a.goalDiff);
+  const best = wins[0] ?? null;
+  const biggestWin = best ? {
+    opponentName: league.entries.find(e => e.clubId === best.opponentId)?.clubName ?? 'Opponents',
+    playerGoals: best.pGoals,
+    opponentGoals: best.oGoals,
+    week: best.week,
+  } : null;
+
+  // Longest streak stats
+  let longestWinStreak = 0, curWin = 0;
+  let longestUnbeaten = 0, curUnbeaten = 0;
+  for (const r of results) {
+    if (r.result === 'W') { curWin++; curUnbeaten++; }
+    else if (r.result === 'D') { curWin = 0; curUnbeaten++; }
+    else { curWin = 0; curUnbeaten = 0; }
+    longestWinStreak = Math.max(longestWinStreak, curWin);
+    longestUnbeaten  = Math.max(longestUnbeaten, curUnbeaten);
+  }
+
+  // Player of the Season — highest OVR in current squad
+  const sorted = [...club.squad].sort((a, b) => computeOverallRating(b) - computeOverallRating(a));
+  const top = sorted[0] ?? null;
+  const playerOfSeason = top
+    ? { name: top.name, ovr: computeOverallRating(top), position: top.position }
+    : null;
+
+  return { biggestWin, longestWinStreak, longestUnbeaten, playerOfSeason };
+}
 
 interface SeasonEndScreenProps {
   state: GameState;
@@ -48,6 +115,7 @@ export function SeasonEndScreen({ state, dispatch }: SeasonEndScreenProps) {
 
   // Player's club league entry
   const clubEntry = league.entries.find(e => e.clubId === club.id);
+  const highlights = computeSeasonHighlights(state);
 
   function handleBeginNextSeason() {
     dispatch({ type: 'BEGIN_NEXT_SEASON' });
@@ -133,6 +201,60 @@ export function SeasonEndScreen({ state, dispatch }: SeasonEndScreenProps) {
             </div>
           </div>
         </div>
+
+        {/* ── Season highlights ──────────────────────────────────────────── */}
+        {(highlights.biggestWin || highlights.longestWinStreak > 0 || highlights.playerOfSeason) && (
+          <div className="bg-bg-raised rounded-card border border-white/5 p-4">
+            <div className="text-xs font-bold text-txt-muted uppercase tracking-widest mb-3">Season Highlights</div>
+            <div className="flex flex-col gap-3">
+              {highlights.biggestWin && (
+                <div className="flex items-center gap-3">
+                  <span className="text-pitch-green text-base shrink-0">🏆</span>
+                  <div>
+                    <p className="text-xs font-semibold text-txt-primary">
+                      Biggest win: {highlights.biggestWin.playerGoals}–{highlights.biggestWin.opponentGoals} vs {highlights.biggestWin.opponentName}
+                    </p>
+                    <p className="text-[10px] text-txt-muted">Week {highlights.biggestWin.week}</p>
+                  </div>
+                </div>
+              )}
+              {highlights.longestWinStreak >= 3 && (
+                <div className="flex items-center gap-3">
+                  <span className="text-warn-amber text-base shrink-0">🔥</span>
+                  <div>
+                    <p className="text-xs font-semibold text-txt-primary">
+                      {highlights.longestWinStreak}-game winning streak
+                    </p>
+                    {highlights.longestUnbeaten > highlights.longestWinStreak && (
+                      <p className="text-[10px] text-txt-muted">{highlights.longestUnbeaten} games unbeaten at best</p>
+                    )}
+                  </div>
+                </div>
+              )}
+              {highlights.longestWinStreak < 3 && highlights.longestUnbeaten >= 4 && (
+                <div className="flex items-center gap-3">
+                  <span className="text-warn-amber text-base shrink-0">🔥</span>
+                  <p className="text-xs font-semibold text-txt-primary">
+                    {highlights.longestUnbeaten} games unbeaten at best
+                  </p>
+                </div>
+              )}
+              {highlights.playerOfSeason && (
+                <div className="flex items-center gap-3">
+                  <span className="text-purple-400 text-base shrink-0">⭐</span>
+                  <div>
+                    <p className="text-xs font-semibold text-txt-primary">
+                      Player of the Season: {highlights.playerOfSeason.name}
+                    </p>
+                    <p className="text-[10px] text-txt-muted">
+                      {highlights.playerOfSeason.position} · {highlights.playerOfSeason.ovr} OVR
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* ── Final league table ─────────────────────────────────────────── */}
         <div className="bg-bg-raised rounded-card border border-white/5 overflow-hidden">

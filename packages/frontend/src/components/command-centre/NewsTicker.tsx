@@ -6,6 +6,7 @@ interface NewsTickerProps {
   clubId: string;
   leagueEntries: LeagueTableEntry[];
   squad: Player[];
+  currentWeek?: number;
 }
 
 function buildMoraleHeadlines(squad: Player[]): string[] {
@@ -39,7 +40,8 @@ function buildHeadlines(
   events: GameEvent[],
   clubId: string,
   nameMap: Map<string, string>,
-  squad: Player[]
+  squad: Player[],
+  currentWeek?: number
 ): string[] {
   const headlines: string[] = [];
 
@@ -82,12 +84,24 @@ function buildHeadlines(
   }
 
   // Most recent events first, max 30; live morale state appended at the end
-  return [...headlines.slice(-30).reverse(), ...buildMoraleHeadlines(squad)];
+  // Milestone week context (live state — shown for the week leading up to and including the milestone)
+  const milestoneHeadlines: string[] = [];
+  if (currentWeek !== undefined) {
+    if (currentWeek === 22 || currentWeek === 23) {
+      milestoneHeadlines.push('Halfway through the season — time to take stock');
+    } else if (currentWeek === 36 || currentWeek === 37) {
+      milestoneHeadlines.push('The run-in begins — 10 games to go');
+    } else if (currentWeek === 45 || currentWeek === 46) {
+      milestoneHeadlines.push('⚠ FINAL DAY — everything is still to play for');
+    }
+  }
+
+  return [...headlines.slice(-30).reverse(), ...buildMoraleHeadlines(squad), ...milestoneHeadlines];
 }
 
-export function NewsTicker({ events, clubId, leagueEntries, squad }: NewsTickerProps) {
+export function NewsTicker({ events, clubId, leagueEntries, squad, currentWeek }: NewsTickerProps) {
   const nameMap = new Map<string, string>(leagueEntries.map(e => [e.clubId, e.clubName]));
-  const headlines = buildHeadlines(events, clubId, nameMap, squad);
+  const headlines = buildHeadlines(events, clubId, nameMap, squad, currentWeek);
 
   if (headlines.length === 0) return null;
 
