@@ -35,7 +35,11 @@ export type MathTopic =
   | 'AREA_AND_PERIMETER'
   | 'ANGLES'
   | 'SCALE_AND_PROPORTION'
-  | 'PROPERTIES_OF_SHAPES';
+  | 'PROPERTIES_OF_SHAPES'
+  // Higher geometry — circles, 3D volume/surface area (GCSE Foundation+)
+  // Question banks to be built when GCSE tiers are implemented.
+  | 'CIRCLES'
+  | 'VOLUME_AND_SURFACE_AREA';
 
 export type CalculationType =
   | 'add'
@@ -348,6 +352,8 @@ export const CURRICULUM_LEVELS: Record<CurriculumLevel, CurriculumConfig> = {
       'ANGLES',
       'SCALE_AND_PROPORTION',
       'PROPERTIES_OF_SHAPES',
+      'CIRCLES',
+      'VOLUME_AND_SURFACE_AREA',
     ],
     difficulty: {
       easy: {
@@ -419,6 +425,8 @@ export const CURRICULUM_LEVELS: Record<CurriculumLevel, CurriculumConfig> = {
       'ANGLES',
       'SCALE_AND_PROPORTION',
       'PROPERTIES_OF_SHAPES',
+      'CIRCLES',
+      'VOLUME_AND_SURFACE_AREA',
     ],
     difficulty: {
       easy: {

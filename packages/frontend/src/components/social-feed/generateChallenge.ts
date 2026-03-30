@@ -40,6 +40,8 @@ export interface MathChallenge {
   hints: [string, string, string];
   explanation: string;
   context: string;
+  /** Key into DiagramLibrary — present only when the question requires a visual. */
+  diagram?: string;
 }
 
 // ── Topic mappings ─────────────────────────────────────────────────────────────
@@ -54,7 +56,7 @@ const CHALLENGE_TOPIC_TO_MATH_TOPICS: Record<ChallengeTopic, MathTopic[]> = {
   ratios:     ['RATIOS', 'SIMPLE_FRACTIONS'],
   algebra:    ['BASIC_ALGEBRA', 'SIMULTANEOUS_EQUATIONS', 'QUADRATIC_EQUATIONS'],
   statistics: ['DATA_INTERPRETATION', 'PROBABILITY', 'SEQUENCES', 'STATISTICAL_ANALYSIS', 'GRAPH_INTERPRETATION', 'ADVANCED_PROBABILITY'],
-  geometry:   ['AREA_AND_PERIMETER', 'ANGLES', 'SCALE_AND_PROPORTION', 'PROPERTIES_OF_SHAPES'],
+  geometry:   ['AREA_AND_PERIMETER', 'ANGLES', 'SCALE_AND_PROPORTION', 'PROPERTIES_OF_SHAPES', 'CIRCLES', 'VOLUME_AND_SURFACE_AREA'],
 };
 
 /**
@@ -80,10 +82,12 @@ export const MATH_TOPIC_TO_CHALLENGE: Partial<Record<MathTopic, ChallengeTopic>>
   STATISTICAL_ANALYSIS: 'statistics',
   GRAPH_INTERPRETATION: 'statistics',
   ADVANCED_PROBABILITY: 'statistics',
-  AREA_AND_PERIMETER:   'geometry',
-  ANGLES:               'geometry',
-  SCALE_AND_PROPORTION: 'geometry',
-  PROPERTIES_OF_SHAPES: 'geometry',
+  AREA_AND_PERIMETER:     'geometry',
+  ANGLES:                 'geometry',
+  SCALE_AND_PROPORTION:   'geometry',
+  PROPERTIES_OF_SHAPES:   'geometry',
+  CIRCLES:                'geometry',
+  VOLUME_AND_SURFACE_AREA:'geometry',
 };
 
 // ── Challenge generator ────────────────────────────────────────────────────────
@@ -205,5 +209,6 @@ export function generateChallenge(
     hints:       resolved.hints,
     explanation: resolved.explanation,
     context:     resolved.context ?? '',
+    diagram:     resolved.diagram,
   };
 }

@@ -21,6 +21,8 @@ export interface ResolvedChallenge {
   hints: [string, string, string];
   explanation: string;
   context?: string;
+  /** Passed through unchanged from QuestionTemplate — see types.ts for intent. */
+  diagram?: string;
 }
 
 export function resolveTemplate(
@@ -38,5 +40,6 @@ export function resolveTemplate(
     hints: [r(template.hints[0]), r(template.hints[1]), r(template.hints[2])],
     explanation: r(template.explanation),
     context: template.context ? r(template.context) : undefined,
+    diagram: template.diagram,
   };
 }

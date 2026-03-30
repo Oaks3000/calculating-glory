@@ -5,10 +5,10 @@ interface Props {
   state: GameState;
   hasSave: boolean;
   onContinue: () => void;
-  onNewGame: (level: CurriculumLevel) => void;
+  onNewGame: (level: CurriculumLevel, clubName: string, stadiumName: string) => void;
 }
 
-type MenuStep = 'main' | 'yearGroup';
+type MenuStep = 'main' | 'yearGroup' | 'clubSetup';
 
 function phaseLabel(phase: GameState['phase']): string {
   switch (phase) {
@@ -21,12 +21,117 @@ function phaseLabel(phase: GameState['phase']): string {
   }
 }
 
+/** Strip common football suffixes and append "Park" as a stadium name suggestion. */
+function suggestStadiumName(clubName: string): string {
+  const stripped = clubName
+    .replace(/\s*(F\.?C\.?|A\.?F\.?C\.?|United|City|Town|Rovers|Wanderers|Athletic|Albion|Rangers|Celtic)\s*$/i, '')
+    .trim();
+  return stripped ? `${stripped} Park` : '';
+}
+
 const LEVEL_ORDER: CurriculumLevel[] = ['YEAR_7', 'YEAR_8'];
 
-export function MenuScreen({ state, hasSave, onContinue, onNewGame }: Props) {
-  const [menuStep, setMenuStep] = useState<MenuStep>('main');
-  const [selected, setSelected] = useState<CurriculumLevel>('YEAR_7');
+const INPUT_CLASS =
+  'w-full rounded-card border border-bg-raised bg-bg-surface px-4 py-3 text-sm text-txt-primary ' +
+  'placeholder:text-txt-muted/50 focus:outline-none focus:border-data-blue/60 transition-colors duration-150';
 
+export function MenuScreen({ state, hasSave, onContinue, onNewGame }: Props) {
+  const [menuStep, setMenuStep]         = useState<MenuStep>('main');
+  const [selected, setSelected]         = useState<CurriculumLevel>('YEAR_7');
+  const [clubName, setClubName]         = useState('');
+  const [stadiumName, setStadiumName]   = useState('');
+  const [stadiumEdited, setStadiumEdited] = useState(false);
+
+  function handleClubNameChange(value: string) {
+    setClubName(value);
+    // Auto-fill stadium name unless the player has already edited it themselves
+    if (!stadiumEdited) {
+      setStadiumName(suggestStadiumName(value));
+    }
+  }
+
+  function handleStadiumNameChange(value: string) {
+    setStadiumEdited(true);
+    setStadiumName(value);
+  }
+
+  function handleStartGame() {
+    const finalClub    = clubName.trim()    || 'Calculating Glory FC';
+    const finalStadium = stadiumName.trim() || suggestStadiumName(finalClub) || 'Glory Park';
+    onNewGame(selected, finalClub, finalStadium);
+  }
+
+  // ── Step: club name + stadium name ────────────────────────────────────────
+  if (menuStep === 'clubSetup') {
+    const canStart = clubName.trim().length > 0;
+    return (
+      <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center px-6">
+        <div className="w-full max-w-xs">
+          <button
+            onClick={() => setMenuStep('yearGroup')}
+            className="text-xs text-txt-muted hover:text-txt-primary mb-6 flex items-center gap-1 transition-colors duration-150"
+          >
+            ← Back
+          </button>
+
+          <h2 className="text-xl font-bold text-txt-primary mb-1">Name your club</h2>
+          <p className="text-sm text-txt-muted mb-6 leading-relaxed">
+            This is your club. Make it yours.
+          </p>
+
+          <div className="flex flex-col gap-4 mb-6">
+            <div>
+              <label className="block text-xs font-semibold text-txt-muted uppercase tracking-widest mb-2">
+                Club name
+              </label>
+              <input
+                type="text"
+                value={clubName}
+                onChange={e => handleClubNameChange(e.target.value)}
+                placeholder="e.g. Riverside United FC"
+                maxLength={40}
+                className={INPUT_CLASS}
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-txt-muted uppercase tracking-widest mb-2">
+                Stadium name
+              </label>
+              <input
+                type="text"
+                value={stadiumName}
+                onChange={e => handleStadiumNameChange(e.target.value)}
+                placeholder="e.g. Riverside Park"
+                maxLength={40}
+                className={INPUT_CLASS}
+              />
+              {!stadiumEdited && clubName.trim() && stadiumName && (
+                <p className="text-xs text-txt-muted/60 mt-1.5 pl-1">
+                  Suggested from your club name — tap to change
+                </p>
+              )}
+            </div>
+          </div>
+
+          <button
+            onClick={handleStartGame}
+            disabled={!canStart}
+            className={`w-full font-semibold text-sm rounded-card py-3 transition-all duration-150
+              ${canStart
+                ? 'bg-data-blue hover:bg-data-blue/90 active:scale-[0.99] text-white'
+                : 'bg-bg-raised text-txt-muted cursor-not-allowed'
+              }`}
+          >
+            Start game →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Step: year group ──────────────────────────────────────────────────────
   if (menuStep === 'yearGroup') {
     return (
       <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center px-6">
@@ -65,21 +170,21 @@ export function MenuScreen({ state, hasSave, onContinue, onNewGame }: Props) {
           </div>
 
           <button
-            onClick={() => onNewGame(selected)}
+            onClick={() => setMenuStep('clubSetup')}
             className="w-full bg-data-blue hover:bg-data-blue/90 active:scale-[0.99] text-white
                        font-semibold text-sm rounded-card py-3 transition-all duration-150"
           >
-            Start game →
+            Next →
           </button>
         </div>
       </div>
     );
   }
 
+  // ── Step: main menu ───────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center px-6">
 
-      {/* Title block */}
       <div className="text-center mb-12">
         <div className="text-xs uppercase tracking-[0.3em] text-data-blue mb-3 font-semibold">
           Football Finance Simulator
@@ -92,7 +197,6 @@ export function MenuScreen({ state, hasSave, onContinue, onNewGame }: Props) {
         </p>
       </div>
 
-      {/* Action buttons */}
       <div className="flex flex-col gap-3 w-full max-w-xs">
 
         {hasSave && (

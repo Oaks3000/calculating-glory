@@ -21,6 +21,7 @@ import {
   applyContagion,
   applyManagerChangeMorale,
   avgSquadMorale,
+  detectFormMilestone,
 } from '../simulation/morale';
 import { applySeasonProgression } from '../simulation/progression';
 
@@ -97,6 +98,8 @@ export function reduceEvent(state: GameState, event: GameEvent): GameState {
       return handleCurriculumUpgraded(state, event);
     case 'RUNWAY_BAND_CHANGED':
       return { ...state, lastRunwayBand: event.band };
+    case 'MORALE_TICKER_EVENT':
+      return { ...state, lastFormMilestone: event.milestoneKey };
     default:
       return state;
   }
@@ -149,6 +152,18 @@ export function buildState(events: GameEvent[]): GameState {
 }
 
 // Helper functions for each event type
+
+/**
+ * Derives a stadium name from the club name.
+ * e.g. "Calculating Glory FC" → "Calculating Glory Park"
+ *      "Riverside United"     → "Riverside Park"
+ */
+function deriveStadiumName(clubName: string): string {
+  const stripped = clubName
+    .replace(/\s*(F\.?C\.?|A\.?F\.?C\.?|United|City|Town|Rovers|Wanderers|Athletic|Albion|Rangers|Celtic)\s*$/i, '')
+    .trim();
+  return `${stripped || clubName} Park`;
+}
 
 function handleGameStarted(state: GameState, event: GameStartedEvent): GameState {
   // Create the player's club entry
@@ -223,6 +238,13 @@ function handleGameStarted(state: GameState, event: GameStartedEvent): GameState
       squad: inheritedSquad,
       squadCapacity: 24,
       manager: null,
+      stadium: {
+        ...state.club.stadium,
+        name: event.stadiumName ?? deriveStadiumName(event.clubName),
+        capacity: state.club.stadium.capacity || 5000,
+        averageAttendance: state.club.stadium.averageAttendance || 1200,
+        ticketPrice: state.club.stadium.ticketPrice || 1500,
+      },
     },
     league: {
       ...state.league,
@@ -526,6 +548,11 @@ function handleWeekAdvanced(state: GameState, event: any): GameState {
   const avg = avgSquadMorale(squad);
   const lowMoraleWeeks = avg < 40 ? (state.lowMoraleWeeks ?? 0) + 1 : 0;
 
+  // Reset lastFormMilestone whenever no streak is currently active.
+  // The handler emits MORALE_TICKER_EVENT (which sets it) only on a new crossing;
+  // we reset here so the same milestone can fire again after a streak breaks and reforms.
+  const lastFormMilestone = detectFormMilestone(state.club.form);
+
   // Decrement construction timers on any in-progress facilities.
   // Facilities completing this week already had FACILITY_CONSTRUCTION_COMPLETED applied
   // before this event, so their constructionWeeksRemaining is already cleared.
@@ -540,6 +567,7 @@ function handleWeekAdvanced(state: GameState, event: any): GameState {
     currentWeek: week,
     phase,
     lowMoraleWeeks,
+    lastFormMilestone,
     club: {
       ...state.club,
       squad,
