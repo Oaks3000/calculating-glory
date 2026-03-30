@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { GameState, GameCommand, formatMoney, toPence } from '@calculating-glory/domain';
 import { CommandCentre } from '../command-centre/CommandCentre';
-import { FinancialHealthBar } from '../shared/FinancialHealthBar';
 import { NpcMessage } from './NpcMessage';
 import { MathsChallenge } from './MathsChallenge';
 import { markIntroCompleted } from '../../lib/introState';
@@ -15,29 +14,28 @@ interface Props {
   onComplete: () => void;
 }
 
-// ── Step definitions ──────────────────────────────────────────────────────────
+// ── Step → spotlight mapping ──────────────────────────────────────────────────
+//
+// Each step names which CommandCentre section should be revealed at full
+// brightness while everything else is dimmed. null = nothing spotlighted
+// (all sections dimmed). Section IDs match the CommandCentre contract.
 
-// Steps 0–3:  Beat 1 — Arrival         blur(10) brightness(0.15)
-// Steps 4–6:  Beat 2 — Meet the team   blur(7)  brightness(0.25)
-// Steps 7–8:  Beat 3 — Stadium tour    blur(5)  brightness(0.40)
-// Steps 9–11: Beat 4 — Squad check     blur(3)  brightness(0.55)
-// Steps 12–17:Beat 5 — First decision  blur(1)  brightness(0.75)
-
-const BLUR_BY_STEP: Record<number, string> = {
-  0:  'blur(10px) brightness(0.15)',
-  1:  'blur(10px) brightness(0.15)',
-  2:  'blur(10px) brightness(0.15)',
-  3:  'blur(10px) brightness(0.15)',
-  4:  'blur(7px)  brightness(0.25)',
-  5:  'blur(7px)  brightness(0.25)',
-  6:  'blur(7px)  brightness(0.25)',
-  7:  'blur(5px)  brightness(0.40)',
-  8:  'blur(5px)  brightness(0.40)',
-  9:  'blur(3px)  brightness(0.55)',
-  10: 'blur(3px)  brightness(0.55)',
-  11: 'blur(3px)  brightness(0.55)',
+const STEP_SPOTLIGHT: Record<number, string | null> = {
+  0:  null,             // title screen — full dark
+  1:  null,             // Val intro — orient before revealing anything
+  2:  'financial-bar',  // Val: "This is your financial overview"
+  3:  'financial-bar',  // Val: "keep this bar green"
+  4:  'squad',          // Kev: squad reality check
+  5:  'data-tiles',     // Marcus: "get revenue moving"
+  6:  'hub-tiles',      // Dani: "the stadium needs work"
+  7:  'hub-tiles',      // Dani: "each building does something"
+  8:  null,             // Dani: "no rush today"
+  9:  'squad',          // Kev: "X players on the books, capacity for 24"
+  10: null,             // Val: "I always do" (short quip)
+  11: 'hub-tiles',      // Kev: "transfer window's open, free agent pool"
+  12: 'inbox',          // Marcus: presents sponsor deal
+  13: 'financial-bar',  // Val: pre-season attendance context
 };
-const DEFAULT_BLUR = 'blur(1px) brightness(0.75)';
 
 // ── NPC avatars ───────────────────────────────────────────────────────────────
 
@@ -59,7 +57,6 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
   const [step, setStep] = useState(0);
   const [mathsCorrect, setMathsCorrect] = useState<boolean | null>(null);
   const [choice, setChoice] = useState<'A' | 'B' | null>(null);
-  const [showFinancialBar, setShowFinancialBar] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const clubName = state.club.name;
@@ -75,14 +72,6 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
   // Auto-scroll messages into view
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [step]);
-
-  // Animate Financial Health Bar in on step 2
-  useEffect(() => {
-    if (step === 2) {
-      const t = setTimeout(() => setShowFinancialBar(true), 400);
-      return () => clearTimeout(t);
-    }
   }, [step]);
 
   function advance() {
@@ -111,18 +100,13 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
     onComplete();
   }
 
-  const filter = BLUR_BY_STEP[step] ?? DEFAULT_BLUR;
+  const spotlight = STEP_SPOTLIGHT[step] ?? null;
 
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-bg-deep">
 
-      {/* ── Blurred Command Centre backdrop ─────────────────────────────────── */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{ filter, transition: 'filter 1s ease-in-out' }}
-      >
-        {/* Financial Health Bar sits above the CC in the real layout */}
-        {showFinancialBar && <FinancialHealthBar state={state} />}
+      {/* ── Command Centre backdrop — sections revealed by spotlight ─────────── */}
+      <div className="absolute inset-0 pointer-events-none">
         <div className="flex flex-col flex-1 h-full overflow-hidden">
           <CommandCentre
             state={state}
@@ -130,6 +114,7 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
             dispatch={() => ({})}
             isLoading={false}
             onNavigateToStadium={() => {}}
+            introSpotlight={spotlight}
           />
         </div>
       </div>

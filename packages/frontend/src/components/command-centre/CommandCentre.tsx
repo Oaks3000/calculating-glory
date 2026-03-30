@@ -20,9 +20,20 @@ interface CommandCentreProps {
   dispatch: (command: GameCommand) => { error?: string };
   isLoading: boolean;
   onNavigateToStadium: () => void;
+  /**
+   * Intro walkthrough spotlight. When set, every section EXCEPT the named one
+   * is covered by a dark translucent overlay, focusing the player's attention.
+   * null  = intro active, no specific section (everything dimmed)
+   * string = intro active, named section revealed at full brightness
+   * undefined (default) = intro not active, no overlays
+   *
+   * Section IDs: 'news-ticker' | 'financial-bar' | 'inbox' | 'data-tiles'
+   *              | 'hub-tiles' | 'league-table' | 'squad'
+   */
+  introSpotlight?: string | null;
 }
 
-export function CommandCentre({ state, events, dispatch, isLoading, onNavigateToStadium }: CommandCentreProps) {
+export function CommandCentre({ state, events, dispatch, isLoading, onNavigateToStadium, introSpotlight }: CommandCentreProps) {
   const [error, setError]                     = useState<string | null>(null);
   const [socialOpen, setSocialOpen]           = useState(false);
   const [socialLinkedEvent, setSocialLinked]  = useState<PendingClubEvent | null>(null);
@@ -60,19 +71,38 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
     f => f.level > 0 && f.level < 5 && !(f.constructionWeeksRemaining ?? 0) && f.upgradeCost <= state.club.transferBudget
   );
 
+  // Returns a dark overlay for a section when the intro is active and another
+  // section is spotlighted. Opacity transitions smoothly so spotlights feel
+  // like a reveal rather than a jump.
+  const dim = (sectionId: string) => {
+    if (introSpotlight === undefined) return null;
+    return (
+      <div
+        className="absolute inset-0 bg-bg-deep/85 backdrop-blur-sm pointer-events-none z-10 transition-opacity duration-700"
+        style={{ opacity: introSpotlight === sectionId ? 0 : 1 }}
+      />
+    );
+  };
+
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
 
       {/* ── Live News Ticker (very top) ───────────────────────────────────── */}
-      <NewsTicker
-        events={events}
-        clubId={state.club.id}
-        leagueEntries={state.league.entries}
-        squad={state.club.squad}
-      />
+      <div className="relative">
+        <NewsTicker
+          events={events}
+          clubId={state.club.id}
+          leagueEntries={state.league.entries}
+          squad={state.club.squad}
+        />
+        {dim('news-ticker')}
+      </div>
 
       {/* ── Financial Health Bar ─────────────────────────────────────────── */}
-      <FinancialHealthBar state={state} />
+      <div className="relative">
+        <FinancialHealthBar state={state} />
+        {dim('financial-bar')}
+      </div>
 
       {/* ── Error toast ──────────────────────────────────────────────────── */}
       {error && (
@@ -111,13 +141,17 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
               onMathChallenge={handleMathChallenge}
               onViewAll={() => setInboxOpen(true)}
             />
+            {dim('inbox')}
           </div>
 
           {/* RIGHT row 1: DataTiles */}
-          <DataTiles state={state} gridMode onBackroomClick={() => setBackroomOpen(true)} onAcumenClick={() => setLearningOpen(true)} />
+          <div className="relative">
+            <DataTiles state={state} gridMode onBackroomClick={() => setBackroomOpen(true)} onAcumenClick={() => setLearningOpen(true)} />
+            {dim('data-tiles')}
+          </div>
 
           {/* RIGHT row 2: 2×2 hub tile grid */}
-          <div className="grid grid-cols-2 gap-2">
+          <div className="relative grid grid-cols-2 gap-2">
             <HubTile
               icon="🏟"
               label="Stadium & Facilities"
@@ -154,6 +188,7 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
               hasEvent={false}
               onClick={() => setTransfersOpen(true)}
             />
+            {dim('hub-tiles')}
           </div>
         </div>
 
@@ -161,7 +196,7 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-2">
 
           {/* League Table */}
-          <div className="flex flex-col min-w-0">
+          <div className="relative flex flex-col min-w-0">
             <div className="overflow-y-auto max-h-56 rounded-card">
               <LeagueTable
                 entries={state.league.entries}
@@ -171,13 +206,15 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
                 previousLeagueTable={state.previousLeagueTable}
               />
             </div>
+            {dim('league-table')}
           </div>
 
           {/* Squad */}
-          <div className="flex flex-col min-w-0">
+          <div className="relative flex flex-col min-w-0">
             <div className="overflow-y-auto max-h-56 rounded-card">
               <SquadAuditTable state={state} />
             </div>
+            {dim('squad')}
           </div>
         </div>
       </div>
