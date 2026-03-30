@@ -28,6 +28,8 @@ import { FixturesSlideOver }                from './FixturesSlideOver';
 import { BoardConfidenceSlideOver }         from './BoardConfidenceSlideOver';
 import { ScoutingSlideOver }                from './ScoutingSlideOver';
 import { ScoutNetworkSlideOver }           from './ScoutNetworkSlideOver';
+import { GeometryDrillCard }               from './GeometryDrillCard';
+import { generateChallenge }               from '../social-feed/generateChallenge';
 
 // Commercial facilities always open the upgrade panel (no dedicated nav destination)
 const COMMERCIAL_TYPES = new Set<FacilityType>([
@@ -54,6 +56,30 @@ export function StadiumView({ state, dispatch, onError }: StadiumViewProps) {
   const [boardOpen,        setBoardOpen]        = useState(false);
   const [scoutingOpen,     setScoutingOpen]     = useState(false);
   const [scoutNetworkOpen, setScoutNetworkOpen] = useState(false);
+
+  // ── Groundskeeper's Drill ─────────────────────────────────────────────────
+  const [drillIndex, setDrillIndex] = useState(0);
+  const [drillStart, setDrillStart] = useState(() => Date.now());
+  const stadiumLevel = club.facilities.find(f => f.type === 'STADIUM')?.level ?? 0;
+  const geometryDrill = generateChallenge(state, drillIndex, undefined, 'geometry');
+
+  function handleDrillAttempt(correct: boolean) {
+    dispatch({
+      type:           'RECORD_MATH_ATTEMPT',
+      studentId:      club.id,
+      topic:          geometryDrill.topic,
+      difficulty:     geometryDrill.difficulty,
+      answer:         correct ? geometryDrill.answer : -1,
+      expectedAnswer: geometryDrill.answer,
+      startTime:      drillStart,
+      endTime:        Date.now(),
+    });
+  }
+
+  function handleDrillRefresh() {
+    setDrillIndex(i => i + 1);
+    setDrillStart(Date.now());
+  }
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
@@ -120,6 +146,20 @@ export function StadiumView({ state, dispatch, onError }: StadiumViewProps) {
               </p>
             </div>
           </div>
+
+          {/* ── Groundskeeper's Drill ───────────────────────────────── */}
+          {stadiumLevel >= 1 && (
+            <div>
+              <p className="text-xs text-txt-muted uppercase tracking-wide mb-3">
+                📐 Groundskeeper's Drill
+              </p>
+              <GeometryDrillCard
+                challenge={geometryDrill}
+                onRefresh={handleDrillRefresh}
+                onAttempt={handleDrillAttempt}
+              />
+            </div>
+          )}
 
           {/* Facility upgrade cards — 2-col grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">

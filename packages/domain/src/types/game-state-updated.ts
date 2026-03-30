@@ -194,6 +194,13 @@ export interface GameState {
   lastRunwayBand?: 'SURPLUS' | 'GREEN' | 'AMBER' | 'RED' | 'CRITICAL';
 
   /**
+   * The form-streak milestone last emitted as a MORALE_TICKER_EVENT.
+   * Null when no streak is active. Updated by the WEEK_ADVANCED reducer.
+   * Used to prevent re-emitting the same milestone during an ongoing run.
+   */
+  lastFormMilestone?: 'W3' | 'W5' | 'L3' | 'L5' | null;
+
+  /**
    * Active scout mission, if any.
    * Only one mission can be active at a time.
    */

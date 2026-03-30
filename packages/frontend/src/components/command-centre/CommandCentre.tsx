@@ -69,7 +69,6 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
         clubId={state.club.id}
         leagueEntries={state.league.entries}
         squad={state.club.squad}
-        form={state.club.form}
       />
 
       {/* ── Financial Health Bar ─────────────────────────────────────────── */}

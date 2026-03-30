@@ -9,6 +9,7 @@ import { algebraBank } from './algebra';
 import { dataInterpretationBank } from './data-interpretation';
 import { decimalsBank } from './decimals';
 import { areaAndPerimeterBank } from './area-and-perimeter';
+import { anglesBank } from './angles';
 
 /** Full question bank — all topics combined. */
 export const QUESTION_BANK: QuestionBank = [
@@ -18,6 +19,7 @@ export const QUESTION_BANK: QuestionBank = [
   ...dataInterpretationBank,
   ...decimalsBank,
   ...areaAndPerimeterBank,
+  ...anglesBank,
 ];
 
 /**

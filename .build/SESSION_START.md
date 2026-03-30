@@ -1,29 +1,39 @@
-# Session Progress - 2026-03-23
+# Session Progress - 2026-03-30
 
 ## Session Goals
-- Fix #30 publicPotential semantics (noisy read of truePotential)
+- Morale news ticker milestone messages (domain event, fires once per streak crossing)
+- Geometry challenges in Stadium View (Groundskeeper's Drill panel)
 
 ## Completed Work
 
-### 1. publicPotential semantics — #30 (PR #67) ✅
-- `squad-generator.ts` and `free-agent-generator.ts` updated: curve/truePotential now computed first; `publicPotential = getScoutedPotential(player, 0)` — a ±15 noisy read of `truePotential` at level-0 scout
-- `playerId` hoisted above the return statement so it can be passed into `getScoutedPotential` before the object literal
-- Old: independent `rng.nextInt()` roll completely unrelated to actual player potential
-- New: signals are correlated — a scout upgrade meaningfully narrows the gap between what you see and what's real
-- `scout-target-generator.ts` skipped — already uses `getScoutedPotential()` at display time
-- 441 domain tests green; TypeScript clean
+### 1. Morale news ticker milestone messages ✅
+- New domain event `MORALE_TICKER_EVENT` fires exactly once per form-streak milestone crossing (W3, W5, L3, L5)
+- `detectFormMilestone()` + `FORM_MILESTONE_HEADLINES` added to `simulation/morale.ts`
+- `lastFormMilestone` field on `GameState` tracks last known milestone so re-fires don't happen
+- `handleSimulateWeek` in `handlers.ts` detects crossing by comparing prospective form to `state.lastFormMilestone`
+- `WEEK_ADVANCED` reducer resets `lastFormMilestone` to current form state (naturally returns `null` when no streak)
+- `NewsTicker.tsx` now reads `MORALE_TICKER_EVENT` from `state.events[]` instead of computing from live form — eliminates the "always showing" bug
+
+### 2. Geometry challenges — Groundskeeper's Drill ✅
+- New `angles.ts` question bank: 8 questions (5 × D1 Year 8, 3 × D2 Year 9) — angles on a line, vertically opposite, triangle rules, polygon interior/exterior, parallel lines
+- Registered in `bank.ts` (`...anglesBank`)
+- `GeometryDrillCard` gains `onAttempt` callback; first submission dispatches `RECORD_MATH_ATTEMPT`
+- `StadiumView` below-fold: "📐 Groundskeeper's Drill" panel renders when `stadiumLevel >= 1`
+- `generateChallenge` called with topic override `'geometry'` (maps to AREA_AND_PERIMETER + ANGLES + SCALE_AND_PROPORTION + PROPERTIES_OF_SHAPES)
+- Verified in browser: panel appears after upgrading Stadium to Level 1; question + hints + submit all working
 
 ## Architecture Notes
 
-- RNG sequence shift: removing the `rng.nextInt(25, 55)` / `rng.nextInt(38, 82)` calls shifts downstream RNG draws for morale, contractExpiresWeek, etc. Accepted — no real users yet, and correctness > reproducibility at this stage.
-- `getScoutedPotential` is in `types/facility.ts` (exported alongside `ScoutNetwork` config) — import path is `'../types/facility'` from generators.
+- Domain events pattern: both features follow the `FINANCIAL_THRESHOLD_EVENT` precedent — fire once on crossing, store "last known" band in state
+- Worktree dist sync: domain changes always need `npm run build` in worktree dist then `cp -r dist/ /main/packages/domain/dist/`
+- `stadiumLevel >= 1` gate: Groundskeeper only appears once the stadium has been built (level 0 = derelict = no Kev on site)
 
 ## Current Status
 
 ### ✅ Working
-- PR #67 merged; main is clean
-- 441 domain tests green
-- TypeScript clean (pre-existing inboxUtils fixture issue only)
+- Both features shipped and browser-verified
+- Domain dist synced
+- TypeScript clean
 
 ### 🟡 In Progress
 - Nothing
@@ -34,29 +44,30 @@
 ## Build Commands / Key Files
 
 ```bash
+# Domain dist rebuild (worktree + sync to main)
+cd packages/domain && npm run build
+cp -r dist/ /Users/oakleywalters/Projects/calculating-glory/packages/domain/dist/
+
 # Dev server
 npm run dev --workspace=@calculating-glory/frontend
-
-# Domain tests (from worktree)
-cd packages/domain && npm test
-
-# Frontend tests
-cd packages/frontend && npx vitest run
-
-# Domain dist rebuild (must be from worktree, not main project)
-cd packages/domain && npm run build
 ```
 
-Key files touched this session:
-- `packages/domain/src/data/squad-generator.ts` — publicPotential derivation
-- `packages/domain/src/data/free-agent-generator.ts` — publicPotential derivation
+Key files:
+- `packages/domain/src/events/types.ts` — MoraleTickerEvent
+- `packages/domain/src/simulation/morale.ts` — detectFormMilestone, FORM_MILESTONE_HEADLINES
+- `packages/domain/src/commands/handlers.ts` — morale event emission
+- `packages/domain/src/reducers/index.ts` — MORALE_TICKER_EVENT case + lastFormMilestone reset
+- `packages/domain/src/content/questions/angles.ts` — new angles bank
+- `packages/domain/src/content/questions/bank.ts` — anglesBank registration
+- `packages/frontend/src/components/stadium-view/GeometryDrillCard.tsx` — onAttempt callback
+- `packages/frontend/src/components/stadium-view/StadiumView.tsx` — Kev's Drill panel
 
 ## Next Session Goals
 
-1. **Multiple leagues** — League One NPC team data, division-aware match sim, promotion/relegation opponent pool swap
-2. **resetGame() UI** — New Game button (no home for it yet)
-3. **NPC strength evolution** — use previousLeagueTable to modestly adjust NPC AI strength each season
+1. **Commit this branch** and open PR against main
+2. **Balance pass** — full L2 → L1 play-through; observe growth/retirement, question difficulty progression
+3. **Multiple leagues** — League One NPC team data, division-aware match sim, promotion/relegation
 
 ---
 
-**Status**: #30 shipped (PR #67). publicPotential is now a correlated noisy read of truePotential. 441 domain tests green. Next: multiple leagues.
+**Status**: Morale ticker milestones + Groundskeeper's Drill both shipped. Browser verified. Ready to commit.

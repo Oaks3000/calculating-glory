@@ -13,6 +13,7 @@ import { generateSeasonFixtures, getWeekFixtures, matchSeed } from '../simulatio
 import { createRng } from '../simulation/rng';
 import { generateWeekEvents, generatePoachAttempts, generateMoraleThresholdEvents, generateFinancialThresholdEvents } from '../simulation/events';
 import { computeWeeklyFinancials, computeRunwayBand } from '../simulation/revenue';
+import { detectFormMilestone, FORM_MILESTONE_HEADLINES } from '../simulation/morale';
 import { getTeamsForDivision } from '../data/division-teams';
 import { Player, computeOverallRating } from '../types/player';
 import { shouldRetire, getRetirementFlavour } from '../simulation/progression';
@@ -294,6 +295,8 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
   const events: GameEvent[] = [];
   const now = Date.now();
 
+  let clubResultThisWeek: 'W' | 'D' | 'L' | null = null;
+
   weekFixtures.fixtures.forEach((fixture, index) => {
     const homeTeam = teamMap.get(fixture.homeTeamId);
     const awayTeam = teamMap.get(fixture.awayTeamId);
@@ -313,7 +316,34 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
       awayGoals: result.awayGoals,
       seed
     });
+
+    // Track the player's club result for form milestone detection
+    if (fixture.homeTeamId === state.club.id) {
+      clubResultThisWeek = result.homeGoals > result.awayGoals ? 'W'
+        : result.homeGoals < result.awayGoals ? 'L' : 'D';
+    } else if (fixture.awayTeamId === state.club.id) {
+      clubResultThisWeek = result.awayGoals > result.homeGoals ? 'W'
+        : result.awayGoals < result.homeGoals ? 'L' : 'D';
+    }
   });
+
+  // ── Form-streak milestone detection ─────────────────────────────────────────
+  // Emit a passive MORALE_TICKER_EVENT once when the club first hits a run of
+  // 3 or 5 consecutive wins/losses. Fires at most once per crossing — the
+  // WEEK_ADVANCED reducer resets lastFormMilestone when the streak breaks.
+  if (clubResultThisWeek !== null && state.phase !== 'PRE_SEASON' && state.phase !== 'SEASON_END') {
+    const prospectiveForm = [...state.club.form, clubResultThisWeek].slice(-5) as ('W' | 'D' | 'L')[];
+    const currentMilestone = detectFormMilestone(prospectiveForm);
+    const previousMilestone = state.lastFormMilestone ?? null;
+    if (currentMilestone !== null && currentMilestone !== previousMilestone) {
+      events.push({
+        type: 'MORALE_TICKER_EVENT',
+        timestamp: now,
+        headline: FORM_MILESTONE_HEADLINES[currentMilestone],
+        milestoneKey: currentMilestone,
+      });
+    }
+  }
 
   // Generate club events for this week and emit ClubEventOccurredEvent for each
   const clubEvents = generateWeekEvents(state, week, season, baseSeed);

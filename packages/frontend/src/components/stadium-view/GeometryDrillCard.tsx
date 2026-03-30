@@ -1,14 +1,11 @@
 /**
  * GeometryDrillCard — self-contained interactive geometry challenge.
  *
- * Rendered inside TrainingFocusSlideOver when the Training Ground is
- * level 1+.  Shows a stadium-themed geometry question with:
+ * Shows a stadium-themed geometry question with:
  *   - progressive hints (up to 3, one at a time)
  *   - numeric answer input + submit
  *   - correct / wrong feedback + full explanation on completion
- *
- * Does not dispatch RECORD_MATH_ATTEMPT — that tracking integration
- * is a follow-up task.
+ *   - onAttempt callback fires once per question (correct or wrong)
  */
 
 import { useState } from 'react';
@@ -18,13 +15,15 @@ interface GeometryDrillCardProps {
   challenge: MathChallenge;
   /** Called when the player wants a fresh challenge */
   onRefresh: () => void;
+  /** Called once per question with the outcome (fires on first submit only) */
+  onAttempt?: (correct: boolean) => void;
 }
 
 const TOPIC_ICONS: Record<string, string> = {
   geometry: '📐',
 };
 
-export function GeometryDrillCard({ challenge, onRefresh }: GeometryDrillCardProps) {
+export function GeometryDrillCard({ challenge, onRefresh, onAttempt }: GeometryDrillCardProps) {
   const [input,     setInput]     = useState('');
   const [hintIndex, setHintIndex] = useState(0);
   const [result,    setResult]    = useState<'correct' | 'wrong' | null>(null);
@@ -37,6 +36,8 @@ export function GeometryDrillCard({ challenge, onRefresh }: GeometryDrillCardPro
     // rounding edge cases (e.g. student rounds differently on a multi-step)
     const correct = Math.abs(parsed - challenge.answer) <= 0.5;
     setResult(correct ? 'correct' : 'wrong');
+    // Only fire onAttempt on first submission (not on Retry clicks)
+    if (result === null) onAttempt?.(correct);
   }
 
   function handleTryAgain() {

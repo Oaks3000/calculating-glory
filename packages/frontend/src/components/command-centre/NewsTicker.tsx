@@ -1,4 +1,4 @@
-import { GameEvent, MatchSimulatedEvent, Player, avgSquadMorale, isUnsettled } from '@calculating-glory/domain';
+import { GameEvent, MatchSimulatedEvent, MoraleTickerEvent, Player, avgSquadMorale, isUnsettled } from '@calculating-glory/domain';
 import { LeagueTableEntry } from '@calculating-glory/domain';
 
 interface NewsTickerProps {
@@ -6,27 +6,13 @@ interface NewsTickerProps {
   clubId: string;
   leagueEntries: LeagueTableEntry[];
   squad: Player[];
-  form: string[];
 }
 
-function buildMoraleHeadlines(squad: Player[], form: string[]): string[] {
+function buildMoraleHeadlines(squad: Player[]): string[] {
   if (squad.length === 0) return [];
   const headlines: string[] = [];
 
-  // Form streak messages (check most recent results — form is oldest→newest)
-  const recent5 = form.slice(-5);
-  const recent3 = form.slice(-3);
-  if (recent5.length === 5 && recent5.every(r => r === 'W')) {
-    headlines.push('🔥 Unstoppable — five wins on the bounce');
-  } else if (recent3.length === 3 && recent3.every(r => r === 'W')) {
-    headlines.push('Squad spirits high after a 3-match winning run');
-  } else if (recent5.length === 5 && recent5.every(r => r === 'L')) {
-    headlines.push('⚠ Deep crisis — five successive defeats');
-  } else if (recent3.length === 3 && recent3.every(r => r === 'L')) {
-    headlines.push('Dressing room confidence low after 3 straight defeats');
-  }
-
-  // Avg morale band messages
+  // Avg morale band messages (live state — always relevant while condition holds)
   const avg = avgSquadMorale(squad);
   if (avg >= 75) {
     headlines.push('Dressing room atmosphere excellent — squad fully motivated');
@@ -53,8 +39,7 @@ function buildHeadlines(
   events: GameEvent[],
   clubId: string,
   nameMap: Map<string, string>,
-  squad: Player[],
-  form: string[]
+  squad: Player[]
 ): string[] {
   const headlines: string[] = [];
 
@@ -66,6 +51,8 @@ function buildHeadlines(
       const isPlayer = m.homeTeamId === clubId || m.awayTeamId === clubId;
       const score = `${m.homeGoals}–${m.awayGoals}`;
       headlines.push(isPlayer ? `★ ${home} ${score} ${away}` : `${home} ${score} ${away}`);
+    } else if (e.type === 'MORALE_TICKER_EVENT') {
+      headlines.push((e as MoraleTickerEvent).headline);
     } else if (e.type === 'NPC_PLAYER_SIGNED') {
       headlines.push(`${e.npcClubName} sign ${e.player.name}`);
     } else if (e.type === 'TRANSFER_COMPLETED') {
@@ -85,13 +72,13 @@ function buildHeadlines(
     }
   }
 
-  // Most recent events first, max 30; morale headlines appended at the end as live state
-  return [...headlines.slice(-30).reverse(), ...buildMoraleHeadlines(squad, form)];
+  // Most recent events first, max 30; live morale state appended at the end
+  return [...headlines.slice(-30).reverse(), ...buildMoraleHeadlines(squad)];
 }
 
-export function NewsTicker({ events, clubId, leagueEntries, squad, form }: NewsTickerProps) {
+export function NewsTicker({ events, clubId, leagueEntries, squad }: NewsTickerProps) {
   const nameMap = new Map<string, string>(leagueEntries.map(e => [e.clubId, e.clubName]));
-  const headlines = buildHeadlines(events, clubId, nameMap, squad, form);
+  const headlines = buildHeadlines(events, clubId, nameMap, squad);
 
   if (headlines.length === 0) return null;
 

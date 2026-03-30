@@ -47,7 +47,8 @@ export * from './data/manager-generator';
 export * from './data/scout-target-generator';
 
 // Morale system
-export { isUnsettled, avgSquadMorale, UNSETTLED_THRESHOLD } from './simulation/morale';
+export { isUnsettled, avgSquadMorale, UNSETTLED_THRESHOLD, detectFormMilestone, FORM_MILESTONE_HEADLINES } from './simulation/morale';
+export type { FormMilestoneKey } from './simulation/morale';
 
 // Simulation helpers
 export { playerCharismaRevenue, squadCharismaRevenue, computeWeeklyFinancials } from './simulation/revenue';

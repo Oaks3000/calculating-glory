@@ -46,7 +46,8 @@ export type GameEvent =
   | TakeoverAcceptedEvent
   | ParachuteOfferedEvent
   | CurriculumUpgradedEvent
-  | RunwayBandChangedEvent;
+  | RunwayBandChangedEvent
+  | MoraleTickerEvent;
 
 export interface TransferCompletedEvent {
   type: 'TRANSFER_COMPLETED';
@@ -400,4 +401,16 @@ export interface RunwayBandChangedEvent {
   type: 'RUNWAY_BAND_CHANGED';
   timestamp: number;
   band: 'SURPLUS' | 'GREEN' | 'AMBER' | 'RED' | 'CRITICAL';
+}
+
+/**
+ * Passive news ticker headline emitted once when a form-streak milestone is first crossed.
+ * No decision required — appears in the ticker only.
+ * milestoneKey: 'W3' | 'W5' | 'L3' | 'L5'
+ */
+export interface MoraleTickerEvent {
+  type: 'MORALE_TICKER_EVENT';
+  timestamp: number;
+  headline: string;
+  milestoneKey: 'W3' | 'W5' | 'L3' | 'L5';
 }

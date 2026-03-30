@@ -157,3 +157,31 @@ export const UNSETTLED_THRESHOLD = 20;
 export function isUnsettled(player: Player): boolean {
   return player.morale < UNSETTLED_THRESHOLD;
 }
+
+// ── Form-streak milestone detection ───────────────────────────────────────────
+
+export type FormMilestoneKey = 'W3' | 'W5' | 'L3' | 'L5';
+
+/**
+ * Detect the highest form-streak milestone present in the given form array.
+ * Returns null when no streak is active (mixed results, or fewer than 3 games).
+ *
+ * Priority: W5 > L5 > W3 > L3 (longer streaks take precedence so W5 supersedes W3).
+ */
+export function detectFormMilestone(form: ('W' | 'D' | 'L')[]): FormMilestoneKey | null {
+  const last5 = form.slice(-5);
+  const last3 = form.slice(-3);
+  if (last5.length === 5 && last5.every(r => r === 'W')) return 'W5';
+  if (last5.length === 5 && last5.every(r => r === 'L')) return 'L5';
+  if (last3.length === 3 && last3.every(r => r === 'W')) return 'W3';
+  if (last3.length === 3 && last3.every(r => r === 'L')) return 'L3';
+  return null;
+}
+
+/** Ticker headline for each form milestone. */
+export const FORM_MILESTONE_HEADLINES: Record<FormMilestoneKey, string> = {
+  W3: 'Squad spirits high after a 3-match winning run',
+  W5: '🔥 Unstoppable — five wins on the bounce',
+  L3: 'Confidence shaken after 3 straight defeats',
+  L5: '⚠ Deep crisis — five successive defeats',
+};
