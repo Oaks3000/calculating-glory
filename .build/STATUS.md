@@ -2,17 +2,17 @@
 project: "Calculating Glory"
 type: "build"
 priority: 2
-phase: "Phase 7 — Practice Mode & Polish"
-progress: 82
-lastUpdated: "2026-03-29"
-lastTouched: "2026-03-29"
+phase: "Phase 8 — Polish"
+progress: 94
+lastUpdated: "2026-03-30"
+lastTouched: "2026-03-30"
 status: "in-progress"
 ---
 
 # Calculating Glory - Current Status
 
-**Phase:** Phase 6 complete → Phase 7 in progress
-**Last Updated:** 2026-03-29
+**Phase:** Phase 8 — Polish (94% complete)
+**Last Updated:** 2026-03-30
 
 ## What's Done
 
@@ -38,14 +38,33 @@ status: "in-progress"
 - `bankTopic` on events — 4 events wired to specific curriculum topics
 - Adaptive curriculum advancement: `checkMastery()` → Val Webb gold nudge card → `UPGRADE_CURRICULUM`
 
-**Phase 7 — Practice Mode (PR #77)**
-- 🎯 Practice HubTile — dedicated entry point in Command Centre (2×2 grid)
-- "Chats" renamed "Negotiations" for clarity
-- Practice slide-over: all 6 topics, weakest 3 badged "Recommended", Marcus Webb drill flow
+**Phase 7 — Practice Mode + Owner's Box + Financial Alerts — COMPLETE (PRs #77–#79)**
+- 🎯 Practice HubTile with Marcus Webb drill flow, all 6 topics
+- Owner's Box: real-time Kev commentary over ~75 real seconds, 8 crowd states, 60+ templates
+- Val financial threshold inbox messages: amber/red/critical/recovery bands
+
+**Phase 8 — Polish (PR #80 + nifty-ride worktree)**
+
+*PR #80 — Morale & Groundskeeper (merged):*
+- Morale news ticker milestone messages: W3, W5, L3, L5 streaks + morale high/low thresholds
+- `MORALE_TICKER_EVENT` fires once per crossing; `lastFormMilestone` on GameState
+- Groundskeeper's Drill: geometry challenges from Stadium View plot clicks
+- `AREA_AND_PERIMETER` + `ANGLES` questions tagged `bankTopic: 'geometry'`
+- Architecture futureproofing for CIRCLES + VOLUME_AND_SURFACE_AREA (GCSE Higher)
+- `DiagramLibrary` + `diagram?` field threaded through QuestionTemplate → MathChallenge
+
+*nifty-ride worktree (open, not yet PR'd):*
+- **Intro spotlight**: each NPC beat reveals its corresponding CC section at full brightness; all others dimmed via per-section overlay divs (CSS opacity transition, not global filter)
+- **Single-message intro**: one card at a time, bottom-anchored — never covers the spotlighted section
+- **Club identity**: `[TEAM]` placeholder in Kev commentary (kickoff, goal reaction/aftermath, full-time win)
+- **Stadium name**: derived from club name at game start; `GameStartedEvent.stadiumName?` optional for backward compat
+- **Club + stadium naming flow**: "Name your club" step in new game setup; stadium auto-suggests, fully editable; names thread through to all NPCs and commentary
 
 ## What's In Progress
 
-- Balance pass — first real play-through (passive observation)
+- nifty-ride worktree — polish batch 1, ready to PR
+- Open polish issues: #81 (match day), #82 (transfers), #83 (season arc), #85 (NPC cast), #86 (mobile)
+- Balance pass — passive, during play-testing
 
 ## Blockers
 
@@ -57,4 +76,5 @@ status: "in-progress"
 - **Live URL**: https://oaks3000.github.io/calculating-glory/ — auto-deploys on push to main
 - Dev server: `npm run dev --workspace=@calculating-glory/frontend`
 - Domain tests: `cd packages/domain && npm test`
-- **Design principle**: two-axis model — football progression (division) never gates maths level; maths progression (curriculum) never gates football.
+- **Design principle**: two-axis model — football division vs curriculum level fully independent
+- **Worktree rule**: always rebuild domain in worktree, then `cp -r dist/ /main/packages/domain/dist/`
