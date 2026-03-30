@@ -32,7 +32,7 @@ export default {
         'slide-in-right': 'slideInRight 0.3s ease-out',
         'fade-in':        'fadeIn 0.2s ease-in',
         'pulse-glow':     'pulseGlow 2s ease-in-out infinite',
-        'ticker':         'ticker 147s linear infinite',
+        'ticker':         'ticker 206s linear infinite',
         'rep-flash-up':   'repFlashUp 0.7s ease-out forwards',
         'rep-flash-down': 'repFlashDown 0.7s ease-out forwards',
       },

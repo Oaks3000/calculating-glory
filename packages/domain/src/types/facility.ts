@@ -312,7 +312,10 @@ export function getScoutedPotential(player: Player, scoutLevel: number): number 
   const level = Math.max(0, Math.min(5, scoutLevel));
   const noiseRange = Math.round(SCOUT_MAX_NOISE * (1 - level / 5));
   const noise = scoutNoise(player.id, noiseRange);
-  return Math.max(1, Math.min(100, player.truePotential + noise));
+  // Invert for display: truePotential is a career-arc position (0=start, 100=retirement).
+  // Displayed potential should be 100 for a player with maximum upside, 0 for one who has peaked.
+  const displayPotential = 100 - player.truePotential;
+  return Math.max(1, Math.min(100, displayPotential + noise));
 }
 
 /**
