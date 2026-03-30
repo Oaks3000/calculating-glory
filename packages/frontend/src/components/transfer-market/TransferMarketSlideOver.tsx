@@ -25,6 +25,7 @@ interface TransferMarketSlideOverProps {
 type Tab = 'free-agents' | 'my-squad';
 type SortKey = 'rating' | 'attack' | 'defence' | 'wage';
 type PlayerWillingness = 'eager' | 'neutral' | 'reluctant';
+type SquadViewMode = 'formation' | 'list';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -102,6 +103,118 @@ function FormationGapPanel({ state }: FormationGapPanelProps) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// ─── Squad formation view ──────────────────────────────────────────────────────
+
+interface SquadFormationViewProps {
+  squad: Player[];
+  formation: string;
+  currentWeek: number;
+  clubId: string;
+  scoutLevel: number;
+  onFillPosition: (pos: Position) => void;
+  onRelease: (playerId: string) => void;
+  onSellToNpc: (playerId: string, npcClubId: string) => void;
+}
+
+function ovrBorderClass(ovr: number): string {
+  if (ovr >= 70) return 'border-pitch-green/40';
+  if (ovr >= 55) return 'border-warn-amber/40';
+  return 'border-alert-red/30';
+}
+
+function ovrTextClass(ovr: number): string {
+  if (ovr >= 70) return 'text-pitch-green';
+  if (ovr >= 55) return 'text-warn-amber';
+  return 'text-alert-red';
+}
+
+function SquadFormationView({
+  squad, formation, currentWeek, clubId, scoutLevel, onFillPosition, onRelease, onSellToNpc,
+}: SquadFormationViewProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const config = FORMATION_CONFIG[formation];
+  if (!config) return null;
+
+  return (
+    <div className="flex flex-col gap-4">
+      {POSITION_ORDER.map(pos => {
+        const target = config.slots[pos];
+        const players = squad
+          .filter(p => p.position === pos)
+          .sort((a, b) => computeOverallRating(b) - computeOverallRating(a));
+        const have = players.length;
+        const gap = have - target;
+        const isShort = gap < 0;
+        const isSurplus = gap > 0;
+        const vacantCount = Math.max(0, -gap);
+
+        return (
+          <div key={pos}>
+            {/* Position section header */}
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-bg-raised text-txt-muted border-white/10">
+                {pos}
+              </span>
+              <span className="text-xs text-txt-muted">{have}/{target}</span>
+              <span className={`text-xs font-semibold ${isShort ? 'text-alert-red' : isSurplus ? 'text-warn-amber' : 'text-pitch-green'}`}>
+                {isShort ? `−${Math.abs(gap)} needed` : isSurplus ? `+${gap} surplus` : '✓'}
+              </span>
+            </div>
+
+            {/* Player chips + vacant slots */}
+            <div className="flex flex-wrap gap-2">
+              {players.map(player => {
+                const ovr = computeOverallRating(player);
+                const isExpanded = expandedId === player.id;
+                return (
+                  <div key={player.id} className="flex flex-col gap-1" style={{ minWidth: '140px', maxWidth: '200px' }}>
+                    <button
+                      onClick={() => setExpandedId(isExpanded ? null : player.id)}
+                      className={`bg-bg-raised border rounded-card px-3 py-2 text-left w-full transition-colors hover:border-white/20 ${ovrBorderClass(ovr)} ${isExpanded ? 'border-opacity-80' : ''}`}
+                    >
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-xs font-semibold text-txt-primary truncate">{player.name}</span>
+                        <span className={`text-sm font-bold shrink-0 ${ovrTextClass(ovr)}`}>{ovr}</span>
+                      </div>
+                      <div className="text-[10px] text-txt-muted mt-0.5">
+                        Age {player.age} · {formatMoney(player.wage)}/wk
+                      </div>
+                    </button>
+
+                    {isExpanded && (
+                      <SquadPlayerCard
+                        player={player}
+                        currentWeek={currentWeek}
+                        clubId={clubId}
+                        scoutLevel={scoutLevel}
+                        onRelease={() => { onRelease(player.id); setExpandedId(null); }}
+                        onSellToNpc={npcClubId => { onSellToNpc(player.id, npcClubId); setExpandedId(null); }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Vacant slots */}
+              {Array.from({ length: vacantCount }).map((_, i) => (
+                <button
+                  key={`vacant-${i}`}
+                  onClick={() => onFillPosition(pos)}
+                  className="bg-bg-raised border border-dashed border-white/20 rounded-card px-3 py-2 text-left hover:border-white/40 transition-colors"
+                  style={{ minWidth: '140px' }}
+                >
+                  <div className="text-xs text-txt-muted font-semibold">+ VACANT</div>
+                  <div className="text-[10px] text-data-blue mt-0.5">Find a {pos} →</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -566,6 +679,7 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
   const [activeTab, setActiveTab] = useState<Tab>('free-agents');
   const [positionFilter, setPositionFilter] = useState<Position | 'ALL'>('ALL');
   const [sortKey, setSortKey] = useState<SortKey>('rating');
+  const [squadViewMode, setSquadViewMode] = useState<SquadViewMode>('formation');
 
   const currentTotalWages = state.club.squad.reduce((sum, p) => sum + p.wage, 0);
   const remainingWageBudget = state.club.wageBudget - currentTotalWages;
@@ -613,6 +727,11 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
     if (result.error) onError(result.error);
   }
 
+  function handleFillPosition(pos: Position) {
+    setPositionFilter(pos);
+    setActiveTab('free-agents');
+  }
+
   const POSITIONS: (Position | 'ALL')[] = ['ALL', 'GK', 'DEF', 'MID', 'FWD'];
   const SORT_OPTIONS: { value: SortKey; label: string }[] = [
     { value: 'rating',  label: 'Rating ↓' },
@@ -644,7 +763,7 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
       <FormationGapPanel state={state} />
 
       {/* ── Tabs ──────────────────────────────────────────────────────────── */}
-      <div className="flex gap-1">
+      <div className="flex items-center gap-1">
         {(['free-agents', 'my-squad'] as Tab[]).map(tab => (
           <button
             key={tab}
@@ -658,6 +777,24 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
             {tab === 'free-agents' ? `Free Agents (${(state.freeAgentPool ?? []).length})` : `My Squad (${squadCount})`}
           </button>
         ))}
+        {/* View mode toggle — only visible on My Squad tab */}
+        {activeTab === 'my-squad' && (
+          <div className="ml-auto flex gap-1">
+            {(['formation', 'list'] as SquadViewMode[]).map(mode => (
+              <button
+                key={mode}
+                onClick={() => setSquadViewMode(mode)}
+                className={`px-2 py-1 text-xs rounded transition-colors ${
+                  squadViewMode === mode
+                    ? 'bg-white/10 text-txt-primary border border-white/20'
+                    : 'text-txt-muted border border-white/5 hover:border-white/10'
+                }`}
+              >
+                {mode === 'formation' ? '⊞ Formation' : '≡ List'}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Filters ──────────────────────────────────────────────────────── */}
@@ -710,6 +847,17 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
               />
             ))
           )
+        ) : squadViewMode === 'formation' && state.club.preferredFormation ? (
+          <SquadFormationView
+            squad={state.club.squad}
+            formation={state.club.preferredFormation}
+            currentWeek={state.currentWeek}
+            clubId={state.club.id}
+            scoutLevel={scoutLevel}
+            onFillPosition={handleFillPosition}
+            onRelease={handleRelease}
+            onSellToNpc={handleSellToNpc}
+          />
         ) : (
           filteredSquad.length === 0 ? (
             <div className="text-txt-muted text-sm text-center py-8">No players match your filters.</div>
