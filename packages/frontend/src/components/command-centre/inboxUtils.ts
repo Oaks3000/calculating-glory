@@ -48,6 +48,8 @@ const TRANSFER_HEADLINES = [
   'League Two clubs brace for January transfer activity.',
   'Big clubs circling: several League Two stars linked with moves up.',
   'Reported: {rival} set to offload fringe player this month.',
+  'Scouts spotted at {stadium} ahead of upcoming fixtures.',
+  'Rumour mill: agents circling players at {club} this week.',
 ];
 
 const INJURY_HEADLINES = [
@@ -72,6 +74,9 @@ const LEAGUE_HEADLINES = [
   'League table chaos: six points separate positions 8 through 18.',
   'League Two clubs vote to trial new substitution rules next season.',
   'Board confidence crisis: two clubs reportedly looking for new managers.',
+  'Pundits tipping {club} for a strong second half of the season.',
+  '{club} fans vocal in their support at {stadium} this week.',
+  'Full house at {stadium} as the fans get behind the team.',
 ];
 
 const CATEGORY_META: Record<NewsCategory, { icon: string; headlines: string[] }> = {
@@ -88,14 +93,18 @@ const ALL_CATEGORIES: NewsCategory[] = ['transfer', 'injury', 'league'];
  * Deterministically generate 1–3 news items for a given week.
  * Items are seeded by week so they are stable across re-renders.
  *
- * @param week      Current game week (drives the seed)
- * @param rivals    Nearby club names from the table (used for flavour text substitution)
- * @param dismissed Set of dismissed IDs (news IDs start at NEWS_ID_OFFSET)
+ * @param week        Current game week (drives the seed)
+ * @param rivals      Nearby club names from the table (used for flavour text substitution)
+ * @param dismissed   Set of dismissed IDs (news IDs start at NEWS_ID_OFFSET)
+ * @param clubName    Player's club name (used in {club} substitutions)
+ * @param stadiumName Player's stadium name (used in {stadium} substitutions)
  */
 export function buildNewsItems(
   week: number,
   rivals: string[],
   dismissed: Set<number>,
+  clubName?: string,
+  stadiumName?: string,
 ): NewsItem[] {
   if (week <= 0) return [];
 
@@ -114,12 +123,16 @@ export function buildNewsItems(
     const meta = CATEGORY_META[cat];
     let headline = seededPick(meta.headlines, rng);
 
-    // Substitute a rival team name if the template has a placeholder
+    // Substitute placeholders
     if (headline.includes('{rival}') && rivals.length > 0) {
       headline = headline.replace('{rival}', rivals[rng() % rivals.length]);
     } else {
       headline = headline.replace(/{rival}/g, 'A nearby side');
     }
+    if (clubName)    headline = headline.replace(/{club}/g, clubName);
+    if (stadiumName) headline = headline.replace(/{stadium}/g, stadiumName);
+    // Strip any unreplaced placeholders
+    headline = headline.replace(/\{club\}/g, 'the club').replace(/\{stadium\}/g, 'the ground');
 
     items.push({ id, category: cat, icon: meta.icon, headline, week });
   }

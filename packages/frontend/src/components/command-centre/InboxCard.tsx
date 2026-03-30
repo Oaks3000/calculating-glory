@@ -11,6 +11,8 @@ interface InboxCardProps {
   pendingEvents: PendingClubEvent[];
   events: GameEvent[];
   clubId: string;
+  clubName?: string;
+  stadiumName?: string;
   leagueEntries: LeagueTableEntry[];
   currentWeek: number;
   dismissed: Set<number>;
@@ -27,6 +29,8 @@ export function InboxCard({
   pendingEvents,
   events,
   clubId,
+  clubName,
+  stadiumName,
   leagueEntries,
   currentWeek,
   dismissed,
@@ -50,7 +54,7 @@ export function InboxCard({
         .filter(e => e.clubId !== clubId)
         .map(e => e.clubName)
     : [];
-  const newsItems = buildNewsItems(currentWeek, rivalNames, dismissed);
+  const newsItems = buildNewsItems(currentWeek, rivalNames, dismissed, clubName, stadiumName);
 
   // Combined preview pool: decisions first, then matches, then news
   const totalMatches = allNotable.length;
