@@ -244,6 +244,8 @@ export interface FreeAgentSignedEvent {
   offeredWage: number;       // pence/week
   contractExpiresWeek: number;
   player: Player;            // Full player object with updated wage + contractExpiresWeek
+  /** Number of NPC clubs that were also interested (0–3), for news ticker drama */
+  npcInterestCount?: number;
 }
 
 export interface PlayerReleasedEvent {

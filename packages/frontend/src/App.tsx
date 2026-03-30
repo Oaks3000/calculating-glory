@@ -15,6 +15,7 @@ import { ForcedOutScreen } from './components/forced-out/ForcedOutScreen';
 import { MenuScreen } from './components/menu/MenuScreen';
 import { IntroScreen } from './components/intro/IntroScreen';
 import { OwnerBox } from './components/owner-box/OwnerBox';
+import { PreMatchOverlay } from './components/owner-box/PreMatchOverlay';
 import { isIntroCompleted, clearIntroCompleted } from './lib/introState';
 
 type Screen = 'menu' | 'intro' | 'game';
@@ -31,6 +32,7 @@ export default function App() {
   const [activeView, setActiveView] = useState<ActiveView>('command');
   const [error, setError] = useState<string | null>(null);
   const [ownerBoxData, setOwnerBoxData] = useState<OwnerBoxData | null>(null);
+  const [showPreMatch, setShowPreMatch] = useState(false);
   const processedEventCount = useRef<number | null>(null);
 
   // Detect new MATCH_SIMULATED events after simulation completes
@@ -97,6 +99,18 @@ export default function App() {
     setScreen('game');
   }
 
+  function handleKickOff() {
+    setShowPreMatch(false);
+    const nextWeek = state.currentWeek + 1;
+    const result = dispatch({
+      type: 'SIMULATE_WEEK',
+      week: nextWeek,
+      season: state.season,
+      seed: `calculating-glory-mvp-v1-w${nextWeek}`,
+    });
+    if (result.error) setError(result.error);
+  }
+
   if (screen === 'menu') {
     return (
       <MenuScreen
@@ -141,6 +155,7 @@ export default function App() {
         dispatch={dispatch}
         onError={setError}
         onResetGame={resetGame}
+        onPreMatch={() => setShowPreMatch(true)}
       />
 
       {error && (
@@ -181,6 +196,14 @@ export default function App() {
             Simulating week…
           </div>
         </div>
+      )}
+
+      {showPreMatch && !ownerBoxData && (
+        <PreMatchOverlay
+          state={state}
+          onKickOff={handleKickOff}
+          onCancel={() => setShowPreMatch(false)}
+        />
       )}
 
       {ownerBoxData && (

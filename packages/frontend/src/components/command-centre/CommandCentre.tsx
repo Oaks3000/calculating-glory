@@ -92,8 +92,11 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
         <NewsTicker
           events={events}
           clubId={state.club.id}
+          clubName={state.club.name}
+          stadiumName={state.club.stadium.name}
           leagueEntries={state.league.entries}
           squad={state.club.squad}
+          currentWeek={state.currentWeek}
         />
         {dim('news-ticker')}
       </div>
@@ -132,6 +135,8 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
               pendingEvents={state.pendingEvents}
               events={events}
               clubId={state.club.id}
+              clubName={state.club.name}
+              stadiumName={state.club.stadium.name}
               leagueEntries={state.league.entries}
               currentWeek={state.currentWeek}
               dismissed={dismissed}

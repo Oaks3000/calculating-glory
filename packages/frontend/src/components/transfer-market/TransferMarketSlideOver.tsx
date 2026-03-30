@@ -4,6 +4,7 @@ import {
   GameCommand,
   Player,
   Position,
+  Formation,
   formatMoney,
   FORMATION_CONFIG,
   LEAGUE_TWO_TEAMS,
@@ -11,6 +12,7 @@ import {
   scoutNoiseRange,
   getScoutLevel,
   computeOverallRating,
+  isTransferWindowOpen,
 } from '@calculating-glory/domain';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -23,6 +25,40 @@ interface TransferMarketSlideOverProps {
 
 type Tab = 'free-agents' | 'my-squad';
 type SortKey = 'rating' | 'attack' | 'defence' | 'wage';
+type PlayerWillingness = 'eager' | 'neutral' | 'reluctant';
+type SquadViewMode = 'formation' | 'list';
+
+// ─── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Deterministic NPC interest count (0–3) based on player id. */
+function getNpcInterestCount(playerId: string): number {
+  let h = 0;
+  for (let i = 0; i < playerId.length; i++) {
+    h = (Math.imul(31, h) + playerId.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h) % 4;
+}
+
+/**
+ * How keen a free agent is to join, based on your league position and the wage
+ * you're offering relative to their asking wage.
+ */
+function computeWillingness(
+  player: Player,
+  offeredWage: number,
+  tablePosition: number,
+): PlayerWillingness {
+  const wageRatio = offeredWage / Math.max(1, player.wage);
+  if (tablePosition <= 6 && wageRatio >= 1.0) return 'eager';
+  if (tablePosition >= 18 || wageRatio < 0.9) return 'reluctant';
+  return 'neutral';
+}
+
+const WILLINGNESS_CONFIG: Record<PlayerWillingness, { label: string; colour: string; icon: string }> = {
+  eager:    { label: 'Keen to join',  colour: 'text-pitch-green',  icon: '★' },
+  neutral:  { label: 'Considering',   colour: 'text-warn-amber',   icon: '~' },
+  reluctant:{ label: 'Hesitant',      colour: 'text-alert-red',    icon: '?' },
+};
 
 // ─── Formation gap panel ───────────────────────────────────────────────────────
 
@@ -68,6 +104,118 @@ function FormationGapPanel({ state }: FormationGapPanelProps) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// ─── Squad formation view ──────────────────────────────────────────────────────
+
+interface SquadFormationViewProps {
+  squad: Player[];
+  formation: Formation;
+  currentWeek: number;
+  clubId: string;
+  scoutLevel: number;
+  onFillPosition: (pos: Position) => void;
+  onRelease: (playerId: string) => void;
+  onSellToNpc: (playerId: string, npcClubId: string) => void;
+}
+
+function ovrBorderClass(ovr: number): string {
+  if (ovr >= 70) return 'border-pitch-green/40';
+  if (ovr >= 55) return 'border-warn-amber/40';
+  return 'border-alert-red/30';
+}
+
+function ovrTextClass(ovr: number): string {
+  if (ovr >= 70) return 'text-pitch-green';
+  if (ovr >= 55) return 'text-warn-amber';
+  return 'text-alert-red';
+}
+
+function SquadFormationView({
+  squad, formation, currentWeek, clubId, scoutLevel, onFillPosition, onRelease, onSellToNpc,
+}: SquadFormationViewProps) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const config = FORMATION_CONFIG[formation];
+  if (!config) return null;
+
+  return (
+    <div className="flex flex-col gap-4">
+      {POSITION_ORDER.map(pos => {
+        const target = config.slots[pos];
+        const players = squad
+          .filter(p => p.position === pos)
+          .sort((a, b) => computeOverallRating(b) - computeOverallRating(a));
+        const have = players.length;
+        const gap = have - target;
+        const isShort = gap < 0;
+        const isSurplus = gap > 0;
+        const vacantCount = Math.max(0, -gap);
+
+        return (
+          <div key={pos}>
+            {/* Position section header */}
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-bg-raised text-txt-muted border-white/10">
+                {pos}
+              </span>
+              <span className="text-xs text-txt-muted">{have}/{target}</span>
+              <span className={`text-xs font-semibold ${isShort ? 'text-alert-red' : isSurplus ? 'text-warn-amber' : 'text-pitch-green'}`}>
+                {isShort ? `−${Math.abs(gap)} needed` : isSurplus ? `+${gap} surplus` : '✓'}
+              </span>
+            </div>
+
+            {/* Player chips + vacant slots */}
+            <div className="flex flex-wrap gap-2">
+              {players.map(player => {
+                const ovr = computeOverallRating(player);
+                const isExpanded = expandedId === player.id;
+                return (
+                  <div key={player.id} className="flex flex-col gap-1" style={{ minWidth: '140px', maxWidth: '200px' }}>
+                    <button
+                      onClick={() => setExpandedId(isExpanded ? null : player.id)}
+                      className={`bg-bg-raised border rounded-card px-3 py-2 text-left w-full transition-colors hover:border-white/20 ${ovrBorderClass(ovr)} ${isExpanded ? 'border-opacity-80' : ''}`}
+                    >
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-xs font-semibold text-txt-primary truncate">{player.name}</span>
+                        <span className={`text-sm font-bold shrink-0 ${ovrTextClass(ovr)}`}>{ovr}</span>
+                      </div>
+                      <div className="text-[10px] text-txt-muted mt-0.5">
+                        Age {player.age} · {formatMoney(player.wage)}/wk
+                      </div>
+                    </button>
+
+                    {isExpanded && (
+                      <SquadPlayerCard
+                        player={player}
+                        currentWeek={currentWeek}
+                        clubId={clubId}
+                        scoutLevel={scoutLevel}
+                        onRelease={() => { onRelease(player.id); setExpandedId(null); }}
+                        onSellToNpc={npcClubId => { onSellToNpc(player.id, npcClubId); setExpandedId(null); }}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+
+              {/* Vacant slots */}
+              {Array.from({ length: vacantCount }).map((_, i) => (
+                <button
+                  key={`vacant-${i}`}
+                  onClick={() => onFillPosition(pos)}
+                  className="bg-bg-raised border border-dashed border-white/20 rounded-card px-3 py-2 text-left hover:border-white/40 transition-colors"
+                  style={{ minWidth: '140px' }}
+                >
+                  <div className="text-xs text-txt-muted font-semibold">+ VACANT</div>
+                  <div className="text-[10px] text-data-blue mt-0.5">Find a {pos} →</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -136,23 +284,64 @@ interface FreeAgentCardProps {
   canAfford: boolean;
   hasSquadRoom: boolean;
   scoutLevel: number;
+  willingness: PlayerWillingness;
+  npcInterest: number;
   onSign: (wage: number) => void;
 }
 
-function FreeAgentCard({ player, canAfford, hasSquadRoom, scoutLevel, onSign }: FreeAgentCardProps) {
-  const [confirming, setConfirming] = useState(false);
-  const [signed, setSigned] = useState(false);
+type SignStep = 'idle' | 'countering' | 'confirming' | 'done';
 
-  function handleConfirm() {
-    onSign(player.wage);
-    setSigned(true);
-    setConfirming(false);
+const NPC_INTEREST_LABELS: Record<number, string> = {
+  1: '1 other club watching',
+  2: '2 clubs interested',
+  3: '3 clubs chasing him',
+};
+
+function FreeAgentCard({
+  player,
+  canAfford,
+  hasSquadRoom,
+  scoutLevel,
+  willingness,
+  npcInterest,
+  onSign,
+}: FreeAgentCardProps) {
+  const [step, setStep] = useState<SignStep>('idle');
+
+  const wCfg = WILLINGNESS_CONFIG[willingness];
+
+  // Reluctant players counter-offer at +15% wage
+  const counterWage = Math.round(player.wage * 1.15);
+  const counterLabel = formatMoney(counterWage);
+
+  const canSign = canAfford && hasSquadRoom;
+
+  function handleSignClick() {
+    if (willingness === 'reluctant') {
+      setStep('countering');
+    } else {
+      setStep('confirming');
+    }
   }
 
-  const canSign = canAfford && hasSquadRoom && !signed;
+  function handleAcceptCounter() {
+    onSign(counterWage);
+    setStep('done');
+  }
+
+  function handleAcceptOriginal() {
+    onSign(player.wage);
+    setStep('done');
+  }
+
+  function handleCancel() {
+    setStep('idle');
+  }
 
   return (
-    <div className="bg-bg-raised rounded-card border border-white/5 p-3 flex flex-col gap-2">
+    <div className={`bg-bg-raised rounded-card border p-3 flex flex-col gap-2 ${
+      npcInterest >= 2 ? 'border-warn-amber/30' : 'border-white/5'
+    }`}>
       {/* Header row */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col gap-0.5 min-w-0">
@@ -160,6 +349,10 @@ function FreeAgentCard({ player, canAfford, hasSquadRoom, scoutLevel, onSign }: 
             <span className="font-semibold text-txt-primary text-sm truncate">{player.name}</span>
             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${POSITION_COLOUR[player.position]}`}>
               {player.position}
+            </span>
+            {/* Willingness badge */}
+            <span className={`text-[10px] font-semibold ${wCfg.colour}`}>
+              {wCfg.icon} {wCfg.label}
             </span>
           </div>
           <span className="text-xs text-txt-muted">Age {player.age} · {formatMoney(player.wage)}/wk</span>
@@ -169,6 +362,13 @@ function FreeAgentCard({ player, canAfford, hasSquadRoom, scoutLevel, onSign }: 
           <div className="text-[10px] text-txt-muted">OVR</div>
         </div>
       </div>
+
+      {/* NPC interest rumour */}
+      {npcInterest > 0 && (
+        <div className="text-[10px] text-warn-amber bg-warn-amber/5 border border-warn-amber/20 rounded px-2 py-1">
+          📰 RUMOUR · {NPC_INTEREST_LABELS[npcInterest] ?? `${npcInterest} clubs interested`}
+        </div>
+      )}
 
       {/* Attribute bars */}
       <div className="flex flex-col gap-0.5">
@@ -180,21 +380,59 @@ function FreeAgentCard({ player, canAfford, hasSquadRoom, scoutLevel, onSign }: 
       </div>
 
       {/* Action row */}
-      {signed ? (
-        <div className="text-xs text-pitch-green font-semibold">Signed!</div>
-      ) : confirming ? (
+      {step === 'done' ? (
+        <div className="text-xs text-pitch-green font-semibold">Signed! {npcInterest > 0 ? 'You beat the competition.' : ''}</div>
+      ) : step === 'countering' ? (
+        /* Reluctant player counter-offer */
+        <div className="flex flex-col gap-2 text-xs">
+          <div className="bg-alert-red/5 border border-alert-red/20 rounded px-2 py-1.5 text-txt-muted">
+            <span className="text-alert-red font-semibold">Counter-offer!</span>{' '}
+            {player.name} is hesitant.{' '}
+            {npcInterest > 0
+              ? <>With {npcInterest > 1 ? `${npcInterest} clubs` : 'another club'} circling, they want {counterLabel}/wk to commit.</>
+              : <>They want {counterLabel}/wk (+15%) to sign.</>
+            }
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleAcceptCounter}
+              className="px-2 py-1 bg-warn-amber/20 text-warn-amber border border-warn-amber/40 rounded hover:bg-warn-amber/30 transition-colors"
+            >
+              Accept {counterLabel}/wk
+            </button>
+            <button
+              onClick={handleAcceptOriginal}
+              className="px-2 py-1 bg-pitch-green/10 text-pitch-green border border-pitch-green/30 rounded hover:bg-pitch-green/20 transition-colors"
+            >
+              Hold firm at {formatMoney(player.wage)}/wk
+            </button>
+            <button
+              onClick={handleCancel}
+              className="px-2 py-0.5 bg-white/5 text-txt-muted border border-white/10 rounded hover:bg-white/10 transition-colors"
+            >
+              Walk away
+            </button>
+          </div>
+          <div className="text-txt-muted text-[10px]">
+            Holding firm risks them choosing another club — but saves on wages.
+          </div>
+        </div>
+      ) : step === 'confirming' ? (
         <div className="flex items-center gap-2 flex-wrap text-xs">
           <span className="text-txt-muted">
             Sign {player.name} at {formatMoney(player.wage)}/wk?
+            {npcInterest > 0 && (
+              <span className="text-warn-amber"> Move fast — others are watching.</span>
+            )}
           </span>
           <button
-            onClick={handleConfirm}
+            onClick={handleAcceptOriginal}
             className="px-2 py-0.5 bg-pitch-green/20 text-pitch-green border border-pitch-green/40 rounded hover:bg-pitch-green/30 transition-colors"
           >
             Yes
           </button>
           <button
-            onClick={() => setConfirming(false)}
+            onClick={handleCancel}
             className="px-2 py-0.5 bg-white/5 text-txt-muted border border-white/10 rounded hover:bg-white/10 transition-colors"
           >
             Cancel
@@ -203,14 +441,22 @@ function FreeAgentCard({ player, canAfford, hasSquadRoom, scoutLevel, onSign }: 
       ) : (
         <button
           disabled={!canSign}
-          onClick={() => setConfirming(true)}
+          onClick={handleSignClick}
           className={`w-full text-xs py-1.5 rounded transition-colors ${
             canSign
-              ? 'bg-pitch-green/20 text-pitch-green border border-pitch-green/40 hover:bg-pitch-green/30'
+              ? npcInterest >= 2
+                ? 'bg-warn-amber/20 text-warn-amber border border-warn-amber/40 hover:bg-warn-amber/30'
+                : 'bg-pitch-green/20 text-pitch-green border border-pitch-green/40 hover:bg-pitch-green/30'
               : 'bg-white/5 text-txt-muted border border-white/10 cursor-not-allowed opacity-60'
           }`}
         >
-          {!hasSquadRoom ? 'Squad full' : !canAfford ? 'Over budget' : 'Sign'}
+          {!hasSquadRoom
+            ? 'Squad full'
+            : !canAfford
+            ? 'Over budget'
+            : npcInterest >= 2
+            ? 'Sign before it\'s too late'
+            : 'Sign'}
         </button>
       )}
     </div>
@@ -230,6 +476,11 @@ interface SquadPlayerCardProps {
 
 type SquadAction = 'idle' | 'confirm-release' | 'pick-club' | 'confirm-sell';
 
+/** Players with OVR >= 65 and morale >= 70 are considered fan favourites. */
+function isFanFavourite(player: Player): boolean {
+  return computeOverallRating(player) >= 65 && (player.morale ?? 0) >= 70;
+}
+
 function SquadPlayerCard({ player, currentWeek, clubId, scoutLevel, onRelease, onSellToNpc }: SquadPlayerCardProps) {
   const [action, setAction] = useState<SquadAction>('idle');
   const [selectedClubId, setSelectedClubId] = useState('');
@@ -245,6 +496,8 @@ function SquadPlayerCard({ player, currentWeek, clubId, scoutLevel, onRelease, o
   const sellFee = player.transferValue > 0
     ? player.transferValue
     : Math.max(10_000, playerOvr * playerOvr * 500);
+
+  const fanFav = isFanFavourite(player);
 
   // All 23 NPC clubs (excluding player's own club)
   const npcClubs = LEAGUE_TWO_TEAMS.filter(t => t.id !== clubId);
@@ -279,7 +532,9 @@ function SquadPlayerCard({ player, currentWeek, clubId, scoutLevel, onRelease, o
   }
 
   return (
-    <div className="bg-bg-raised rounded-card border border-white/5 p-3 flex flex-col gap-2">
+    <div className={`bg-bg-raised rounded-card border p-3 flex flex-col gap-2 ${
+      fanFav ? 'border-purple-500/30' : 'border-white/5'
+    }`}>
       {/* Header row */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col gap-0.5 min-w-0">
@@ -288,6 +543,9 @@ function SquadPlayerCard({ player, currentWeek, clubId, scoutLevel, onRelease, o
             <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${POSITION_COLOUR[player.position]}`}>
               {player.position}
             </span>
+            {fanFav && (
+              <span className="text-[10px] text-purple-400 font-semibold">♥ Fan favourite</span>
+            )}
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-txt-muted">Age {player.age} · {formatMoney(player.wage)}/wk</span>
@@ -311,19 +569,31 @@ function SquadPlayerCard({ player, currentWeek, clubId, scoutLevel, onRelease, o
 
       {/* Actions */}
       {done === 'released' ? (
-        <div className="text-xs text-warn-amber font-semibold">Released</div>
+        <div className="text-xs text-warn-amber font-semibold">Released{fanFav ? ' — the fans won\'t forget.' : ''}</div>
       ) : done === 'sold' ? (
-        <div className="text-xs text-pitch-green font-semibold">Sold for {formatMoney(sellFee)}</div>
+        <div className="text-xs text-pitch-green font-semibold">Sold for {formatMoney(sellFee)}{fanFav ? ' — a tough call.' : ''}</div>
       ) : action === 'confirm-release' ? (
-        <div className="flex items-center gap-2 flex-wrap text-xs">
-          <span className="text-txt-muted">
-            Release {player.name}{releaseFee > 0 ? ` (${formatMoney(releaseFee)} fee)` : ' for free'}?
-          </span>
-          <button onClick={handleConfirmRelease} className="px-2 py-0.5 bg-alert-red/20 text-alert-red border border-alert-red/40 rounded hover:bg-alert-red/30 transition-colors">Yes</button>
-          <button onClick={cancel} className="px-2 py-0.5 bg-white/5 text-txt-muted border border-white/10 rounded hover:bg-white/10 transition-colors">Cancel</button>
+        <div className="flex flex-col gap-1.5 text-xs">
+          {fanFav && (
+            <div className="text-[10px] text-purple-400 bg-purple-500/5 border border-purple-500/20 rounded px-2 py-1">
+              ♥ {player.name} is a fan favourite — releasing them will hurt morale.
+            </div>
+          )}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-txt-muted">
+              Release {player.name}{releaseFee > 0 ? ` (${formatMoney(releaseFee)} fee)` : ' for free'}?
+            </span>
+            <button onClick={handleConfirmRelease} className="px-2 py-0.5 bg-alert-red/20 text-alert-red border border-alert-red/40 rounded hover:bg-alert-red/30 transition-colors">Yes</button>
+            <button onClick={cancel} className="px-2 py-0.5 bg-white/5 text-txt-muted border border-white/10 rounded hover:bg-white/10 transition-colors">Cancel</button>
+          </div>
         </div>
       ) : action === 'pick-club' ? (
         <div className="flex flex-col gap-1.5 text-xs">
+          {fanFav && (
+            <div className="text-[10px] text-purple-400 bg-purple-500/5 border border-purple-500/20 rounded px-2 py-1">
+              ♥ Are you sure? {player.name} is a fan favourite.
+            </div>
+          )}
           <span className="text-txt-muted">Sell to club for <span className="text-pitch-green font-semibold">{formatMoney(sellFee)}</span>:</span>
           <select
             value={selectedClubId}
@@ -365,18 +635,62 @@ function SquadPlayerCard({ player, currentWeek, clubId, scoutLevel, onRelease, o
   );
 }
 
+// ─── Deadline day banner ───────────────────────────────────────────────────────
+
+function DeadlineDayBanner({ week, phase }: { week: number; phase: string }) {
+  if (!isTransferWindowOpen(week, phase)) return null;
+
+  // Last week of summer window (week 4) or January window (week 24)
+  const isDeadlineDay = week === 4 || week === 24;
+  // Second-to-last week — approaching deadline
+  const isUrgent = week === 3 || week === 23;
+
+  if (isDeadlineDay) {
+    return (
+      <div className="bg-alert-red/10 border border-alert-red/50 rounded-card px-4 py-2.5 flex items-center gap-3">
+        <span className="text-alert-red font-bold text-sm uppercase tracking-wide animate-pulse">
+          DEADLINE DAY
+        </span>
+        <span className="text-xs text-txt-muted flex-1">
+          Transfer window closes at the end of this week — all signings must be finalised now.
+        </span>
+      </div>
+    );
+  }
+
+  if (isUrgent) {
+    return (
+      <div className="bg-warn-amber/10 border border-warn-amber/40 rounded-card px-4 py-2 flex items-center gap-3">
+        <span className="text-warn-amber font-bold text-xs uppercase tracking-wide">
+          WINDOW CLOSING
+        </span>
+        <span className="text-xs text-txt-muted flex-1">
+          Transfer window shuts in 2 weeks — don't leave your business too late.
+        </span>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 // ─── Main component ────────────────────────────────────────────────────────────
 
 export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMarketSlideOverProps) {
   const [activeTab, setActiveTab] = useState<Tab>('free-agents');
   const [positionFilter, setPositionFilter] = useState<Position | 'ALL'>('ALL');
   const [sortKey, setSortKey] = useState<SortKey>('rating');
+  const [squadViewMode, setSquadViewMode] = useState<SquadViewMode>('formation');
 
   const currentTotalWages = state.club.squad.reduce((sum, p) => sum + p.wage, 0);
   const remainingWageBudget = state.club.wageBudget - currentTotalWages;
   const squadCount = state.club.squad.length;
   const squadCapacity = state.club.squadCapacity;
   const scoutLevel = getScoutLevel(state.club.facilities);
+
+  // Current league position (1–24). If table not yet populated, default to mid-table.
+  const leagueEntry = state.league.entries.find(e => e.clubId === state.club.id);
+  const tablePosition = leagueEntry?.position ?? 12;
 
   // ── Filter + sort free agents ──────────────────────────────────────────────
 
@@ -414,6 +728,11 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
     if (result.error) onError(result.error);
   }
 
+  function handleFillPosition(pos: Position) {
+    setPositionFilter(pos);
+    setActiveTab('free-agents');
+  }
+
   const POSITIONS: (Position | 'ALL')[] = ['ALL', 'GK', 'DEF', 'MID', 'FWD'];
   const SORT_OPTIONS: { value: SortKey; label: string }[] = [
     { value: 'rating',  label: 'Rating ↓' },
@@ -424,6 +743,9 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
 
   return (
     <div className="flex flex-col h-full gap-3">
+
+      {/* ── Deadline day / urgency banner ────────────────────────────────── */}
+      <DeadlineDayBanner week={state.currentWeek} phase={state.phase} />
 
       {/* ── Budget / squad bar ─────────────────────────────────────────────── */}
       <div className="bg-bg-raised rounded-card border border-white/5 px-4 py-2 flex items-center gap-4 text-sm flex-wrap">
@@ -442,7 +764,7 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
       <FormationGapPanel state={state} />
 
       {/* ── Tabs ──────────────────────────────────────────────────────────── */}
-      <div className="flex gap-1">
+      <div className="flex items-center gap-1">
         {(['free-agents', 'my-squad'] as Tab[]).map(tab => (
           <button
             key={tab}
@@ -456,6 +778,24 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
             {tab === 'free-agents' ? `Free Agents (${(state.freeAgentPool ?? []).length})` : `My Squad (${squadCount})`}
           </button>
         ))}
+        {/* View mode toggle — only visible on My Squad tab */}
+        {activeTab === 'my-squad' && (
+          <div className="ml-auto flex gap-1">
+            {(['formation', 'list'] as SquadViewMode[]).map(mode => (
+              <button
+                key={mode}
+                onClick={() => setSquadViewMode(mode)}
+                className={`px-2 py-1 text-xs rounded transition-colors ${
+                  squadViewMode === mode
+                    ? 'bg-white/10 text-txt-primary border border-white/20'
+                    : 'text-txt-muted border border-white/5 hover:border-white/10'
+                }`}
+              >
+                {mode === 'formation' ? '⊞ Formation' : '≡ List'}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* ── Filters ──────────────────────────────────────────────────────── */}
@@ -502,10 +842,23 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
                 canAfford={player.wage <= remainingWageBudget}
                 hasSquadRoom={squadCount < squadCapacity}
                 scoutLevel={scoutLevel}
+                willingness={computeWillingness(player, player.wage, tablePosition)}
+                npcInterest={getNpcInterestCount(player.id)}
                 onSign={wage => handleSign(player.id, wage)}
               />
             ))
           )
+        ) : squadViewMode === 'formation' && state.club.preferredFormation ? (
+          <SquadFormationView
+            squad={state.club.squad}
+            formation={state.club.preferredFormation}
+            currentWeek={state.currentWeek}
+            clubId={state.club.id}
+            scoutLevel={scoutLevel}
+            onFillPosition={handleFillPosition}
+            onRelease={handleRelease}
+            onSellToNpc={handleSellToNpc}
+          />
         ) : (
           filteredSquad.length === 0 ? (
             <div className="text-txt-muted text-sm text-center py-8">No players match your filters.</div>

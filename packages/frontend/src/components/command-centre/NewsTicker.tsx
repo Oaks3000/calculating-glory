@@ -4,8 +4,11 @@ import { LeagueTableEntry } from '@calculating-glory/domain';
 interface NewsTickerProps {
   events: GameEvent[];
   clubId: string;
+  clubName: string;
+  stadiumName: string;
   leagueEntries: LeagueTableEntry[];
   squad: Player[];
+  currentWeek?: number;
 }
 
 function buildMoraleHeadlines(squad: Player[]): string[] {
@@ -38,8 +41,11 @@ function buildMoraleHeadlines(squad: Player[]): string[] {
 function buildHeadlines(
   events: GameEvent[],
   clubId: string,
+  clubName: string,
+  stadiumName: string,
   nameMap: Map<string, string>,
-  squad: Player[]
+  squad: Player[],
+  currentWeek?: number
 ): string[] {
   const headlines: string[] = [];
 
@@ -55,30 +61,51 @@ function buildHeadlines(
       headlines.push((e as MoraleTickerEvent).headline);
     } else if (e.type === 'NPC_PLAYER_SIGNED') {
       headlines.push(`${e.npcClubName} sign ${e.player.name}`);
+    } else if (e.type === 'FREE_AGENT_SIGNED') {
+      const count = e.npcInterestCount ?? 0;
+      if (count >= 2) {
+        headlines.push(`${clubName} sign ${e.player.name} — beat ${count} clubs to the deal`);
+      } else if (count === 1) {
+        headlines.push(`${clubName} pip rivals to sign ${e.player.name}`);
+      } else {
+        headlines.push(`${clubName} sign ${e.player.name} as a free agent`);
+      }
     } else if (e.type === 'TRANSFER_COMPLETED') {
-      headlines.push(`Transfer: ${e.player.name} joins the squad`);
+      headlines.push(`${clubName} complete transfer: ${e.player.name} arrives`);
     } else if (e.type === 'PLAYER_SOLD') {
       const fee = (e.fee / 100).toLocaleString('en-GB', { style: 'currency', currency: 'GBP', maximumFractionDigits: 0 });
       if (e.playerName && e.npcClubName) {
-        headlines.push(`${e.playerName} joins ${e.npcClubName} for ${fee}`);
+        headlines.push(`${e.playerName} leaves ${clubName} to join ${e.npcClubName} for ${fee}`);
       } else {
-        headlines.push(`Departure: Player sold for ${fee}`);
+        headlines.push(`${clubName}: Departure confirmed — player sold for ${fee}`);
       }
     } else if (e.type === 'FACILITY_UPGRADED') {
-      headlines.push(`Facility upgraded: ${e.facilityType} → Level ${e.level}`);
+      headlines.push(`${clubName} invest at ${stadiumName}: ${e.facilityType} upgraded to Level ${e.level}`);
     } else if (e.type === 'SEASON_ENDED') {
       const status = e.promoted ? '🏆 PROMOTED!' : e.relegated ? '⚠ RELEGATED' : 'Season complete';
-      headlines.push(`${status} — Final position: ${e.finalPosition}`);
+      headlines.push(`${clubName}: ${status} — Final position: ${e.finalPosition}`);
     }
   }
 
   // Most recent events first, max 30; live morale state appended at the end
-  return [...headlines.slice(-30).reverse(), ...buildMoraleHeadlines(squad)];
+  // Milestone week context (live state — shown for the week leading up to and including the milestone)
+  const milestoneHeadlines: string[] = [];
+  if (currentWeek !== undefined) {
+    if (currentWeek === 22 || currentWeek === 23) {
+      milestoneHeadlines.push(`Halfway through the season — how are ${clubName} measuring up?`);
+    } else if (currentWeek === 36 || currentWeek === 37) {
+      milestoneHeadlines.push(`The run-in begins — 10 games left for ${clubName} to make their mark`);
+    } else if (currentWeek === 45 || currentWeek === 46) {
+      milestoneHeadlines.push(`⚠ FINAL DAY — everything is still to play for at ${stadiumName}`);
+    }
+  }
+
+  return [...headlines.slice(-30).reverse(), ...buildMoraleHeadlines(squad), ...milestoneHeadlines];
 }
 
-export function NewsTicker({ events, clubId, leagueEntries, squad }: NewsTickerProps) {
+export function NewsTicker({ events, clubId, clubName, stadiumName, leagueEntries, squad, currentWeek }: NewsTickerProps) {
   const nameMap = new Map<string, string>(leagueEntries.map(e => [e.clubId, e.clubName]));
-  const headlines = buildHeadlines(events, clubId, nameMap, squad);
+  const headlines = buildHeadlines(events, clubId, clubName, stadiumName, nameMap, squad, currentWeek);
 
   if (headlines.length === 0) return null;
 

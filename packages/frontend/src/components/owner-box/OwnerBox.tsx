@@ -174,9 +174,15 @@ export function OwnerBox({ timeline, playerTeamName, opponentTeamName, onComplet
         <div ref={bottomRef} />
       </div>
 
-      {/* ── Continue button (appears after FULL_TIME) ────────────────────────── */}
+      {/* ── Post-match result card (appears after FULL_TIME) ───────────────── */}
       {completed && (
-        <div className="shrink-0 px-4 py-4 border-t border-bg-raised">
+        <div className="shrink-0 px-4 py-4 border-t border-bg-raised flex flex-col gap-3">
+          <PostMatchResult
+            finalScore={timeline.finalScore}
+            isHome={timeline.isHome}
+            playerTeamName={playerTeamName}
+            opponentTeamName={opponentTeamName}
+          />
           <button
             onClick={onComplete}
             className="w-full py-3 rounded-card bg-data-blue text-white text-sm font-semibold
@@ -213,6 +219,71 @@ function KevBubble({ text, beatType }: { text: string; beatType: BeatType }) {
         <p className="text-xs2 font-semibold text-data-blue mb-0.5">Kev Mulligan</p>
         <p className={`text-xs leading-relaxed ${isGoal ? 'text-pitch-green font-medium' : 'text-txt-primary'}`}>
           {text}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ── Post-match result card ────────────────────────────────────────────────────
+
+const RESULT_CONFIG = {
+  W: {
+    badge: 'WIN',
+    badgeClass: 'bg-pitch-green/20 text-pitch-green border border-pitch-green/40',
+    headlines: [
+      'Three points! Brilliant.',
+      'Get in! What a result.',
+      'The team delivered. Enjoy it.',
+    ],
+  },
+  D: {
+    badge: 'DRAW',
+    badgeClass: 'bg-warn-amber/20 text-warn-amber border border-warn-amber/40',
+    headlines: [
+      'A point on the board.',
+      'We\'ll take it. Heads up.',
+      'Could have been worse. Move on.',
+    ],
+  },
+  L: {
+    badge: 'DEFEAT',
+    badgeClass: 'bg-alert-red/20 text-alert-red border border-alert-red/40',
+    headlines: [
+      'Tough one. Back to the training ground.',
+      'Not good enough today. We regroup.',
+      'That hurts. Time to bounce back.',
+    ],
+  },
+};
+
+interface PostMatchResultProps {
+  finalScore: MatchScore;
+  isHome: boolean;
+  playerTeamName: string;
+  opponentTeamName: string;
+}
+
+function PostMatchResult({ finalScore, isHome, playerTeamName, opponentTeamName }: PostMatchResultProps) {
+  const playerGoals   = isHome ? finalScore.home : finalScore.away;
+  const opponentGoals = isHome ? finalScore.away : finalScore.home;
+  const result: 'W' | 'D' | 'L' =
+    playerGoals > opponentGoals ? 'W' : playerGoals < opponentGoals ? 'L' : 'D';
+  const cfg = RESULT_CONFIG[result];
+
+  // Pick a deterministic headline from the list based on goal diff
+  const headlineIdx = Math.abs(playerGoals - opponentGoals) % cfg.headlines.length;
+  const headline = cfg.headlines[headlineIdx];
+
+  return (
+    <div className="bg-bg-raised rounded-card border border-bg-raised/60 px-4 py-3 flex items-center gap-4">
+      <span className={`text-xs font-bold px-2 py-1 rounded shrink-0 ${cfg.badgeClass}`}>
+        {cfg.badge}
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs font-semibold text-txt-primary truncate">{headline}</p>
+        <p className="text-[10px] text-txt-muted mt-0.5">
+          {playerTeamName} {playerGoals} – {opponentGoals} {opponentTeamName}
         </p>
       </div>
     </div>

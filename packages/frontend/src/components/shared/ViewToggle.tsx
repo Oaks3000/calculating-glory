@@ -19,6 +19,7 @@ interface ViewToggleProps {
   dispatch: (command: GameCommand) => { error?: string };
   onError: (msg: string) => void;
   onResetGame: (curriculumLevel: CurriculumLevel) => void;
+  onPreMatch?: () => void;
 }
 
 /** Format pence as a compact £ string: 50000000 → "£500k", 500000000 → "£5m" */
@@ -44,6 +45,7 @@ export function ViewToggle({
   dispatch,
   onError,
   onResetGame,
+  onPreMatch,
 }: ViewToggleProps) {
   const [step, setStep] = useState<'idle' | 'confirm' | 'pick'>('idle');
   const [selected, setSelected] = useState<CurriculumLevel>('YEAR_7');
@@ -112,6 +114,7 @@ export function ViewToggle({
             isLoading={isLoading}
             dispatch={dispatch}
             onError={onError}
+            onPreMatch={onPreMatch}
           />
         </div>
       </div>

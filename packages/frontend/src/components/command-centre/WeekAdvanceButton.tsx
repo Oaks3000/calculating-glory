@@ -7,6 +7,8 @@ interface WeekAdvanceButtonProps {
   isLoading: boolean;
   dispatch: (command: GameCommand) => { error?: string };
   onError: (msg: string) => void;
+  /** If provided, clicking shows the pre-match screen instead of simulating directly. */
+  onPreMatch?: () => void;
 }
 
 export function WeekAdvanceButton({
@@ -16,6 +18,7 @@ export function WeekAdvanceButton({
   isLoading,
   dispatch,
   onError,
+  onPreMatch,
 }: WeekAdvanceButtonProps) {
   const unresolved = pendingEvents.filter(e => !e.resolved);
   const isDisabled = isLoading || unresolved.length > 0 || currentWeek >= 46;
@@ -30,6 +33,10 @@ export function WeekAdvanceButton({
       : `Advance to Week ${currentWeek + 1}`;
 
   function handleClick() {
+    if (onPreMatch) {
+      onPreMatch();
+      return;
+    }
     const result = dispatch({
       type: 'SIMULATE_WEEK',
       week: currentWeek + 1,
