@@ -87,9 +87,9 @@ export default function App() {
     setScreen('game');
   }
 
-  function handleNewGame(level: CurriculumLevel) {
+  function handleNewGame(level: CurriculumLevel, clubName: string, stadiumName: string) {
     clearIntroCompleted();
-    resetGame(level);
+    resetGame(level, clubName, stadiumName);
     setScreen('intro');
   }
 

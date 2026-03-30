@@ -23,17 +23,25 @@ const SEED = 'calculating-glory-mvp-v1';
  * Division progression is completely separate — both start in League Two.
  */
 export function createInitialGameState(
-  curriculumLevel: CurriculumLevel = 'YEAR_7'
+  curriculumLevel: CurriculumLevel = 'YEAR_7',
+  clubName: string = CLUB_NAME,
+  stadiumName: string = STADIUM_NAME,
 ): { state: GameState; events: GameEvent[] } {
   const config = CURRICULUM_LEVELS[curriculumLevel];
+
+  // Derive a stable club ID from the club name
+  const clubId = clubName
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '') || CLUB_ID;
 
   const events: GameEvent[] = [
     {
       type: 'GAME_STARTED',
       timestamp: Date.now(),
-      clubId: CLUB_ID,
-      clubName: CLUB_NAME,
-      stadiumName: STADIUM_NAME,
+      clubId,
+      clubName,
+      stadiumName,
       initialBudget: config.budgetScale.transferBudget,
       difficulty: 'MEDIUM',
       seed: SEED,
