@@ -55,6 +55,15 @@ function buildHeadlines(
       headlines.push((e as MoraleTickerEvent).headline);
     } else if (e.type === 'NPC_PLAYER_SIGNED') {
       headlines.push(`${e.npcClubName} sign ${e.player.name}`);
+    } else if (e.type === 'FREE_AGENT_SIGNED') {
+      const count = e.npcInterestCount ?? 0;
+      if (count >= 2) {
+        headlines.push(`Exclusive: ${e.player.name} signs — beat ${count} clubs to secure the deal`);
+      } else if (count === 1) {
+        headlines.push(`${e.player.name} signs — pipped another club to the punch`);
+      } else {
+        headlines.push(`${e.player.name} joins the squad as a free agent`);
+      }
     } else if (e.type === 'TRANSFER_COMPLETED') {
       headlines.push(`Transfer: ${e.player.name} joins the squad`);
     } else if (e.type === 'PLAYER_SOLD') {

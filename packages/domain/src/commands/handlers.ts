@@ -813,6 +813,14 @@ function handleSignFreeAgent(command: any, state: GameState): CommandResult {
     contractExpiresWeek,
   };
 
+  // Compute NPC interest count deterministically from player id + current week
+  // so the same player always has the same interest level in the same session.
+  let idHash = 0;
+  for (let i = 0; i < command.playerId.length; i++) {
+    idHash = (Math.imul(31, idHash) + command.playerId.charCodeAt(i)) | 0;
+  }
+  const npcInterestCount = Math.abs(idHash + state.currentWeek) % 4; // 0–3
+
   const events: GameEvent[] = [
     {
       type: 'FREE_AGENT_SIGNED',
@@ -822,6 +830,7 @@ function handleSignFreeAgent(command: any, state: GameState): CommandResult {
       offeredWage: command.offeredWage,
       contractExpiresWeek,
       player: updatedPlayer,
+      npcInterestCount,
     }
   ];
 
