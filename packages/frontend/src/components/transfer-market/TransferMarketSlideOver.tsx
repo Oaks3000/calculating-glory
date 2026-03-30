@@ -4,6 +4,7 @@ import {
   GameCommand,
   Player,
   Position,
+  Formation,
   formatMoney,
   FORMATION_CONFIG,
   LEAGUE_TWO_TEAMS,
@@ -111,7 +112,7 @@ function FormationGapPanel({ state }: FormationGapPanelProps) {
 
 interface SquadFormationViewProps {
   squad: Player[];
-  formation: string;
+  formation: Formation;
   currentWeek: number;
   clubId: string;
   scoutLevel: number;
