@@ -532,3 +532,173 @@ export function generateMoraleThresholdEvents(
 
   return [];
 }
+
+// ── Financial threshold event IDs ────────────────────────────────────────────
+
+export const FINANCIAL_THRESHOLD_TEMPLATE_IDS = new Set([
+  'val-runway-amber',
+  'val-runway-red',
+  'val-runway-critical',
+  'val-runway-recovery',
+]);
+
+// Band severity order: higher index = better financial health
+const BAND_ORDER = ['CRITICAL', 'RED', 'AMBER', 'GREEN', 'SURPLUS'] as const;
+type RunwayBand = 'SURPLUS' | 'GREEN' | 'AMBER' | 'RED' | 'CRITICAL';
+
+function bandIndex(b: RunwayBand): number {
+  return BAND_ORDER.indexOf(b);
+}
+
+/**
+ * Generate 0–1 Val Okoro inbox cards when the runway band crosses a threshold.
+ *
+ * Fires on:
+ *   - deterioration:  SURPLUS/GREEN → AMBER, AMBER → RED, RED → CRITICAL
+ *   - recovery:       CRITICAL/RED → AMBER or better
+ *
+ * "Once per crossing" — skips if an unresolved financial threshold card is already pending.
+ */
+export function generateFinancialThresholdEvents(
+  state: GameState,
+  week: number,
+  season: number,
+  currentBand: RunwayBand,
+  runway: number
+): PendingClubEvent[] {
+  if (state.phase === 'PRE_SEASON' || state.phase === 'SEASON_END') return [];
+
+  const previousBand: RunwayBand = state.lastRunwayBand ?? currentBand;
+  if (previousBand === currentBand) return [];
+
+  // Don't stack — skip if an unresolved financial threshold card is already in the inbox
+  if (state.pendingEvents.some(
+    e => FINANCIAL_THRESHOLD_TEMPLATE_IDS.has(e.templateId) && !e.resolved
+  )) return [];
+
+  const prevIdx = bandIndex(previousBand);
+  const currIdx = bandIndex(currentBand);
+  const deteriorating = currIdx < prevIdx;
+  const recovering    = currIdx > prevIdx;
+
+  const runwayDisplay = isFinite(runway) ? `${Math.round(runway)} weeks` : 'a surplus';
+
+  if (deteriorating) {
+    if (currentBand === 'AMBER') {
+      return [{
+        id: `evt-S${season}-W${week}-val-runway-amber`,
+        templateId: 'val-runway-amber',
+        week,
+        title: 'Financial warning — amber zone',
+        description: `Our runway is down to ${runwayDisplay} at current burn rate. We're not in crisis yet, but if the wage bill stays where it is we'll be in the red within a few months. Time to keep a close eye on the spend.`,
+        severity: 'minor',
+        npc: 'val',
+        choices: [
+          {
+            id: 'acknowledge',
+            label: 'Noted — I\'ll watch the wage bill',
+            description: 'Acknowledge the warning. No immediate action required.',
+          },
+          {
+            id: 'review-wages',
+            label: 'Ask Val for a full wage review',
+            description: 'Request a detailed breakdown to identify where savings can be made.',
+            reputationEffect: -2,
+          },
+        ],
+        resolved: false,
+      }];
+    }
+
+    if (currentBand === 'RED') {
+      return [{
+        id: `evt-S${season}-W${week}-val-runway-red`,
+        templateId: 'val-runway-red',
+        week,
+        title: 'Financial alert — red zone',
+        description: `Runway has dropped to ${runwayDisplay}. At current burn rate we're less than 10 weeks from running dry. We need to make some decisions — either cut costs or bring money in.`,
+        severity: 'major',
+        npc: 'val',
+        choices: [
+          {
+            id: 'sell-player',
+            label: 'I\'ll look at selling a player',
+            description: 'Commit to listing a player — transfer income could buy several more months of runway.',
+            reputationEffect: -3,
+          },
+          {
+            id: 'cut-wages',
+            label: 'Start wage negotiations',
+            description: 'Attempt to renegotiate contracts. Some players may push back.',
+            moraleEffect: -5,
+          },
+          {
+            id: 'hold-nerve',
+            label: 'Hold for now — form will turn it around',
+            description: 'Results on the pitch drive morale and attendance. Risky if form doesn\'t improve.',
+          },
+        ],
+        resolved: false,
+      }];
+    }
+
+    if (currentBand === 'CRITICAL') {
+      return [{
+        id: `evt-S${season}-W${week}-val-runway-critical`,
+        templateId: 'val-runway-critical',
+        week,
+        title: 'URGENT — less than 5 weeks of cash',
+        description: `Runway has collapsed to ${runwayDisplay}. I'm not being dramatic — we are weeks from not being able to pay wages. Emergency action is needed now.`,
+        severity: 'major',
+        npc: 'val',
+        choices: [
+          {
+            id: 'emergency-sale',
+            label: 'Authorise an emergency player sale',
+            description: 'Accept below-value offers to generate cash fast. The market knows you\'re desperate.',
+            reputationEffect: -5,
+            budgetEffect: 0,
+          },
+          {
+            id: 'board-emergency',
+            label: 'Request emergency board funding',
+            description: 'The board may step in — but they\'ll expect results and will monitor everything more closely.',
+            reputationEffect: -8,
+            budgetEffect: 50000_00, // £50k emergency injection
+          },
+          {
+            id: 'hope',
+            label: 'Hold on — we just need one big result',
+            description: 'The gambler\'s last stand. If things don\'t turn around, this is how clubs get taken over.',
+          },
+        ],
+        resolved: false,
+      }];
+    }
+  }
+
+  if (recovering) {
+    const newBandLabel = currentBand === 'SURPLUS' ? 'a surplus' :
+                         currentBand === 'GREEN'   ? 'the green zone' :
+                         'the amber zone';
+    return [{
+      id: `evt-S${season}-W${week}-val-runway-recovery`,
+      templateId: 'val-runway-recovery',
+      week,
+      title: 'Financial update — runway improving',
+      description: `Good news — we\'re back in ${newBandLabel} (${runwayDisplay} runway). The finances are looking more stable. Keep it up.`,
+      severity: 'minor',
+      npc: 'val',
+      choices: [
+        {
+          id: 'acknowledge',
+          label: 'Good to hear',
+          description: 'Note the improvement and continue as planned.',
+        },
+      ],
+      resolved: false,
+    }];
+  }
+
+  return [];
+}

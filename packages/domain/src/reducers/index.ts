@@ -95,6 +95,8 @@ export function reduceEvent(state: GameState, event: GameEvent): GameState {
       return handleTakeoverAccepted(state, event);
     case 'CURRICULUM_UPGRADED':
       return handleCurriculumUpgraded(state, event);
+    case 'RUNWAY_BAND_CHANGED':
+      return { ...state, lastRunwayBand: event.band };
     default:
       return state;
   }

@@ -126,3 +126,15 @@ export function computeWeeklyFinancials(state: GameState): {
 
   return { weeklyIncome, weeklyWages, runway };
 }
+
+/** Maps a runway value (weeks) to the colour band shown in the Financial Health Bar. */
+export function computeRunwayBand(
+  runway: number,
+  isSurplus: boolean
+): 'SURPLUS' | 'GREEN' | 'AMBER' | 'RED' | 'CRITICAL' {
+  if (isSurplus) return 'SURPLUS';
+  if (runway >= 20) return 'GREEN';
+  if (runway >= 10) return 'AMBER';
+  if (runway >= 5)  return 'RED';
+  return 'CRITICAL';
+}
