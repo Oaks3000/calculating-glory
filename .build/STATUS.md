@@ -3,7 +3,7 @@ project: "Calculating Glory"
 type: "build"
 priority: 2
 phase: "Phase 8 — Polish"
-progress: 94
+progress: 96
 lastUpdated: "2026-03-30"
 lastTouched: "2026-03-30"
 status: "in-progress"
@@ -11,7 +11,7 @@ status: "in-progress"
 
 # Calculating Glory - Current Status
 
-**Phase:** Phase 8 — Polish (94% complete)
+**Phase:** Phase 8 — Polish (96% complete)
 **Last Updated:** 2026-03-30
 
 ## What's Done
@@ -53,6 +53,12 @@ status: "in-progress"
 - Architecture futureproofing for CIRCLES + VOLUME_AND_SURFACE_AREA (GCSE Higher)
 - `DiagramLibrary` + `diagram?` field threaded through QuestionTemplate → MathChallenge
 
+*pensive-kapitsa worktree — issue #81 (open, not yet PR'd):*
+- **Pre-match screen**: full-screen overlay between "Advance to Week" and Owner's Box; shows home/away team cards with league position + last-5 form strip; "Kick Off" CTA
+- **Post-match screen**: result banner (Victory/Draw/Defeat) with colour treatment (green/amber/red); final score; morale milestone if one fired that week; NPC reaction (Val on wins+losses, Marcus on draws)
+- **Three-phase matchday flow**: `MatchdayState` in App.tsx tracks `pre-match → live → post-match`; Owner's Box `onComplete` now transitions to post-match instead of dismissing directly
+- New components: `PreMatchScreen.tsx`, `PostMatchScreen.tsx` in `components/matchday/`
+
 *nifty-ride worktree (open, not yet PR'd):*
 - **Intro spotlight**: each NPC beat reveals its corresponding CC section at full brightness; all others dimmed via per-section overlay divs (CSS opacity transition, not global filter)
 - **Single-message intro**: one card at a time, bottom-anchored — never covers the spotlighted section
@@ -63,7 +69,8 @@ status: "in-progress"
 ## What's In Progress
 
 - nifty-ride worktree — polish batch 1, ready to PR
-- Open polish issues: #81 (match day), #82 (transfers), #83 (season arc), #85 (NPC cast), #86 (mobile)
+- pensive-kapitsa worktree — issue #81 (matchday event flow), ready to PR
+- Open polish issues: #82 (transfers), #83 (season arc), #85 (NPC cast), #86 (mobile)
 - Balance pass — passive, during play-testing
 
 ## Blockers

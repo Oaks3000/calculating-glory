@@ -15,14 +15,25 @@ import { ForcedOutScreen } from './components/forced-out/ForcedOutScreen';
 import { MenuScreen } from './components/menu/MenuScreen';
 import { IntroScreen } from './components/intro/IntroScreen';
 import { OwnerBox } from './components/owner-box/OwnerBox';
+import { PreMatchScreen } from './components/matchday/PreMatchScreen';
+import { PostMatchScreen } from './components/matchday/PostMatchScreen';
 import { isIntroCompleted, clearIntroCompleted } from './lib/introState';
 
 type Screen = 'menu' | 'intro' | 'game';
+type MatchdayPhase = 'pre-match' | 'live' | 'post-match';
 
-interface OwnerBoxData {
+interface MatchdayState {
+  phase: MatchdayPhase;
   timeline: MatchTimeline;
   playerTeamName: string;
   opponentTeamName: string;
+  isHome: boolean;
+  myPosition: number;
+  myForm: ('W' | 'D' | 'L')[];
+  opponentPosition: number;
+  opponentForm: ('W' | 'D' | 'L')[];
+  week: number;
+  moraleEvent: { headline: string; milestoneKey: string } | null;
 }
 
 export default function App() {
@@ -30,7 +41,7 @@ export default function App() {
   const [screen, setScreen] = useState<Screen>('menu');
   const [activeView, setActiveView] = useState<ActiveView>('command');
   const [error, setError] = useState<string | null>(null);
-  const [ownerBoxData, setOwnerBoxData] = useState<OwnerBoxData | null>(null);
+  const [matchdayState, setMatchdayState] = useState<MatchdayState | null>(null);
   const processedEventCount = useRef<number | null>(null);
 
   // Detect new MATCH_SIMULATED events after simulation completes
@@ -57,6 +68,7 @@ export default function App() {
     const opponentId = isHome ? matchEvent.awayTeamId : matchEvent.homeTeamId;
     const opponentEntry = state.league.entries.find(e => e.clubId === opponentId);
     const opponentTeamName = opponentEntry?.clubName ?? 'Opponents';
+    const myEntry = state.league.entries.find(e => e.clubId === state.club.id);
 
     const gk = state.club.squad.find(p => p.position === 'GK');
     const keeperName = gk ? gk.name.split(' ')[0] : 'Keeper';
@@ -73,10 +85,22 @@ export default function App() {
       keeperName,
     };
 
-    setOwnerBoxData({
+    const moraleEvent = newEvents.find(e => e.type === 'MORALE_TICKER_EVENT');
+
+    setMatchdayState({
+      phase: 'pre-match',
       timeline: generateMatchTimeline(ctx),
       playerTeamName: state.club.name,
       opponentTeamName,
+      isHome,
+      myPosition: myEntry?.position ?? 0,
+      myForm: (myEntry?.form ?? []) as ('W' | 'D' | 'L')[],
+      opponentPosition: opponentEntry?.position ?? 0,
+      opponentForm: (opponentEntry?.form ?? []) as ('W' | 'D' | 'L')[],
+      week: state.currentWeek,
+      moraleEvent: moraleEvent && moraleEvent.type === 'MORALE_TICKER_EVENT'
+        ? { headline: moraleEvent.headline, milestoneKey: moraleEvent.milestoneKey }
+        : null,
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [events, isLoading]);
@@ -183,12 +207,37 @@ export default function App() {
         </div>
       )}
 
-      {ownerBoxData && (
+      {matchdayState?.phase === 'pre-match' && (
+        <PreMatchScreen
+          week={matchdayState.week}
+          playerTeamName={matchdayState.playerTeamName}
+          opponentTeamName={matchdayState.opponentTeamName}
+          isHome={matchdayState.isHome}
+          myPosition={matchdayState.myPosition}
+          myForm={matchdayState.myForm}
+          opponentPosition={matchdayState.opponentPosition}
+          opponentForm={matchdayState.opponentForm}
+          onKickOff={() => setMatchdayState(s => s ? { ...s, phase: 'live' } : s)}
+        />
+      )}
+
+      {matchdayState?.phase === 'live' && (
         <OwnerBox
-          timeline={ownerBoxData.timeline}
-          playerTeamName={ownerBoxData.playerTeamName}
-          opponentTeamName={ownerBoxData.opponentTeamName}
-          onComplete={() => setOwnerBoxData(null)}
+          timeline={matchdayState.timeline}
+          playerTeamName={matchdayState.playerTeamName}
+          opponentTeamName={matchdayState.opponentTeamName}
+          onComplete={() => setMatchdayState(s => s ? { ...s, phase: 'post-match' } : s)}
+        />
+      )}
+
+      {matchdayState?.phase === 'post-match' && (
+        <PostMatchScreen
+          finalScore={matchdayState.timeline.finalScore}
+          isHome={matchdayState.isHome}
+          playerTeamName={matchdayState.playerTeamName}
+          opponentTeamName={matchdayState.opponentTeamName}
+          moraleEvent={matchdayState.moraleEvent}
+          onDismiss={() => setMatchdayState(null)}
         />
       )}
     </div>

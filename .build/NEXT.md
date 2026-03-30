@@ -8,8 +8,9 @@ lastUpdated: "2026-03-30"
 
 ## Immediate (Next Session)
 
-1. **Open PR for nifty-ride branch** — morale ticker milestones + Groundskeeper's Drill; both browser-verified.
-2. **Balance pass** — full L2 → L1 play-through; observe growth/retirement rates, budget scaling, question difficulty progression; compare Year 7 vs Year 9 starting experience.
+1. **Open PR for pensive-kapitsa branch** — matchday event flow (issue #81); pre-match + post-match screens, three-phase MatchdayState.
+2. **Open PR for nifty-ride branch** — morale ticker milestones + Groundskeeper's Drill; both browser-verified.
+3. **Balance pass** — full L2 → L1 play-through; observe growth/retirement rates, budget scaling, question difficulty progression; compare Year 7 vs Year 9 starting experience.
 
 ## Short Term (Next 2–4 Weeks)
 
