@@ -5,7 +5,7 @@
  * Deterministic — same seed always produces the same pool.
  *
  * Narrative context: these are journeymen and near-misses rattling around
- * the lower leagues. A few recognisable faces (sort of) among the journeymen.
+ * the lower leagues. All names are fictional.
  */
 
 import { Player, Position, PlayerAttributes } from '../types/player';
@@ -25,22 +25,17 @@ const DIVISION_QUALITY_BOOST: Record<Division, number> = {
   PREMIER_LEAGUE: 30,
 };
 
-// ─── Famous-ish parody names (8) ──────────────────────────────────────────────
-
-const PARODY_NAMES: string[] = [
-  'Lional Messy',
-  'Crystiano Ronoldo',
-  'Neymur Jr',
-  'Killian Mboppe',
-  'Errling Haland',
-  'Kevin De Bruyne',
-  'Virgil van Dijck',
-  'Mohammid Salah',
-];
-
-// ─── Plausible lower-league journeymen (52) ────────────────────────────────────
+// ─── Plausible lower-league journeymen (60) ────────────────────────────────────
 
 const JOURNEYMEN_NAMES: string[] = [
+  'Luca Fiorelli',
+  'Andres Cienfuegos',
+  'Tomasz Wierzbicki',
+  'Declan Murtagh',
+  'Oumar Sy',
+  'Nils Bergqvist',
+  'Davide Caruso',
+  'Thibault Renaudin',
   'Dale Hutchins',
   'Connor Farrell',
   'Matty Swann',
@@ -161,9 +156,7 @@ export function generateFreeAgentPool(seed: string, division: Division = 'LEAGUE
   const qualityBoost = DIVISION_QUALITY_BOOST[division];
   const rng = createRng(`${seed}-free-agents`);
 
-  // Build full name list: parody names first, then journeymen
-  // Shuffle both lists separately using rng for variety
-  const allNames = [...PARODY_NAMES, ...JOURNEYMEN_NAMES];
+  const allNames = [...JOURNEYMEN_NAMES];
 
   // Shuffle the name list deterministically
   const shuffledNames = [...allNames];
