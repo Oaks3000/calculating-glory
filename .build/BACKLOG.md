@@ -136,6 +136,10 @@ Performance notes for Chromebooks:
 - Blip engine renders only during match context (`isMatchDay`) — zero overhead outside match
 - 22 blips as `<rect>` elements inside one `<g>` is cheap; avoid mounting as individual React components with their own state/intervals
 
+## Multiplayer Readiness
+
+- [ ] Expand free agent name bank from 60 → 150–200 names to avoid repetition across concurrent sessions (single-player pool is seeded so 60 is fine; multiplayer draws from different seeds and will surface duplicates quickly)
+
 ## Balance / Tuning
 
 - [ ] Balance pass — observe growth/decline rates, retirement frequency (~1–2/season), and whether promotion to L1 feels meaningfully harder; run passively during normal play-throughs rather than as a dedicated task
