@@ -33,11 +33,13 @@ interface CoreUnitProps {
   /** Weeks remaining on active construction; undefined or 0 = not building */
   constructionWeeksRemaining?: number;
   isHovered: boolean;
+  /** When true, the building pulses with a highlight glow (used during intro tour). */
+  isHighlighted?: boolean;
   onClick:   () => void;
   onHover:   (id: string | null) => void;
 }
 
-export function CoreUnit({ def, level, constructionWeeksRemaining, isHovered, onClick, onHover }: CoreUnitProps) {
+export function CoreUnit({ def, level, constructionWeeksRemaining, isHovered, isHighlighted, onClick, onHover }: CoreUnitProps) {
   const isBuilding = (constructionWeeksRemaining ?? 0) > 0;
   const bh   = def.blockHeights[Math.min(level, 5)];
   const fv   = footprintVertices(def.gc, def.gr, def.cols, def.rows);
@@ -137,6 +139,17 @@ export function CoreUnit({ def, level, constructionWeeksRemaining, isHovered, on
             style={{ pointerEvents: 'none' }}
           />
         </>
+      )}
+
+      {/* ── Intro tour highlight pulse ─────────────────────────── */}
+      {isHighlighted && (
+        <path
+          d={hitPath}
+          fill="rgba(68,138,255,0.15)"
+          stroke="#448AFF"
+          strokeWidth="2"
+          style={{ pointerEvents: 'none', animation: 'intro-highlight 1.5s ease-in-out infinite' }}
+        />
       )}
 
       {/* ── Hover tint (sits above block faces, below icon) ──────── */}
