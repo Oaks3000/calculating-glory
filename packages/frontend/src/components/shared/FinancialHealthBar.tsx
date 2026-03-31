@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { GameState, computeWeeklyFinancials, formatMoney } from '@calculating-glory/domain';
 
 interface Props {
@@ -42,7 +43,33 @@ export function FinancialHealthBar({ state }: Props) {
     ? `+${formatMoney(-burn)}/wk`
     : `${formatMoney(burn)}/wk`;
 
-  const runwayLabel = isSurplus ? 'Surplus' : `${runwayWeeks} wks`;
+  const runwayLabel = isSurplus ? 'Surplus' : `${runwayWeeks}w runway`;
+
+  // ── Budget change flash ──────────────────────────────────────────────────
+  const prevBudgetRef = useRef(budget);
+  const [budgetFlash, setBudgetFlash] = useState<'gain' | 'loss' | null>(null);
+  const [budgetDelta, setBudgetDelta] = useState<number | null>(null);
+
+  useEffect(() => {
+    const prev = prevBudgetRef.current;
+    if (prev !== budget) {
+      const delta = budget - prev;
+      setBudgetFlash(delta > 0 ? 'gain' : 'loss');
+      setBudgetDelta(delta);
+      prevBudgetRef.current = budget;
+      const timer = setTimeout(() => {
+        setBudgetFlash(null);
+        setBudgetDelta(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [budget]);
+
+  const flashClass = budgetFlash === 'gain'
+    ? 'text-pitch-green animate-pulse'
+    : budgetFlash === 'loss'
+      ? 'text-alert-red animate-pulse'
+      : 'text-txt-primary';
 
   return (
     <div className="mx-4 mt-1 px-3 py-1.5 bg-bg-surface rounded-card flex items-center gap-3 text-sm">
@@ -50,7 +77,16 @@ export function FinancialHealthBar({ state }: Props) {
       {/* Budget */}
       <div className="flex items-center gap-1.5 shrink-0">
         <span className="text-txt-muted text-xs uppercase tracking-wide leading-none">Budget</span>
-        <span className="text-txt-primary font-mono font-semibold tabular-nums">{formatMoney(budget)}</span>
+        <span className={`font-mono font-semibold tabular-nums transition-colors duration-300 ${flashClass}`}>
+          {formatMoney(budget)}
+        </span>
+        {budgetDelta !== null && (
+          <span className={`text-xs font-mono font-semibold tabular-nums animate-bounce ${
+            budgetDelta > 0 ? 'text-pitch-green' : 'text-alert-red'
+          }`}>
+            {budgetDelta > 0 ? '+' : ''}{formatMoney(budgetDelta)}
+          </span>
+        )}
       </div>
 
       <div className="h-3.5 w-px bg-bg-raised shrink-0" />

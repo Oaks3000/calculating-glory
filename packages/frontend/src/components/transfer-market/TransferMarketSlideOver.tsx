@@ -511,7 +511,7 @@ function SquadPlayerCard({ player, currentWeek, clubId, scoutLevel, onRelease, o
       return <span className="text-[10px] bg-pitch-green/20 text-pitch-green border border-pitch-green/40 px-1.5 py-0.5 rounded">Out of contract</span>;
     }
     const weeksLeft = player.contractExpiresWeek - currentWeek;
-    return <span className="text-[10px] text-txt-muted">Wk {player.contractExpiresWeek} ({weeksLeft}wk left)</span>;
+    return <span className="text-[10px] text-txt-muted" title={`Contract expires week ${player.contractExpiresWeek}`}>Contract: {weeksLeft}w left</span>;
   }
 
   function handleConfirmRelease() {

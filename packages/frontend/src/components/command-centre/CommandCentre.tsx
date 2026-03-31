@@ -262,6 +262,7 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
             events={events}
             dispatch={dispatch}
             linkedEvent={socialLinkedEvent}
+            onNegotiationComplete={handleSocialClose}
           />
         )}
       </SlideOver>
