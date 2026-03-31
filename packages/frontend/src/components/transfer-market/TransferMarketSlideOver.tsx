@@ -172,7 +172,7 @@ function SquadFormationView({
                 const ovr = computeOverallRating(player);
                 const isExpanded = expandedId === player.id;
                 return (
-                  <div key={player.id} className="flex flex-col gap-1" style={{ minWidth: '140px', maxWidth: '200px' }}>
+                  <div key={player.id} className="flex flex-col gap-1 min-w-[120px] flex-1">
                     <button
                       onClick={() => setExpandedId(isExpanded ? null : player.id)}
                       className={`bg-bg-raised border rounded-card px-3 py-2 text-left w-full transition-colors hover:border-white/20 ${ovrBorderClass(ovr)} ${isExpanded ? 'border-opacity-80' : ''}`}
@@ -205,8 +205,7 @@ function SquadFormationView({
                 <button
                   key={`vacant-${i}`}
                   onClick={() => onFillPosition(pos)}
-                  className="bg-bg-raised border border-dashed border-white/20 rounded-card px-3 py-2 text-left hover:border-white/40 transition-colors"
-                  style={{ minWidth: '140px' }}
+                  className="bg-bg-raised border border-dashed border-white/20 rounded-card px-3 py-2 text-left hover:border-white/40 transition-colors min-w-[120px] flex-1"
                 >
                   <div className="text-xs text-txt-muted font-semibold">+ VACANT</div>
                   <div className="text-[10px] text-data-blue mt-0.5">Find a {pos} →</div>

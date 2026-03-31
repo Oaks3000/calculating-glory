@@ -67,6 +67,7 @@ export function MathsChallenge({ onResult }: Props) {
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-txt-muted text-sm">£</span>
             <input
               type="number"
+              inputMode="numeric"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}

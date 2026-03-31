@@ -30,7 +30,7 @@ function DataTile({ label, value, sub, trend, color, animateClass, onClick }: Ti
   return (
     <div
       className={[
-        'card flex flex-col gap-1 min-w-[120px]',
+        'card flex flex-col gap-1',
         animateClass ?? '',
         onClick ? 'cursor-pointer hover:border hover:border-data-blue/40 transition-colors' : '',
       ].join(' ')}
@@ -146,7 +146,7 @@ export function DataTiles({ state, gridMode, onBackroomClick, onAcumenClick }: D
   ];
 
   return (
-    <div className={gridMode ? 'grid grid-cols-4 gap-2' : 'flex flex-wrap gap-3'}>
+    <div className={gridMode ? 'grid grid-cols-2 sm:grid-cols-4 gap-2' : 'flex flex-wrap gap-3'}>
       {tiles.map(tile => (
         <DataTile key={tile.label} {...tile} />
       ))}

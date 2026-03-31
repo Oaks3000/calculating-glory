@@ -61,12 +61,12 @@ export function ViewToggle({
     <>
       <div className="flex items-center justify-between px-4 py-2 border-b border-bg-raised bg-bg-surface">
         {/* Left: Club info */}
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-lg font-bold text-txt-primary tracking-tight">
+        <div className="flex items-center gap-4 min-w-0">
+          <div className="min-w-0">
+            <h1 className="text-lg font-bold text-txt-primary tracking-tight truncate max-w-[120px] sm:max-w-none">
               {state.club.name}
             </h1>
-            <p className="text-xs text-txt-muted">
+            <p className="text-xs text-txt-muted hidden sm:block">
               Season {state.season} · Week {state.currentWeek} ·{' '}
               <span className="capitalize">{state.phase.replace('_', ' ').toLowerCase()}</span>
             </p>
