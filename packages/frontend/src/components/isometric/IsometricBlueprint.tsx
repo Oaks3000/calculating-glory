@@ -28,6 +28,8 @@ interface IsometricBlueprintProps {
   onError:  (msg: string) => void;
   /** Called when the player clicks a core unit. */
   onCoreUnitClick?: (facilityType: FacilityType) => void;
+  /** When set, the named facility pulses with a highlight glow (intro tour). */
+  highlightFacility?: FacilityType | null;
 }
 
 interface TooltipState {
@@ -47,6 +49,7 @@ export function IsometricBlueprint({
   dispatch: _dispatch,
   onError: _onError,
   onCoreUnitClick,
+  highlightFacility,
 }: IsometricBlueprintProps) {
   const { club } = state;
 
@@ -204,6 +207,7 @@ export function IsometricBlueprint({
             level={levelOf[def.facilityType] ?? 0}
             constructionWeeksRemaining={constructionOf[def.facilityType]}
             isHovered={hoveredId === def.id}
+            isHighlighted={highlightFacility === def.facilityType}
             onClick={() => onCoreUnitClick?.(def.facilityType)}
             onHover={handleHover}
           />

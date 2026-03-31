@@ -98,9 +98,11 @@ interface SocialFeedProps {
   dispatch: (cmd: GameCommand) => { error?: string };
   linkedEvent?: PendingClubEvent | null;
   practiceMode?: boolean;
+  /** Called after a negotiation is resolved and consequence is shown. */
+  onNegotiationComplete?: () => void;
 }
 
-export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode }: SocialFeedProps) {
+export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode, onNegotiationComplete }: SocialFeedProps) {
   const [view, setView]                             = useState<SocialView>(linkedEvent ? 'thread' : 'inbox');
   const [messages, setMessages]                     = useState<Message[]>([]);
   const [currentChallenge, setCurrentChallenge]     = useState<MathChallenge | null>(null);
@@ -266,6 +268,11 @@ export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode 
 
           setTimeout(() => addMsg({ kind: 'npc', text: pick(NPC_CORRECT), sender: NPC_NAME }), 300);
           setTimeout(() => addMsg({ kind: 'system', text: consequenceText }), 800);
+
+          // Auto-close the negotiation slide-over after the player has seen the result
+          if (onNegotiationComplete) {
+            setTimeout(() => onNegotiationComplete(), 2500);
+          }
         }
       } else {
         // Practice session
@@ -344,6 +351,11 @@ export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode 
       setAwaitingFallback(false);
       setSolved(true);
     }, 600);
+
+    // Auto-close after fallback choice consequence
+    if (onNegotiationComplete) {
+      setTimeout(() => onNegotiationComplete(), 2500);
+    }
   }
 
   // ── Next challenge (practice continuation) ────────────────────────────────

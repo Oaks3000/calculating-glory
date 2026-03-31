@@ -11,7 +11,7 @@ import { validateTransfer, validateFacilityUpgrade, validateStaffHire } from '..
 import { simulateMatch, clubToTeam, generateAITeam, Team } from '../simulation/match';
 import { generateSeasonFixtures, getWeekFixtures, matchSeed } from '../simulation/season';
 import { createRng } from '../simulation/rng';
-import { generateWeekEvents, generatePoachAttempts, generateMoraleThresholdEvents, generateFinancialThresholdEvents, generateDaniFacilityObservationEvents } from '../simulation/events';
+import { generateWeekEvents, generatePoachAttempts, generateMoraleThresholdEvents, generateFinancialThresholdEvents, generateDaniFacilityObservationEvents, generateNpcMatchReactionEvents } from '../simulation/events';
 import { computeWeeklyFinancials, computeRunwayBand } from '../simulation/revenue';
 import { detectFormMilestone, FORM_MILESTONE_HEADLINES } from '../simulation/morale';
 import { getTeamsForDivision } from '../data/division-teams';
@@ -296,6 +296,9 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
   const now = Date.now();
 
   let clubResultThisWeek: 'W' | 'D' | 'L' | null = null;
+  let clubGoalsFor = 0;
+  let clubGoalsAgainst = 0;
+  let clubOpponentId: string | null = null;
 
   weekFixtures.fixtures.forEach((fixture, index) => {
     const homeTeam = teamMap.get(fixture.homeTeamId);
@@ -317,13 +320,19 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
       seed
     });
 
-    // Track the player's club result for form milestone detection
+    // Track the player's club result for form milestone detection + NPC reactions
     if (fixture.homeTeamId === state.club.id) {
       clubResultThisWeek = result.homeGoals > result.awayGoals ? 'W'
         : result.homeGoals < result.awayGoals ? 'L' : 'D';
+      clubGoalsFor = result.homeGoals;
+      clubGoalsAgainst = result.awayGoals;
+      clubOpponentId = fixture.awayTeamId;
     } else if (fixture.awayTeamId === state.club.id) {
       clubResultThisWeek = result.awayGoals > result.homeGoals ? 'W'
         : result.awayGoals < result.homeGoals ? 'L' : 'D';
+      clubGoalsFor = result.awayGoals;
+      clubGoalsAgainst = result.homeGoals;
+      clubOpponentId = fixture.homeTeamId;
     }
   });
 
@@ -433,6 +442,40 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
   {
     const daniEvents = generateDaniFacilityObservationEvents(state, week, season, baseSeed);
     for (const pendingEvent of daniEvents) {
+      events.push({
+        type: 'CLUB_EVENT_OCCURRED',
+        timestamp: now,
+        eventId: pendingEvent.id,
+        templateId: pendingEvent.templateId,
+        week,
+        clubId: state.club.id,
+        pendingEvent,
+      });
+    }
+  }
+
+  // ── NPC match reactions ──────────────────────────────────────────────────────
+
+  // After notable results (big wins, bad losses, streaks), one of the NPCs
+  // drops a flavour inbox card in their voice. Fires independently of club events.
+  if (clubResultThisWeek !== null && clubOpponentId !== null) {
+    const opponentEntry = state.league.entries.find(e => e.clubId === clubOpponentId);
+    const opponentName = opponentEntry?.clubName ?? 'the opposition';
+    const playerEntry = state.league.entries.find(e => e.clubId === state.club.id);
+    const prospectiveForm = [...state.club.form, clubResultThisWeek].slice(-5) as ('W' | 'D' | 'L')[];
+
+    const reactionEvents = generateNpcMatchReactionEvents(
+      state, week, season, baseSeed,
+      {
+        result: clubResultThisWeek,
+        goalsFor: clubGoalsFor,
+        goalsAgainst: clubGoalsAgainst,
+        opponentName,
+        form: prospectiveForm,
+        leaguePosition: playerEntry?.position ?? 12,
+      }
+    );
+    for (const pendingEvent of reactionEvents) {
       events.push({
         type: 'CLUB_EVENT_OCCURRED',
         timestamp: now,
