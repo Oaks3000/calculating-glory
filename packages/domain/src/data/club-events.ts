@@ -622,7 +622,7 @@ export const CLUB_EVENT_TEMPLATES: ClubEventTemplate[] = [
     npc: 'dani',
     title: 'Re-Inspection: Passed',
     description:
-      "Dani: \"Inspector's back. The improvements held up — we passed with a 4. Crisis over for now. No further action required.\"",
+      "Dani: \"Inspector's back. The improvements held up. We passed with a 4. Crisis over for now. No further action required.\"",
     severity: 'minor',
     prerequisite: {
       eventId: 'chain1-hop1',
@@ -684,7 +684,7 @@ export const CLUB_EVENT_TEMPLATES: ClubEventTemplate[] = [
     npc: 'marcus',
     title: 'Catering Partnership Offer',
     description:
-      "Marcus: \"Our food situation has got attention. GrubHub Catering want to run our matchday food operation — they handle everything, we take a 15% cut of all sales.\" Dani: \"Or we run it ourselves. Higher margins but more effort and more risk.\"",
+      "Marcus: \"Our food situation has got attention. GrubHub Catering want to run our matchday food operation. They handle everything, we take a 15% cut of all sales.\" Dani: \"Or we run it ourselves. Higher margins but more effort and more risk.\"",
     severity: 'minor',
     mathsChallenge: {
       question: "GrubHub estimates total matchday food sales of £8,500 per home game. We have 23 home games this season. If we take 15%, what's our total income from the partnership?",
@@ -732,7 +732,7 @@ export const CLUB_EVENT_TEMPLATES: ClubEventTemplate[] = [
     npc: 'dani',
     title: 'Supply Chain Shock',
     description:
-      "Dani: \"Problem. Our main food supplier just raised prices 22%. Our unit costs are shot. Marcus knows a bulk supplier at the old rate but we'd have to buy double what we need per game — we'd be wasting half of it.\"",
+      "Dani: \"Problem. Our main food supplier just raised prices 22%. Our unit costs are shot. Marcus knows a bulk supplier at the old rate but we'd have to buy double what we need per game. We'd be wasting half of it.\"",
     severity: 'major',
     mathsChallenge: {
       question: "If we sell 400 units at £4.00 each with Marcus's supplier at £1.45 per unit, but we have to buy 800 units, what's our actual profit per game?",
@@ -782,7 +782,7 @@ export const CLUB_EVENT_TEMPLATES: ClubEventTemplate[] = [
     npc: 'marcus',
     title: 'The Catering Empire',
     description:
-      "Marcus: \"The food operation is working. I've had interest from the council — they want us to cater their community events. Six events over the summer, £2,000 fee per event, we supply food at cost plus margin.\" Val: \"This is outside our core business. There are staffing and transport costs.\"",
+      "Marcus: \"The food operation is working. I've had interest from the council. They want us to cater their community events. Six events over the summer, £2,000 fee per event, we supply food at cost plus margin.\" Val: \"This is outside our core business. There are staffing and transport costs.\"",
     severity: 'minor',
     mathsChallenge: {
       question: "Six events at £2,000 each. Staff cost: £800 per event. Food cost: £600 per event. Transport: £150 per event. What's the total profit across all six events?",
@@ -832,7 +832,7 @@ export const CLUB_EVENT_TEMPLATES: ClubEventTemplate[] = [
     npc: 'marcus',
     title: 'Catering Partnership Offer',
     description:
-      "Marcus: \"Even though the re-inspection went badly, the forced upgrade has got attention. GrubHub Catering want to run our matchday food operation — 15% cut of all sales. Might be the silver lining here.\"",
+      "Marcus: \"Even though the re-inspection went badly, the forced upgrade has got attention. GrubHub Catering want to run our matchday food operation, 15% cut of all sales. Might be the silver lining here.\"",
     severity: 'minor',
     mathsChallenge: {
       question: "GrubHub estimates total matchday food sales of £8,500 per home game. We have 23 home games this season. If we take 15%, what's our total income from the partnership?",
@@ -924,7 +924,7 @@ export const CLUB_EVENT_TEMPLATES: ClubEventTemplate[] = [
     npc: 'kev',
     title: 'Transfer Request',
     description:
-      "Kev: \"Told you this would happen. Torres has handed in a transfer request. Two others aren't training properly — morale is through the floor.\" Val: \"Losing Torres saves us £320/week in wages but we'd need a replacement. Estimate: £15,000 fee plus £280/week.\"",
+      "Kev: \"Told you this would happen. Torres has handed in a transfer request. Two others aren't training properly, morale is through the floor.\" Val: \"Losing Torres saves us £320/week in wages but we'd need a replacement. Estimate: £15,000 fee plus £280/week.\"",
     severity: 'major',
     mathsChallenge: {
       question: "The full squad raise over 20 weeks costs £4,320. Alternatively: sell Torres (saves £320/week × 20 weeks = £6,400 in wages), but pay £15,000 transfer fee + £280/week for a replacement (20 weeks = £5,600). What's the net cost of selling and replacing vs just giving the raise?",
@@ -1071,7 +1071,7 @@ export const CLUB_EVENT_TEMPLATES: ClubEventTemplate[] = [
     npc: 'dani',
     title: 'Storm Damage',
     description:
-      "Dani: \"The roof took some damage in the storm. Repair cost: £3,500. Good thing we've been maintaining the drainage — it could've been much worse.\" Val: \"Insurance covers 60% of weather damage above a £500 excess. Let's work out what we're actually paying.\"",
+      "Dani: \"The roof took some damage in the storm. Repair cost: £3,500. Good thing we've been maintaining the drainage, it could've been much worse.\" Val: \"Insurance covers 60% of weather damage above a £500 excess. Let's work out what we're actually paying.\"",
     severity: 'minor',
     mathsChallenge: {
       question: "Repair cost is £3,500. We pay the first £500 as excess. Insurance covers 60% of the remaining £3,000. What's our total out-of-pocket cost?",
@@ -1158,7 +1158,7 @@ export const CLUB_EVENT_TEMPLATES: ClubEventTemplate[] = [
     npc: 'val',
     title: 'Business Rates Overpayment',
     description:
-      "Val: \"I've been through the accounts. I think we've been overpaying on business rates. The council charges based on the rateable value of the stadium — but our classification might be wrong. If we're reclassified as a community sports facility instead of a commercial entertainment venue, the rate drops from 48p to 34p in the pound. Application costs £750 and takes 4 weeks.\"",
+      "Val: \"I've been through the accounts. I think we've been overpaying on business rates. The council charges based on the rateable value of the stadium, but our classification might be wrong. If we're reclassified as a community sports facility instead of a commercial entertainment venue, the rate drops from 48p to 34p in the pound. Application costs £750 and takes 4 weeks.\"",
     severity: 'minor',
     mathsChallenge: {
       question: "If the rateable value is £37,500, what are the current annual rates at 48p in the pound? What would they be at 34p? What's the annual saving?",
@@ -1194,7 +1194,7 @@ export const CLUB_EVENT_TEMPLATES: ClubEventTemplate[] = [
     npc: 'val',
     title: 'Partial Reclassification',
     description:
-      "Val: \"Result back from the council — partially approved. The corporate hospitality area still counts as commercial. New rate: 34p on 70% of the rateable value, and 48p on the remaining 30%. Not as much as we hoped, but still a saving.\"",
+      "Val: \"Result back from the council, partially approved. The corporate hospitality area still counts as commercial. New rate: 34p on 70% of the rateable value, and 48p on the remaining 30%. Not as much as we hoped, but still a saving.\"",
     severity: 'minor',
     mathsChallenge: {
       question: "Rateable value: £37,500. Calculate the new annual bill: 70% at 34p in the pound, plus 30% at 48p in the pound. What's the saving compared to the original £18,000 bill?",

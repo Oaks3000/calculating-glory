@@ -114,7 +114,7 @@ export function FacilityCard({
                 : 'bg-bg-raised text-txt-muted cursor-not-allowed',
             ].join(' ')}
           >
-            Upgrade
+            {facility.level === 0 ? 'Build' : 'Upgrade'}
           </button>
         </div>
       )}

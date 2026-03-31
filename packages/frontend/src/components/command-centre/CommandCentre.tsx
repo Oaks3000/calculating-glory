@@ -62,9 +62,13 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
   const maxFacilityLevel = state.club.facilities.length > 0
     ? Math.max(...state.club.facilities.map(f => f.level))
     : 0;
-  // Badge only when a brand-new facility (level 0) can be built for the first time.
-  // Routine level-ups don't warrant an action signal — they're always available.
-  const canUnlockNew = state.club.facilities.some(
+  // Badge only when a brand-new facility can be built AND at least one facility
+  // has already been built. On game start all facilities except CLUB_OFFICE are
+  // level 0 and affordable, so the badge would fire immediately with no clear
+  // action — suppress it until the player has built at least one additional
+  // facility beyond the default CLUB_OFFICE (level > 0 AND not CLUB_OFFICE).
+  const anyBuilt = state.club.facilities.some(f => f.level > 0 && f.type !== 'CLUB_OFFICE');
+  const canUnlockNew = anyBuilt && state.club.facilities.some(
     f => f.level === 0 && !(f.constructionWeeksRemaining ?? 0) && f.upgradeCost <= state.club.transferBudget
   );
   const canUpgrade = state.club.facilities.some(

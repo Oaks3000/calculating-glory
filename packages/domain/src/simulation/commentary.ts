@@ -113,8 +113,17 @@ export function generateMatchTimeline(ctx: MatchCommentaryContext): MatchTimelin
 
   // ── local helpers ────────────────────────────────────────────────────────
 
+  let lastPicked: unknown = undefined;
+
   function pick<T>(arr: readonly T[]): T {
-    return arr[Math.floor(rng.next() * arr.length)];
+    if (arr.length <= 1) return arr[0];
+    let result = arr[Math.floor(rng.next() * arr.length)];
+    // Re-roll once to avoid identical back-to-back lines
+    if (result === lastPicked) {
+      result = arr[Math.floor(rng.next() * arr.length)];
+    }
+    lastPicked = result;
+    return result;
   }
 
   function fill(template: string, scorer?: string): string {

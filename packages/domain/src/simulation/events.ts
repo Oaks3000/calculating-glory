@@ -354,13 +354,13 @@ export function generatePoachAttempts(
       {
         id: 'reject',
         label: 'Reject the bid',
-        description: `Turn down the offer. ${target.name} stays — but may be unsettled.`,
+        description: `Turn down the offer. ${target.name} stays, but may be unsettled.`,
         moraleEffect: -15,
       },
       {
         id: 'counter',
         label: `Counter at ${counterFeeStr}`,
-        description: `Demand 50% more. ${npcClub.name} agrees — ${target.name} moves on for a premium fee.`,
+        description: `Demand 50% more. ${npcClub.name} agrees. ${target.name} moves on for a premium fee.`,
         budgetEffect: counterFee,
         reputationEffect: 5,
         playerLeaves: true,
@@ -425,7 +425,7 @@ export function generateMoraleThresholdEvents(
         templateId: MORALE_TEMPLATE_IDS.UNSETTLED,
         week,
         title: `${target.name} is unsettled`,
-        description: `${target.name}'s morale has dropped to ${target.morale} — they're visibly disengaged in training. You need to act before it infects the rest of the dressing room.`,
+        description: `${target.name}'s morale has dropped to ${target.morale}. They're visibly disengaged in training. You need to act before it infects the rest of the dressing room.`,
         severity: 'minor',
         choices: [
           {
@@ -480,7 +480,7 @@ export function generateMoraleThresholdEvents(
         },
         {
           id: 'do-nothing',
-          label: 'Hold firm — results will turn it around',
+          label: 'Hold firm. Results will turn it around',
           description: "Say nothing publicly. The squad interprets silence as indifference.",
           reputationEffect: -5,
         },
@@ -514,7 +514,7 @@ export function generateMoraleThresholdEvents(
         {
           id: 'change-emphasis',
           label: 'Change the team\'s training emphasis',
-          description: 'Visibly change approach — different formations, fresh drills. Morale +6 across the squad.',
+          description: 'Visibly change approach, different formations, fresh drills. Morale +6 across the squad.',
           moraleEffect: 6,
         },
         {
@@ -596,7 +596,7 @@ export function generateFinancialThresholdEvents(
         choices: [
           {
             id: 'acknowledge',
-            label: 'Noted — I\'ll watch the wage bill',
+            label: 'Noted. I\'ll watch the wage bill',
             description: 'Acknowledge the warning. No immediate action required.',
           },
           {
@@ -616,14 +616,14 @@ export function generateFinancialThresholdEvents(
         templateId: 'val-runway-red',
         week,
         title: 'Financial alert — red zone',
-        description: `Runway has dropped to ${runwayDisplay}. At current burn rate we're less than 10 weeks from running dry. We need to make some decisions — either cut costs or bring money in.`,
+        description: `Runway has dropped to ${runwayDisplay}. At current burn rate we're less than 10 weeks from running dry. We need to make some decisions, either cut costs or bring money in.`,
         severity: 'major',
         npc: 'val',
         choices: [
           {
             id: 'sell-player',
             label: 'I\'ll look at selling a player',
-            description: 'Commit to listing a player — transfer income could buy several more months of runway.',
+            description: 'Commit to listing a player. Transfer income could buy several more months of runway.',
             reputationEffect: -3,
           },
           {
@@ -634,7 +634,7 @@ export function generateFinancialThresholdEvents(
           },
           {
             id: 'hold-nerve',
-            label: 'Hold for now — form will turn it around',
+            label: 'Hold for now. Form will turn it around',
             description: 'Results on the pitch drive morale and attendance. Risky if form doesn\'t improve.',
           },
         ],
@@ -648,7 +648,7 @@ export function generateFinancialThresholdEvents(
         templateId: 'val-runway-critical',
         week,
         title: 'URGENT — less than 5 weeks of cash',
-        description: `Runway has collapsed to ${runwayDisplay}. I'm not being dramatic — we are weeks from not being able to pay wages. Emergency action is needed now.`,
+        description: `Runway has collapsed to ${runwayDisplay}. I'm not being dramatic. We are weeks from not being able to pay wages. Emergency action is needed now.`,
         severity: 'major',
         npc: 'val',
         choices: [
@@ -662,13 +662,13 @@ export function generateFinancialThresholdEvents(
           {
             id: 'board-emergency',
             label: 'Request emergency board funding',
-            description: 'The board may step in — but they\'ll expect results and will monitor everything more closely.',
+            description: 'The board may step in, but they\'ll expect results and will monitor everything more closely.',
             reputationEffect: -8,
             budgetEffect: 50000_00, // £50k emergency injection
           },
           {
             id: 'hope',
-            label: 'Hold on — we just need one big result',
+            label: 'Hold on. We just need one big result',
             description: 'The gambler\'s last stand. If things don\'t turn around, this is how clubs get taken over.',
           },
         ],
@@ -686,7 +686,7 @@ export function generateFinancialThresholdEvents(
       templateId: 'val-runway-recovery',
       week,
       title: 'Financial update — runway improving',
-      description: `Good news — we\'re back in ${newBandLabel} (${runwayDisplay} runway). The finances are looking more stable. Keep it up.`,
+      description: `Good news, we\'re back in ${newBandLabel} (${runwayDisplay} runway). The finances are looking more stable. Keep it up.`,
       severity: 'minor',
       npc: 'val',
       choices: [
@@ -701,4 +701,109 @@ export function generateFinancialThresholdEvents(
   }
 
   return [];
+}
+
+// ── Dani facility observation IDs ─────────────────────────────────────────────
+
+export const DANI_OBSERVATION_TEMPLATE_IDS = new Set([
+  'dani-facility-observation',
+]);
+
+// Per-facility observation copy — Dani's voice: practical, dry, observational.
+// Each entry: { title, observation } where [TEAM] is replaced at runtime.
+const FACILITY_OBSERVATIONS: Record<string, { title: string; observation: string }> = {
+  TRAINING_GROUND: {
+    title: '[TEAM] invest in their Training Ground',
+    observation: `I've been watching [TEAM] in training. They've put money into the facilities, structured pitches, proper equipment. You can see it in how their sessions run. Doesn't make bad players good, but it makes good players better. Worth keeping in mind.`,
+  },
+  MEDICAL_CENTER: {
+    title: '[TEAM] upgrade their Medical Centre',
+    observation: `[TEAM] have a proper Medical Centre now. Physio on site, decent recovery equipment. They're coming back from knocks faster than they should. We're managing injuries with what we've got, which is fine until it isn't.`,
+  },
+  YOUTH_ACADEMY: {
+    title: '[TEAM] open a Youth Academy',
+    observation: `[TEAM] have put money into an Academy. Won't pay off this season, probably not next either. But they're thinking three or four years ahead. If we want our own pipeline of players eventually, it starts with something like that.`,
+  },
+  STADIUM: {
+    title: '[TEAM] expand the stadium',
+    observation: `[TEAM] are adding seats. More capacity means more matchday revenue, simple as that. The atmosphere will be better too, which matters more than people think. We'd need the fanbase to justify it, but it's on the list.`,
+  },
+  CLUB_COMMERCIAL: {
+    title: '[TEAM] build out their Commercial Centre',
+    observation: `[TEAM] have a proper commercial operation now, sponsorship deals, kit partnerships, media rights. They're pulling in money we can't compete with yet. That kind of infrastructure takes time to build, but it compounds.`,
+  },
+  FOOD_AND_BEVERAGE: {
+    title: '[TEAM] overhaul their catering',
+    observation: `[TEAM] have sorted their matchday catering. Sounds trivial but fans spend money before and after games, not just on tickets. Their revenue per head on matchdays has apparently gone up noticeably. Small things add up.`,
+  },
+  FAN_ZONE: {
+    title: '[TEAM] open a Fan Zone',
+    observation: `[TEAM] have built out a fan zone, bar area, merchandise, somewhere to gather before games. The pre-match atmosphere is different. Fans stay longer, spend more, feel more connected to the club. It's a slow build but the intent is clear.`,
+  },
+  GROUNDS_SECURITY: {
+    title: '[TEAM] sort out their front-of-house',
+    observation: `[TEAM] have upgraded their ticketing and turnstiles. Less queuing, better crowd flow. It's unglamorous work but when it's wrong everyone notices. When it's right, no one says anything, which is kind of the point.`,
+  },
+  SCOUT_NETWORK: {
+    title: '[TEAM] invest in their Scout Network',
+    observation: `[TEAM] are building out their scouting operation, more coverage, better data on players. They'll know about good free agents before we do if we're not careful. Scouting is one of those things where the gap compounds quietly.`,
+  },
+};
+
+/**
+ * Generate 0–1 Dani Lopes inbox observation about a rival club's facility
+ * investment. Fires roughly once every 6–8 weeks, seeded so it's deterministic.
+ *
+ * One unresolved observation at a time — doesn't stack.
+ * Skips PRE_SEASON and SEASON_END.
+ */
+export function generateDaniFacilityObservationEvents(
+  state: GameState,
+  week: number,
+  season: number,
+  seed: string
+): PendingClubEvent[] {
+  if (state.phase === 'PRE_SEASON' || state.phase === 'SEASON_END') return [];
+  if (week === 0) return [];
+
+  // Don't stack — skip if an unresolved observation is already in the inbox
+  if (state.pendingEvents.some(
+    e => DANI_OBSERVATION_TEMPLATE_IDS.has(e.templateId) && !e.resolved
+  )) return [];
+
+  // Seeded gate: roughly 1-in-7 chance per week (≈ once every 6–8 weeks)
+  const rng = createRng(`${seed}-S${season}-W${week}-dani-obs`);
+  if (rng.next() > 1 / 7) return [];
+
+  // Pick a rival NPC team from the league (exclude the player's club)
+  const npcEntries = state.league.entries.filter(e => e.clubId !== state.club.id);
+  if (npcEntries.length === 0) return [];
+  const teamEntry = npcEntries[Math.floor(rng.next() * npcEntries.length)];
+  const teamName = teamEntry.clubName;
+
+  // Pick a facility to observe — excludes CLUB_OFFICE (too administrative)
+  const observableFacilities = Object.keys(FACILITY_OBSERVATIONS);
+  const facilityKey = observableFacilities[Math.floor(rng.next() * observableFacilities.length)];
+  const obs = FACILITY_OBSERVATIONS[facilityKey];
+
+  const title = obs.title.replace('[TEAM]', teamName);
+  const description = obs.observation.replace(/\[TEAM\]/g, teamName);
+
+  return [{
+    id: `evt-S${season}-W${week}-dani-obs`,
+    templateId: 'dani-facility-observation',
+    week,
+    title,
+    description,
+    severity: 'minor',
+    npc: 'dani',
+    choices: [
+      {
+        id: 'noted',
+        label: 'Noted. I\'ll keep an eye on it',
+        description: 'File it away. No immediate action required.',
+      },
+    ],
+    resolved: false,
+  }];
 }

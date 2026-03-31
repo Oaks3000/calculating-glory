@@ -11,7 +11,7 @@ import { validateTransfer, validateFacilityUpgrade, validateStaffHire } from '..
 import { simulateMatch, clubToTeam, generateAITeam, Team } from '../simulation/match';
 import { generateSeasonFixtures, getWeekFixtures, matchSeed } from '../simulation/season';
 import { createRng } from '../simulation/rng';
-import { generateWeekEvents, generatePoachAttempts, generateMoraleThresholdEvents, generateFinancialThresholdEvents } from '../simulation/events';
+import { generateWeekEvents, generatePoachAttempts, generateMoraleThresholdEvents, generateFinancialThresholdEvents, generateDaniFacilityObservationEvents } from '../simulation/events';
 import { computeWeeklyFinancials, computeRunwayBand } from '../simulation/revenue';
 import { detectFormMilestone, FORM_MILESTONE_HEADLINES } from '../simulation/morale';
 import { getTeamsForDivision } from '../data/division-teams';
@@ -423,6 +423,25 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
           pendingEvent,
         });
       }
+    }
+  }
+
+  // ── Dani facility observations ───────────────────────────────────────────────
+
+  // Occasionally (roughly once every 6–8 weeks) Dani drops an inbox card
+  // observing a rival club's facility investment and what it might mean.
+  {
+    const daniEvents = generateDaniFacilityObservationEvents(state, week, season, baseSeed);
+    for (const pendingEvent of daniEvents) {
+      events.push({
+        type: 'CLUB_EVENT_OCCURRED',
+        timestamp: now,
+        eventId: pendingEvent.id,
+        templateId: pendingEvent.templateId,
+        week,
+        clubId: state.club.id,
+        pendingEvent,
+      });
     }
   }
 
