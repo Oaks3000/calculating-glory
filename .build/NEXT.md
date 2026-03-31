@@ -8,8 +8,9 @@ lastUpdated: "2026-03-31"
 
 ## Immediate (Next Session)
 
-1. **Merge PR #89** — Owner's Box polish + Dani observations; browser-verified, ready.
-2. **Balance pass** — full L2 → L1 play-through; observe growth/retirement rates, budget scaling, question difficulty progression; compare Year 7 vs Year 9 starting experience.
+1. **#85 — NPC cast** — Val/Marcus/Kev voice distinctiveness, contextual reappearance, first 10 minutes pacing.
+2. **#86 — Mobile/touch** — tap targets, no horizontal scroll, slide-overs on small screens, isometric on touch.
+3. **Balance pass** — full L2 → L1 play-through; observe growth/retirement rates, budget scaling, question difficulty progression; compare Year 7 vs Year 9 starting experience.
 
 ## Short Term (Next 2–4 Weeks)
 

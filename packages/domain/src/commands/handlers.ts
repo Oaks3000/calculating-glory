@@ -11,7 +11,7 @@ import { validateTransfer, validateFacilityUpgrade, validateStaffHire } from '..
 import { simulateMatch, clubToTeam, generateAITeam, Team } from '../simulation/match';
 import { generateSeasonFixtures, getWeekFixtures, matchSeed } from '../simulation/season';
 import { createRng } from '../simulation/rng';
-import { generateWeekEvents, generatePoachAttempts, generateMoraleThresholdEvents, generateFinancialThresholdEvents, generateDaniFacilityObservationEvents } from '../simulation/events';
+import { generateWeekEvents, generatePoachAttempts, generateMoraleThresholdEvents, generateFinancialThresholdEvents, generateDaniFacilityObservationEvents, generateKevFormMilestoneEvent, generateMarcusCommercialEvents } from '../simulation/events';
 import { computeWeeklyFinancials, computeRunwayBand } from '../simulation/revenue';
 import { detectFormMilestone, FORM_MILESTONE_HEADLINES } from '../simulation/morale';
 import { getTeamsForDivision } from '../data/division-teams';
@@ -342,6 +342,16 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
         headline: FORM_MILESTONE_HEADLINES[currentMilestone],
         milestoneKey: currentMilestone,
       });
+      const kevMilestoneEvent = generateKevFormMilestoneEvent(currentMilestone, week, season);
+      events.push({
+        type: 'CLUB_EVENT_OCCURRED',
+        timestamp: now,
+        eventId: kevMilestoneEvent.id,
+        templateId: kevMilestoneEvent.templateId,
+        week,
+        clubId: state.club.id,
+        pendingEvent: kevMilestoneEvent,
+      });
     }
   }
 
@@ -433,6 +443,25 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
   {
     const daniEvents = generateDaniFacilityObservationEvents(state, week, season, baseSeed);
     for (const pendingEvent of daniEvents) {
+      events.push({
+        type: 'CLUB_EVENT_OCCURRED',
+        timestamp: now,
+        eventId: pendingEvent.id,
+        templateId: pendingEvent.templateId,
+        week,
+        clubId: state.club.id,
+        pendingEvent,
+      });
+    }
+  }
+
+  // ── Marcus commercial observations ──────────────────────────────────────────
+
+  // Occasionally (roughly once every 5–6 weeks) Marcus sends a commercial
+  // observation inbox card — revenue opportunities, fan engagement, sponsorship.
+  {
+    const marcusEvents = generateMarcusCommercialEvents(state, week, season, baseSeed);
+    for (const pendingEvent of marcusEvents) {
       events.push({
         type: 'CLUB_EVENT_OCCURRED',
         timestamp: now,

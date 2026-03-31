@@ -43,7 +43,7 @@ status: "in-progress"
 - Owner's Box: real-time Kev commentary over ~75 real seconds, 8 crowd states, 60+ templates
 - Val financial threshold inbox messages: amber/red/critical/recovery bands
 
-**Phase 8 — Polish (PRs #80, #89 + open issues)**
+**Phase 8 — Polish (PRs #80, #88, #89 — all merged)**
 
 *PR #80 — Morale & Groundskeeper (merged):*
 - Morale news ticker milestone messages: W3, W5, L3, L5 streaks + morale high/low thresholds
@@ -55,7 +55,7 @@ status: "in-progress"
 
 *Also merged in #80: Intro spotlight, single-message intro, club identity ([TEAM] in commentary), club + stadium naming flow*
 
-*PR #89 — Owner's Box polish + Dani observations (open):*
+*PR #89 — Owner's Box polish + Dani observations (merged 2026-03-31):*
 - **Owner's Box animations**: removed goal-green styling; physics bump system (fade-in / single bump / quadruple flash for player goals / double bump for opposition goals); tailwind keyframes `msg-bump`, `msg-goal-bump`, `msg-goal-bump-oppo`
 - **No-duplicate commentary**: `pick()` tracks `lastPicked`, re-rolls once to prevent identical back-to-back lines
 - **Dani facility observations**: wired into weekly sim — rival club observation inbox card every ~6–8 weeks
@@ -63,8 +63,8 @@ status: "in-progress"
 
 ## What's In Progress
 
-- PR #89 — Owner's Box polish (open, ready to merge)
-- Open polish issues: #81 (match day), #82 (transfers), #83 (season arc), #85 (NPC cast), #86 (mobile)
+- #85 — NPC cast (Val/Marcus/Kev feel like a real cast)
+- #86 — mobile/touch feel
 - Balance pass — passive, during play-testing
 
 ## Blockers

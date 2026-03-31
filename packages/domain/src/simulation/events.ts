@@ -807,3 +807,138 @@ export function generateDaniFacilityObservationEvents(
     resolved: false,
   }];
 }
+
+// ── Kev form milestone inbox cards ────────────────────────────────────────────
+
+export const KEV_FORM_MILESTONE_TEMPLATE_IDS = new Set([
+  'kev-form-milestone',
+]);
+
+const KEV_FORM_MILESTONE_MESSAGES: Record<'W3' | 'W5' | 'L3' | 'L5', { title: string; description: string }> = {
+  W3: {
+    title: 'Three wins on the bounce',
+    description: `Three on the bounce. Don't let it go to their heads — I won't — but the lads are in good nick. Shape has been solid, everyone's working hard. This is what it looks like when things click. Long way to go yet but I'll take it.`,
+  },
+  W5: {
+    title: 'Five straight wins',
+    description: `Five. I've been doing this a long time and five on the bounce still means something. The squad's confident, training has been sharp, and honestly we've deserved every point. Keep the heads down. Don't start believing the noise. But yeah. Five.`,
+  },
+  L3: {
+    title: 'Three defeats in a row',
+    description: `Three losses. Not going to dress it up. We've been off it and the results show it. I've had a word with the lads — it's not finger-pointing, it's about getting back to basics. We've done it before. We'll do it again. But we need to be honest about where we're at.`,
+  },
+  L5: {
+    title: 'Five defeats. We need to talk.',
+    description: `Five straight defeats. That's a bad run and I'm not going to pretend otherwise. The mood in the changing room isn't great. We need to look at everything, training, selection, the lot. I'm not panicking, but I need you to know it's serious. We have to turn this around.`,
+  },
+};
+
+/**
+ * Generate a Kev Mulligan inbox card when a form-streak milestone fires.
+ * Called from the handler alongside the MORALE_TICKER_EVENT.
+ */
+export function generateKevFormMilestoneEvent(
+  milestoneKey: 'W3' | 'W5' | 'L3' | 'L5',
+  week: number,
+  season: number,
+): PendingClubEvent {
+  const { title, description } = KEV_FORM_MILESTONE_MESSAGES[milestoneKey];
+  return {
+    id: `evt-S${season}-W${week}-kev-form-${milestoneKey}`,
+    templateId: 'kev-form-milestone',
+    week,
+    title,
+    description,
+    severity: 'minor',
+    npc: 'kev',
+    choices: [
+      {
+        id: 'noted',
+        label: 'Understood. Keep them focused.',
+        description: 'Acknowledge the run and move on.',
+      },
+    ],
+    resolved: false,
+  };
+}
+
+// ── Marcus commercial observations ────────────────────────────────────────────
+
+export const MARCUS_COMMERCIAL_TEMPLATE_IDS = new Set([
+  'marcus-commercial-observation',
+]);
+
+const COMMERCIAL_OBSERVATIONS = [
+  {
+    title: 'Season ticket push — worth a look',
+    observation: `Been running the numbers on season ticket holders vs walk-ups. The regulars spend more per head on matchday, they tell their mates, and we know exactly what revenue's coming in. I think there's a window here to run a push. Even picking up another twenty or thirty would make a difference to the budget.`,
+  },
+  {
+    title: 'Matchday revenue — there\'s more in this',
+    observation: `I keep looking at what we bring in on a matchday and thinking we're leaving money on the table. Programme sales, food, merchandise — none of it's bad but none of it's great either. Some clubs our size are pulling in noticeably more per head. Worth a conversation about what we can do differently.`,
+  },
+  {
+    title: 'Local sponsor interest',
+    observation: `Had a conversation with a local business this week. They're not ready to commit but they're interested. Kit sponsorship, pitch-side boards, that kind of thing. I'm not counting it until it's signed but I wanted you to know there's something to develop there. Sponsorship at our level is all about relationships.`,
+  },
+  {
+    title: 'Fan engagement is up',
+    observation: `Don't have hard numbers but the noise around the club feels different lately. More people talking about us, more faces I don't recognise at games. That kind of organic buzz doesn't happen by accident — the results have helped, obviously, but it's also the atmosphere we're building. Keep it going and it starts to show up in the revenue.`,
+  },
+  {
+    title: 'Away support — don\'t ignore it',
+    observation: `Noticed we're picking up a few more away fans at games. Small numbers but they're there. That's the kind of support that grows if you nurture it. Travel packages, early ticket access, that sort of thing. It's a long way off being significant but I always say: find the thing early and grow it properly.`,
+  },
+  {
+    title: 'Kit sales — a quick win',
+    observation: `Kit sales are ticking along but I think we can do better. People want to wear the badge when the team's doing well. We're in a decent window for a push. Online store, a post on the socials, maybe a signing session. Low cost, decent return. I can handle it if you're happy for me to.`,
+  },
+  {
+    title: 'Community ties — worth investing',
+    observation: `We've had a few local schools reach out about visits and coaching sessions. I know it's not directly commercial but hear me out — community work builds goodwill, goodwill builds fans, fans build revenue. It's a long loop but it's a real one. Worth putting some time in even if it doesn't pay off immediately.`,
+  },
+];
+
+/**
+ * Generate 0–1 Marcus Webb inbox commercial observation.
+ * Fires roughly once every 5–6 weeks in season, seeded and deterministic.
+ * One unresolved observation at a time.
+ */
+export function generateMarcusCommercialEvents(
+  state: GameState,
+  week: number,
+  season: number,
+  seed: string
+): PendingClubEvent[] {
+  if (state.phase === 'PRE_SEASON' || state.phase === 'SEASON_END') return [];
+  if (week === 0) return [];
+
+  // Don't stack — skip if an unresolved Marcus observation is already in the inbox
+  if (state.pendingEvents.some(
+    e => MARCUS_COMMERCIAL_TEMPLATE_IDS.has(e.templateId) && !e.resolved
+  )) return [];
+
+  // Seeded gate: roughly 1-in-6 chance per week
+  const rng = createRng(`${seed}-S${season}-W${week}-marcus-obs`);
+  if (rng.next() > 1 / 6) return [];
+
+  const obs = COMMERCIAL_OBSERVATIONS[Math.floor(rng.next() * COMMERCIAL_OBSERVATIONS.length)];
+
+  return [{
+    id: `evt-S${season}-W${week}-marcus-obs`,
+    templateId: 'marcus-commercial-observation',
+    week,
+    title: obs.title,
+    description: obs.observation,
+    severity: 'minor',
+    npc: 'marcus',
+    choices: [
+      {
+        id: 'noted',
+        label: 'Good thinking. Keep me posted.',
+        description: 'Acknowledge and move on.',
+      },
+    ],
+    resolved: false,
+  }];
+}
