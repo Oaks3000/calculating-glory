@@ -2,7 +2,7 @@
 project: "Calculating Glory"
 type: "build"
 createdAt: "2026-03-03"
-lastUpdated: "2026-03-18"
+lastUpdated: "2026-03-31"
 ---
 
 # Calculating Glory - Roadmap
@@ -18,98 +18,78 @@ An educational football club management game for Year 7 maths, built on event-so
 - InboxCard overhaul, InboxHistory slide-over, seeded news generator, reputation flash animation, Backroom Team slide-over, star player name injection, Learning Progress slide-over, curriculum progression UI
 
 ### Phase 4: Stadium View ✅
-- 9 facility types, FACILITY_CONFIG, weekly revenue, isometric SVG renderer (20×14 grid, 9 core units, level-scaled blocks), navigation wiring (all core units → slide-overs), Weekly Training Focus command + UI
+- 9 facility types, FACILITY_CONFIG, weekly revenue, isometric SVG renderer (20×14 grid, 9 core units, level-scaled blocks), navigation wiring, Weekly Training Focus
 
-### Phase 5.1: Pre-season Flow ✅ (PRs #33, #38)
-- Pre-season screen: narrative → formation picker → inherited squad → enter season
-- `SET_PREFERRED_FORMATION` command, `FORMATION_CONFIG` with slots + recruitmentPriority + `formationCoverage()`
-- 16 auto-generated inherited players (Pro-Evo names, weak, varied contracts)
-- `club.squadCapacity = 24`
+### Phase 5: Gameplay Systems ✅ (PRs #33–#48)
+- Pre-season flow, transfer market, match sim rewrite, NPC poaching, manager hire
+- Club-owned transfers, season end screen, scout network, morale system
+- Owner forced-out cascade + parachute re-entry
 
-### Phase 5.2: Transfer Window ✅ (PR #37)
-- All 5 player attributes: attack, defence, teamwork, charisma, publicPotential (visible); truePotential (hidden)
-- Free agent pool: 60 seeded players with position-tier attribute variance
-- TransferMarketSlideOver: 2 tabs, position filter, sort, sign + release flows with fee logic
-- Formation recruitment gap panel in transfer market
+### Phase 6: Educational Depth ✅ (PRs #72–#76)
+- Two-axis decoupling: football division vs curriculum level fully independent
+- Year group picker, 60-question bank across 6 topics, adaptive curriculum advancement
+- `bankTopic` on events, adaptive mastery checks
 
-### Phase 5.3: Match Sim Rewrite + NPC Transfers ✅ (PRs #39, #42)
-- Player attributes (not overallRating) weighted by position for attack/defence strengths
-- Team modifier fully wired: teamwork, TRAINING_GROUND, staff, reputation, form, morale
-- FAN_ZONE as home-only atmosphere bonus
-- Training focus applied post-strength-calc
-- NPC season-start transfers: tier-based, strongest clubs pick first
-- Pro-Evo analogue team names (24 clubs)
+### Phase 7: Practice Mode + Owner's Box ✅ (PRs #77–#79)
+- Practice HubTile with Marcus Webb drill flow
+- Owner's Box: real-time Kev commentary, 22-beat timeline, 8 crowd states, 60+ templates
+- Val financial threshold inbox messages
 
-### Phase 5.4: NPC Poaching ✅ (PR #43)
-- NPCs approach your players mid-season with bid events
-- 4 response options: accept / reject / counter / ignore
-- Teamwork cascade on unhappy ignored player → squad performance hit → forced sale
-
-### Phase 5.5: Manager Hire & Impact ✅ (PR #44)
-- Manager type: tactical, motivation, experience attributes
-- 8-manager seeded pool in 3 tiers (elite/mid/budget)
-- HIRE_MANAGER / SACK_MANAGER commands with budget guards + sack compensation
-- Tactical amplifier on training focus; experience feeds team modifier; motivation = weekly morale nudge
-- Pre-season 3-step flow: Formation → Appoint Manager → Your Squad
+### Phase 8: Polish ✅ (PRs #80, #82, #88–#94)
+- Intro spotlight system, club identity/naming, stadium name
+- Transfer market drama, formation view, season arc moments
+- Owner's Box physics animations, no-duplicate commentary
+- Dani facility observations, NPC match reactions (Kev/Val/Marcus)
+- Dani intro stadium tour with facility highlight pulse
+- Contract label UX, auto-exit negotiations, budget flash animation
+- Match pitch visualisation: 22-blip SVG, beat-driven state machine, goal celebrations
+- Morale news ticker milestones, Groundskeeper's Drill (geometry)
 
 ---
 
-### Phase 5.6: Club-Owned Transfers ✅ (PR #45)
-- `SELL_PLAYER_TO_NPC` command — sell squad players to NPC clubs for a fee
-- Fee: `transferValue` if set, else `OVR² × 500` (min £100)
-- News ticker: "{name} joins {club} for £X"
+## Current Work
 
-### Phase 5.7: Season End Screen ✅ (PR #46)
-- `SeasonEndScreen` — outcome banner, season stats grid, club snapshot, final league table
-- `BEGIN_NEXT_SEASON` command → `PRE_SEASON_STARTED` event; resets to pre-season, increments season
+### Remaining Polish
+- **#91** Season-end experience — final table, awards, promotion/relegation moment
+- **#92** Inbox overflow — multiple events stacking on same week
+- **#87** Stadium view — isometric facility panels with upgrade action
+- **#86** Math challenge difficulty scaling
+- **#80** Sponsor negotiation — Val presents deals, maths challenge
 
-### Scout Network Facility ✅ (PR #47)
-- `SCOUT_NETWORK` facility (10th type) — upgrades 0→5, £15k–£600k
-- `getScoutedPotential(player, scoutLevel)` — truePotential ± seeded noise (±15 at level 0, exact at level 5)
-- `~POT` / `≈POT` / `POT` confidence prefix in TransferMarketSlideOver and SquadAuditTable
-- Isometric stadium unit at grid (1,7), deep blue, between Medical Centre and Youth Academy
-
-### Morale System ✅ (PR #48)
-- `simulation/morale.ts` — pure morale helpers (charismaFactor, applyResultMoraleDelta, applyContractAnxiety, applyContagion, applyManagerChangeMorale, isUnsettled)
-- Layer 1: result delta per player (W+3/D+1/L−4, ×1.5 upset/shock, ±streak bonus, charisma-shaped)
-- Layer 2: contract anxiety drain (−1/wk <8 weeks, −2/wk <4 weeks)
-- Layer 3: threshold events — "Unsettled player" (<20), "Dressing Room Unrest" (<30 avg), "Losing Faith" (<40 × 3wks); 6-week cooldowns
-- Layer 4: contagion — morale-0 players drain position group −1/wk
-- Manager change: gravitational pull toward 55 on HIRE_MANAGER (charisma-shaped)
-- Match sim: unsettled players contribute 85% attributes; poach targeting weights unsettled 3×
-- SquadAuditTable: red ! badge on morale bar for unsettled players
-
-## Current Phase: Phase 5.8 — Owner Forced Out + Cascade Re-entry (#34)
-
-- Your club collapses → bottom NPC club also fails → you parachute in mid-season
-- Trigger: bottom 3 AND budget < £10,000 AND week ≥ 30
-- Always the last-place NPC club; inherit their current squad + budget exactly
-- Business Acumen score persists across the transition; reputation malus applied
-- Win condition: survive (finish outside relegation zone by week 46)
+### Phase 7 Visual Upgrade (SC2K)
+- **#66** Construction animations — hazard dashes, jostle, dust particles
+- **#65** Match pitch done ✅; remaining: seeded blip movement, crowd-flash on Stands, isometric migration
+- 3-tone SC2K tile shading, per-facility micro-animations
+- See BACKLOG.md Phase 7 section for full spec
 
 ---
 
 ## Future Phases
 
-### Phase 6: Educational Depth
-- Adaptive difficulty fully wired to curriculum progression UI
-- All 15 club event chains with full branching follow-ups
-- Practice mode (Marcus Webb free drills)
-- Teacher dashboard — class view of student progress
-- Hint system with curriculum-appropriate scaffolding
-- Player development / aging using truePotential
+### Gameplay Depth
+- #70 Formation tactics — player chooses formation and style
+- #71 Transfer windows — summer/January with deadline-day drama
+- #72 Dynamic sponsors — scale with league position and reputation
+- #73 Local derbies — special atmosphere and crowd boost
+- #74 Rival managers — named AI personalities
+- #75 Board objectives — start-of-season targets
+- #76 Morale system expansion
+- #77 Youth academy — promote youth players
+- #78 Player development — training affects individual growth
+- #79 Scout report deep-dive — profile cards with strengths/weaknesses
 
-### Phase 7: Polish & Multiplayer Prep
-- AI team evolution (form/results affect NPC strength over season)
-- Match events beyond goals (injuries, red cards, suspensions)
-- Decision density overhaul (squad selection, transfers, contracts, sponsorship)
-- Multiplayer sync architecture (async, turn-based)
-- Visual design spec applied to isometric renderer (3-tone shading, SVG patterns)
+### Technical & Accessibility
+- #67 Chromebook performance audit (target 60fps, <500KB bundle)
+- #68 Accessibility audit — keyboard nav, screen reader, reduced-motion
+- #69 Save/load system — multiple save slots
+
+### Educational
+- Adaptive difficulty wired to live evidence (not just curriculum level)
+- Hint system with curriculum-appropriate scaffolding
+- Teacher dashboard — class view of student progress
 
 ## Out of Scope (for now)
 
 - Real-time multiplayer
-- Mobile/touch optimisation (Chromebook keyboard+trackpad is primary)
 - Custom team/player creation
-- Multiple leagues
-- Save/load to server (localStorage only for MVP)
+- Save/load to server (localStorage only)

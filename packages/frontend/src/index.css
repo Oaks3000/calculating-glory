@@ -73,3 +73,31 @@
   0%, 100% { opacity: 0.4; }
   50%      { opacity: 1; }
 }
+
+/* ── Match Pitch animations (SVG-specific) ─────────────────────────────── */
+
+/* Goal scored — radial pulse expanding from goal area */
+@keyframes goalPulse {
+  0%   { r: 4;  opacity: 0.8; stroke-width: 3; }
+  40%  { r: 50; opacity: 0.5; stroke-width: 2; }
+  100% { r: 90; opacity: 0;   stroke-width: 0.5; }
+}
+
+/* Crowd atmosphere — glowing pitch border */
+@keyframes crowdGlow {
+  0%, 100% { opacity: 0.2; }
+  50%      { opacity: 0.5; }
+}
+
+/* Accessibility: disable all match pitch animations */
+@media (prefers-reduced-motion: reduce) {
+  .animate-blip-jitter,
+  .animate-blip-drift,
+  .animate-blip-tense,
+  .animate-blip-celebrate,
+  .animate-goal-pulse,
+  .animate-crowd-glow,
+  .animate-score-bounce {
+    animation: none !important;
+  }
+}

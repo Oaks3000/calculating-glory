@@ -1,7 +1,7 @@
 ---
 project: "Calculating Glory"
 type: "build"
-lastUpdated: "2026-03-23"
+lastUpdated: "2026-03-31"
 ---
 
 # Calculating Glory - Backlog & Ideas
@@ -14,7 +14,7 @@ lastUpdated: "2026-03-23"
 - [ ] Geometry challenges — 4 new MathTopics, stadium-themed templates (#21 PR 6)
 - [ ] Player database/market — pool of purchasable players with real(ish) names and stats
 - [ ] Transfer window UI — browse market, make offers, negotiate
-- [ ] Tutorial/onboarding flow — first-time player guidance
+- [x] Tutorial/onboarding flow — Dani intro stadium tour with facility walkthrough ✅ (PR #94)
 - [ ] Pre-season flow — squad building before the season starts
 - [ ] Season end screen — promotion/relegation celebration/commiseration
 - [ ] localStorage persistence — serialise event log on every command, rehydrate on load; prevents progress loss on browser close (no infrastructure needed)
@@ -37,7 +37,8 @@ lastUpdated: "2026-03-23"
 - [ ] AI team evolution — form/results affect strength over the season
 - [ ] Morale system — explicit morale stat rather than folded into randomness
 - [ ] Match events beyond goals — injuries, red cards, suspensions
-- [ ] Practice mode — Marcus Webb free math drills for business acumen improvement
+- [x] Practice mode — Marcus Webb free math drills for business acumen improvement ✅
+- [x] NPC match reactions — Kev, Val, Marcus respond to results with distinct voices ✅ (PR #94)
 - [ ] Decision density overhaul — squad selection, transfers, contracts, sponsorship (separate issue)
 - [x] Business acumen tile clickable → Learning Progress slide-over ✅
 - [x] Challenge difficulty capped by curriculum level ✅
@@ -91,40 +92,46 @@ Full rework of the stadium renderer to give it a SimCity 2000 "living machine" f
 - [ ] (Remaining 7 facilities to be designed — one looping animation each)
 
 **Match day overlay**
-- [ ] `MatchDayOverlay` component renders on top of the Pitch unit during match sim
-- [ ] 22 `<rect>` blips (2×2px): 11 home colour, 11 white (away)
-- [ ] Default jitter: ±2px random movement every 500ms within positional zones (defence / midfield / attack)
-- [ ] Surge state: attacking team blips shift mean x-position toward opponent goal when attack event fires
-- [ ] Goal celebration: scoring team blips converge on centre circle for 3 seconds
-- [ ] Blip movement must be deterministic (seeded by gameWeek + playerId) — not `Math.random()` — so replays are consistent
-- [ ] `crowd-flash` keyframe on Stands tiles — staggered brightness spikes (2.5× and 3× peaks) per stand section; `animation-delay` varies by section to avoid global strobe
+- [x] `MatchPitch` component renders in Owner's Box during match — top-down SVG pitch with 22 blips ✅ (#65)
+- [x] 22 circle blips: 11 home colour, 11 away in 4-4-2 formation zones ✅ (#65)
+- [x] Default jitter: CSS `blipJitter` keyframe (±1.5px) within formation zones ✅ (#65)
+- [x] Surge state: BUILD_UP → CHANCE — blips shift toward opponent goal on attack beats ✅ (#65)
+- [x] Goal celebration: scoring team blips converge on pitch centre + pulse animation ✅ (#65)
+- [x] Goal radial pulse from goal area + scoreboard bounce animation ✅ (#65)
+- [x] Crowd atmosphere glow on pitch border (ROAR/CELEBRATION/HOSTILE) ✅ (#65)
+- [x] `prefers-reduced-motion` disables all match animations ✅ (#65)
+- [ ] Blip movement deterministic (seeded by gameWeek + playerId) — currently CSS-only, not seeded
+- [ ] `crowd-flash` keyframe on Stands tiles — staggered brightness spikes; Stands not yet rendered
+- [ ] Migrate from Owner's Box top-down pitch to isometric Pitch unit overlay (Phase 7 visual upgrade)
 
 **Visual connectivity**
 - [ ] Auto-path tiles between adjacent facilities — "concrete" texture rendered between neighbours
 - [ ] All path tiles respect Painter's Algorithm (gc+gr sort order) — blips and dust must not appear behind foreground buildings
 
 **Technical constraints**
-- [ ] All animations CSS-based or `requestAnimationFrame` — no JS `setInterval` for visual updates (Chromebook perf)
-- [ ] `prefers-reduced-motion` media query disables all keyframe animations (accessibility — school use)
+- [x] All animations CSS-based — no JS `setInterval` (Chromebook perf) ✅ (#65)
+- [x] `prefers-reduced-motion` media query disables all keyframe animations ✅ (#65)
 - [ ] Z-indexing: animated overlay elements always respect Painter's Algorithm sort order
-- [ ] `isMatchDay` boolean on `gameState` is the trigger for crowd-flash and blip overlay; no animation outside match context
+- [ ] `isMatchDay` boolean on `gameState` as trigger — currently beat-driven from OwnerBox timeline
 
-**Match director — advisory (verify against game wiring when Phase 7 begins)**
+**Match director — IMPLEMENTED (#65)**
 
-> ⚠️ The current match sim is deterministic and runs synchronously — there are no streaming `matchEvent` emissions mid-simulation. This spec assumes a real-time event feed that doesn't currently exist. Treat as design intent; implementation approach needs to be worked out against actual game architecture.
+> ✅ Solved without streaming events. The existing `MatchTimeline` beat sequence (22 beats with real-time offsets) drives the blip state machine directly. OwnerBox maps `BeatType` → `BlipState` transitions via timeouts, piggybacking on the same timeline that drives Kev's commentary.
 
-Blip state machine (5 states):
-- `IDLE` — default jitter around home coordinate based on position role (Def / Mid / Atk)
-- `BUILD_UP` — blips drift toward opposition half; speed tied to `teamwork` attribute
-- `CHANCE` — high-intensity jitter near opponent goal area
-- `CELEBRATE` — scoring team's blips converge on pitch centre / corner flag (3 seconds)
-- `RESET` — blips glide back to starting isometric coordinates
+Blip state machine (6 states) — implemented in `MatchPitch.tsx`:
+- `IDLE` — CSS `blipJitter` animation (±1.5px) around formation coordinates ✅
+- `BUILD_UP` — blips shift toward opposition half (per-role offset) ✅
+- `CHANCE` — high-intensity `blipTense` jitter (±2px) near opponent goal ✅
+- `CELEBRATE_HOME` / `CELEBRATE_AWAY` — scoring team converges on pitch centre (3s) ✅
+- `RESET` — smooth CSS transition back to formation coordinates ✅
 
-`PitchDirector` component concept:
-- Sits inside the Pitch core unit `<g>` on the 20×14 grid
-- Receives `matchEvent` (goal scored / attack attempt) and drives phase transitions
-- Player blips receive `phase`, `speed` (from `teamwork / 10`), `aggression` (from `attack`)
-- Renders only while `isMatchDay` — single `<svg>` or `<g>`, not 22 individual React subtrees
+Beat → BlipState mapping (in `OwnerBox.tsx`):
+- `GOAL` beat → `CELEBRATE_HOME`/`CELEBRATE_AWAY` (3s) → `RESET` (1s) → `IDLE`
+- `CHANCE` beat → `BUILD_UP` (0.4s) → `CHANCE` (2.1s) → `IDLE`
+- `NEAR_MISS` beat → `CHANCE` (1.8s) → `IDLE`
+- `HALF_TIME` / `FULL_TIME` → `IDLE`
+
+Future: migrate to isometric `PitchDirector` when Stands rendering lands.
 
 Goal reaction cascade:
 - Trigger `crowd-flash` simultaneously on all Stands units (the "Flash Mob")

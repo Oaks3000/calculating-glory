@@ -1,73 +1,79 @@
-# Session Progress - 2026-03-30
+# Session Progress — 2026-03-31
 
 ## Session Goals
-- Morale news ticker milestone messages (domain event, fires once per streak crossing)
-- Geometry challenges in Stadium View (Groundskeeper's Drill panel)
+- Update priorities based on current project state
+- Implement #63, #64 (UX polish — contract labels, auto-exit, budget flash)
+- Implement #90 (Dani intro stadium tour)
+- Implement #85 (NPC match reactions)
+- Implement #65 (match pitch visualisation)
+- Update .build docs
 
 ## Completed Work
 
-### 1. Morale news ticker milestone messages ✅
-- New domain event `MORALE_TICKER_EVENT` fires exactly once per form-streak milestone crossing (W3, W5, L3, L5)
-- `detectFormMilestone()` + `FORM_MILESTONE_HEADLINES` added to `simulation/morale.ts`
-- `lastFormMilestone` field on `GameState` tracks last known milestone so re-fires don't happen
-- `handleSimulateWeek` in `handlers.ts` detects crossing by comparing prospective form to `state.lastFormMilestone`
-- `WEEK_ADVANCED` reducer resets `lastFormMilestone` to current form state (naturally returns `null` when no streak)
-- `NewsTicker.tsx` now reads `MORALE_TICKER_EVENT` from `state.events[]` instead of computing from live form — eliminates the "always showing" bug
+### 1. UX Polish — #63 + #64 ✅ (PR #93, merged)
+- Contract label: "Contract: Xw left" with tooltip for full expiry week
+- Runway label: "Xw runway" (was "X wks")
+- Negotiations auto-close 2.5s after correct answer
+- Budget flash: useRef tracks previous value, shows +/- delta badge with bouncing animation for 2s
 
-### 2. Geometry challenges — Groundskeeper's Drill ✅
-- New `angles.ts` question bank: 8 questions (5 × D1 Year 8, 3 × D2 Year 9) — angles on a line, vertically opposite, triangle rules, polygon interior/exterior, parallel lines
-- Registered in `bank.ts` (`...anglesBank`)
-- `GeometryDrillCard` gains `onAttempt` callback; first submission dispatches `RECORD_MATH_ATTEMPT`
-- `StadiumView` below-fold: "📐 Groundskeeper's Drill" panel renders when `stadiumLevel >= 1`
-- `generateChallenge` called with topic override `'geometry'` (maps to AREA_AND_PERIMETER + ANGLES + SCALE_AND_PROPORTION + PROPERTIES_OF_SHAPES)
-- Verified in browser: panel appears after upgrading Stadium to Level 1; question + hints + submit all working
+### 2. Dani Intro Stadium Tour — #90 ✅ (PR #94, merged)
+- 6 new intro steps with stadium backdrop (Training Ground, Medical, Scout, Stadium)
+- `BackdropMode` type: 'command' | 'stadium' — IntroScreen switches dynamically
+- `highlightFacility` prop on IsometricBlueprint → `isHighlighted` on CoreUnit
+- Pulsing blue SVG overlay (intro-highlight keyframe)
+- Dani's voice: practical, dry — trade-off framing
+
+### 3. NPC Match Reactions — #85 ✅ (PR #94, merged)
+- 30+ templates across 3 NPCs × 7 scenarios (big_win, win, draw, loss, bad_loss, winning_streak, losing_streak)
+- `generateNpcMatchReactionEvents()` in simulation/events.ts
+- Wired into SIMULATE_WEEK handler after match results
+- Deterministic (seeded RNG), non-stacking, Kev double-weighted, 40% chance on ordinary results
+
+### 4. Match Pitch Visualisation — #65 ✅ (committed, awaiting PR)
+- `MatchPitch.tsx`: top-down SVG pitch (280×180), 22 blips in 4-4-2 formation
+- `BlipState` machine: IDLE → BUILD_UP → CHANCE → CELEBRATE_HOME/AWAY → RESET
+- Beat-driven: OwnerBox maps BeatType → BlipState transitions via timeouts
+- Goal celebration: radial pulse (goalPulse keyframe) + blip convergence + scoreboard bounce (scoreBounce)
+- Crowd glow on pitch border (crowdGlow keyframe) for ROAR/CELEBRATION/HOSTILE
+- 7 new Tailwind keyframes + 3 CSS keyframes for SVG animations
+- prefers-reduced-motion disables all match animations
+
+### 5. .build Docs Updated ✅
+- NEXT.md: complete rewrite with priority queue
+- BACKLOG.md: Phase 7d items marked done, match director documented
+- STATUS.md: refreshed to 98% Phase 8
+- ROADMAP.md: all phases through 8 marked complete
 
 ## Architecture Notes
 
-- Domain events pattern: both features follow the `FINANCIAL_THRESHOLD_EVENT` precedent — fire once on crossing, store "last known" band in state
-- Worktree dist sync: domain changes always need `npm run build` in worktree dist then `cp -r dist/ /main/packages/domain/dist/`
-- `stadiumLevel >= 1` gate: Groundskeeper only appears once the stadium has been built (level 0 = derelict = no Kev on site)
+- Match pitch piggybacks on existing MatchTimeline beats — no streaming events needed
+- Beat → BlipState mapping: GOAL→CELEBRATE (3s), CHANCE→BUILD_UP→CHANCE (2.5s), NEAR_MISS→CHANCE (1.8s)
+- All CSS keyframes, no setInterval — Chromebook-safe
+- OwnerBox layout: top bar → scoreboard (with bounce) → pitch → crowd label → commentary → post-match
 
 ## Current Status
 
 ### ✅ Working
-- Both features shipped and browser-verified
-- Domain dist synced
-- TypeScript clean
+- All features shipped, tests pass (478 domain tests)
+- Zero new TypeScript errors (149 total = all pre-existing module resolution)
 
-### 🟡 In Progress
-- Nothing
+### 🟡 Pending
+- PR for #65 match pitch (on branch, pushed)
 
 ### 🔴 Blocked
 - Nothing
 
-## Build Commands / Key Files
+## Key Files Modified
 
-```bash
-# Domain dist rebuild (worktree + sync to main)
-cd packages/domain && npm run build
-cp -r dist/ /Users/oakleywalters/Projects/calculating-glory/packages/domain/dist/
-
-# Dev server
-npm run dev --workspace=@calculating-glory/frontend
-```
-
-Key files:
-- `packages/domain/src/events/types.ts` — MoraleTickerEvent
-- `packages/domain/src/simulation/morale.ts` — detectFormMilestone, FORM_MILESTONE_HEADLINES
-- `packages/domain/src/commands/handlers.ts` — morale event emission
-- `packages/domain/src/reducers/index.ts` — MORALE_TICKER_EVENT case + lastFormMilestone reset
-- `packages/domain/src/content/questions/angles.ts` — new angles bank
-- `packages/domain/src/content/questions/bank.ts` — anglesBank registration
-- `packages/frontend/src/components/stadium-view/GeometryDrillCard.tsx` — onAttempt callback
-- `packages/frontend/src/components/stadium-view/StadiumView.tsx` — Kev's Drill panel
-
-## Next Session Goals
-
-1. **Commit this branch** and open PR against main
-2. **Balance pass** — full L2 → L1 play-through; observe growth/retirement, question difficulty progression
-3. **Multiple leagues** — League One NPC team data, division-aware match sim, promotion/relegation
-
----
-
-**Status**: Morale ticker milestones + Groundskeeper's Drill both shipped. Browser verified. Ready to commit.
+- `packages/frontend/src/components/owner-box/MatchPitch.tsx` — NEW: pitch SVG + blips
+- `packages/frontend/src/components/owner-box/OwnerBox.tsx` — blip state, goal flash, scoreboard bounce
+- `packages/frontend/tailwind.config.js` — 7 new animation keyframes
+- `packages/frontend/src/index.css` — 3 SVG keyframes + reduced-motion rules
+- `packages/frontend/src/components/intro/IntroScreen.tsx` — backdrop switching, Dani tour
+- `packages/frontend/src/components/isometric/CoreUnit.tsx` — isHighlighted prop
+- `packages/frontend/src/components/isometric/IsometricBlueprint.tsx` — highlightFacility prop
+- `packages/domain/src/simulation/events.ts` — NPC match reaction templates + generator
+- `packages/domain/src/commands/handlers.ts` — wire NPC reactions into SIMULATE_WEEK
+- `packages/frontend/src/components/shared/FinancialHealthBar.tsx` — budget flash
+- `packages/frontend/src/components/social-feed/SocialFeed.tsx` — auto-exit callback
+- `packages/frontend/src/components/transfer-market/TransferMarketSlideOver.tsx` — contract labels
