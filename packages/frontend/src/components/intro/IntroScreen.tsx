@@ -107,7 +107,7 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
     switch (step) {
       case 1: return (
         <NpcMessage {...NPC.val} delay>
-          Morning. I'm Val — I handle the money at {clubName}. I should warn you: the previous owner didn't leave us in great shape. Let me show you where we stand.
+          Morning. I'm Val. I handle the money at {clubName}. I should warn you: the previous owner didn't leave us in great shape. Let me show you where we stand.
         </NpcMessage>
       );
       case 2: return (
@@ -122,22 +122,22 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
       );
       case 4: return (
         <NpcMessage {...NPC.kev} delay>
-          Alright boss. I'm Kev — I look after the football side. The squad I've got is... well, it's what it is. We'll need to be smart in the market. I'll handle tactics and training — you just make sure I've got something to work with.
+          Alright boss. I'm Kev. I look after the football side. The squad I've got is... well, it's what it is. We'll need to be smart in the market. I'll handle tactics and training, you just make sure I've got something to work with.
         </NpcMessage>
       );
       case 5: return (
         <NpcMessage {...NPC.marcus} delay>
-          Hey! Marcus here. Commercial and fan engagement. I've got some ideas to get revenue moving but we'll need to invest a bit to make money. I'll bring you opportunities — you decide what's worth backing.
+          Hey! Marcus here. Commercial and fan engagement. I've got some ideas to get revenue moving but we'll need to invest a bit to make money. I'll bring you opportunities, you decide what's worth backing.
         </NpcMessage>
       );
       case 6: return (
         <NpcMessage {...NPC.dani} delay>
-          Dani. I run the day-to-day — facilities, suppliers, logistics. The stadium needs work. I'll keep you posted on what's urgent and what can wait. Just so you know: everything takes longer and costs more than Marcus thinks it will.
+          Dani. I run the day-to-day, facilities, suppliers, logistics. The stadium needs work. I'll keep you posted on what's urgent and what can wait. Just so you know: everything takes longer and costs more than Marcus thinks it will.
         </NpcMessage>
       );
       case 7: return (
         <NpcMessage {...NPC.dani} delay>
-          See those buildings behind me? Each one does something for the club — generates revenue, improves the squad, keeps the fans happy. Upgrading them costs money, but it's how you build something that sustains itself.
+          See those buildings behind me? Each one does something for the club, generates revenue, improves the squad, keeps the fans happy. Upgrading them costs money, but it's how you build something that sustains itself.
         </NpcMessage>
       );
       case 8: return (
@@ -157,15 +157,15 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
       );
       case 11: return (
         <NpcMessage {...NPC.kev} delay>
-          The transfer window's open for the first few weeks of the season. We've also got a free agent pool — players without a club. Some bargains, some traps. I'll flag who I think is worth looking at, but the budget calls are yours.
+          The transfer window's open for the first few weeks of the season. We've also got a free agent pool, players without a club. Some bargains, some traps. I'll flag who I think is worth looking at, but the budget calls are yours.
         </NpcMessage>
       );
       case 12: return (
         <NpcMessage {...NPC.marcus} delay>
-          Boss, before the season starts, I've got something that needs a decision. A local company has offered to sponsor our pre-season friendlies — three warm-up matches, their branding on the programme and pitch-side boards. They're offering two options:
+          Boss, before the season starts, I've got something that needs a decision. A local company has offered to sponsor our pre-season friendlies, three warm-up matches, their branding on the programme and pitch-side boards. They're offering two options:
           <ul className="mt-2 space-y-1 text-xs text-txt-muted">
-            <li><strong className="text-txt-primary">Option A:</strong> Flat fee — {formatMoney(OPTION_A_AMOUNT)} for all three matches. Simple, guaranteed money.</li>
-            <li><strong className="text-txt-primary">Option B:</strong> Per-attendance deal — £0.60 per fan per match. More money if attendance is good, less if it isn't.</li>
+            <li><strong className="text-txt-primary">Option A:</strong> Flat fee, {formatMoney(OPTION_A_AMOUNT)} for all three matches. Simple, guaranteed money.</li>
+            <li><strong className="text-txt-primary">Option B:</strong> Per-attendance deal, £0.60 per fan per match. More money if attendance is good, less if it isn't.</li>
           </ul>
         </NpcMessage>
       );
@@ -182,8 +182,8 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
       case 15: return mathsCorrect !== null ? (
         <NpcMessage {...NPC.val} delay>
           {mathsCorrect
-            ? `That's right — £2,700 versus the flat £2,000. Option B looks better on paper, but attendance isn't guaranteed. Your call.`
-            : `I make it £2,700 — 1,500 fans, times 3 matches, times 60p each. So Option B is worth more if attendance holds up. But it's a gamble.`}
+            ? `That's right. £2,700 versus the flat £2,000. Option B looks better on paper, but attendance isn't guaranteed. Your call.`
+            : `I make it £2,700, 1,500 fans, times 3 matches, times 60p each. So Option B is worth more if attendance holds up. But it's a gamble.`}
         </NpcMessage>
       ) : null;
       case 16: return choice === null ? (
@@ -220,7 +220,7 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
       ) : null;
       case 18: return choice !== null ? (
         <NpcMessage {...NPC.val} delay>
-          First decision made. Let's see how it plays out. Now — let's get the squad ready for the season.
+          First decision made. Let's see how it plays out. Now, let's get the squad ready for the season.
         </NpcMessage>
       ) : null;
       default: return null;
@@ -253,7 +253,7 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
       {/* ── Beat 1, Step 0: Arrival title ───────────────────────────────────── */}
       {step === 0 && (
         <div
-          className="absolute inset-0 flex flex-col items-center justify-center text-center px-8 cursor-pointer"
+          className="absolute inset-0 flex flex-col items-center justify-center text-center px-8 cursor-pointer z-20"
           onClick={advance}
         >
           <div className="animate-fade-in space-y-3">
@@ -271,7 +271,7 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
 
       {/* ── Steps 1+: Single-message panel anchored to the bottom ───────────── */}
       {step >= 1 && (
-        <div className="absolute inset-x-0 bottom-0 flex flex-col">
+        <div className="absolute inset-x-0 bottom-0 flex flex-col z-20">
           {/* Message card — shows only the current step */}
           {currentMessage && (
             <div

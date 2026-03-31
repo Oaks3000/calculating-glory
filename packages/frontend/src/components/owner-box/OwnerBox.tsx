@@ -163,7 +163,7 @@ export function OwnerBox({ timeline, playerTeamName, opponentTeamName, onComplet
       {/* ── Message thread ───────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
         {visibleMessages.map(msg => (
-          <KevBubble key={msg.id} text={msg.text} beatType={msg.beatType} />
+          <KevBubble key={msg.id} text={msg.text} beatType={msg.beatType} mood={msg.mood} />
         ))}
 
         {/* Typing indicator — shown when not complete and at least one message visible */}
@@ -198,26 +198,20 @@ export function OwnerBox({ timeline, playerTeamName, opponentTeamName, onComplet
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function KevBubble({ text, beatType }: { text: string; beatType: BeatType }) {
-  const isGoal = beatType === 'GOAL';
+function KevBubble({ text, beatType, mood }: { text: string; beatType: BeatType; mood: PhoneMessage['mood'] }) {
+  const animClass =
+    beatType === 'GOAL' && mood === 'elated'      ? 'animate-msg-goal-bump origin-left'
+    : beatType === 'GOAL' && mood === 'frustrated' ? 'animate-msg-goal-bump-oppo origin-left'
+    : beatType === 'CHANCE' || beatType === 'NEAR_MISS' || (beatType === 'GOAL' && mood === 'excited') ? 'animate-msg-bump origin-left'
+    : 'animate-fade-in';
   return (
-    <div className="flex items-start gap-2.5 max-w-sm">
-      <div
-        className={[
-          'shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold',
-          isGoal ? 'bg-pitch-green/20 text-pitch-green' : 'bg-data-blue/20 text-data-blue',
-        ].join(' ')}
-      >
+    <div className={`flex items-start gap-2.5 max-w-sm ${animClass}`}>
+      <div className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold bg-data-blue/20 text-data-blue">
         K
       </div>
-      <div
-        className={[
-          'rounded-card px-3 py-2',
-          isGoal ? 'bg-pitch-green/10 border border-pitch-green/20' : 'bg-bg-raised',
-        ].join(' ')}
-      >
+      <div className="rounded-card px-3 py-2 bg-bg-raised">
         <p className="text-xs2 font-semibold text-data-blue mb-0.5">Kev Mulligan</p>
-        <p className={`text-xs leading-relaxed ${isGoal ? 'text-pitch-green font-medium' : 'text-txt-primary'}`}>
+        <p className="text-xs leading-relaxed text-txt-primary">
           {text}
         </p>
       </div>

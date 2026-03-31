@@ -35,7 +35,7 @@ const NPC_NAME = 'Agent Rodriguez';
 const PRACTICE_NPC = 'Marcus Webb';
 
 const NPC_TRANSITIONS = [
-  "Right boss, here's the next one. Pay attention — this one's trickier.",
+  "Right boss, here's the next one. Pay attention, this one's trickier.",
   "Good. Let's keep the momentum going. Next situation:",
   "The board are impressed so far. One more:",
   "Right, new scenario. Think it through carefully:",
@@ -43,26 +43,26 @@ const NPC_TRANSITIONS = [
 
 const NPC_CORRECT = [
   "Spot on! That's exactly the kind of sharp thinking that wins promotions.",
-  "Perfect. The numbers don't lie — and neither do you, boss.",
+  "Perfect. The numbers don't lie, and neither do you, boss.",
   "Brilliant. I'll send that straight to the board.",
   "Exactly right. Your Business Acumen just went up a notch.",
 ];
 
 const NPC_WRONG = [
-  "Not quite — let me give you a clue to get you back on track.",
+  "Not quite. Let me give you a clue to get you back on track.",
   "Close, but not right. Here's a hint:",
-  "That's not it — think about the method. Here's where to start:",
+  "That's not it. Think about the method. Here's where to start:",
 ];
 
 const NPC_HINT3 = [
   "Here's the full working so you can see exactly where to start next time.",
-  "Let me walk you through it step by step — study this and you'll nail it.",
+  "Let me walk you through it step by step. Study this and you'll nail it.",
 ];
 
 const NPC_CONSEQUENCE = [
   "Your Business Acumen rating has improved. The board are starting to trust your judgement.",
   "That's on record. Your analytical skills are getting sharper every week.",
-  "Filed. The board can see you know your numbers — that matters come contract time.",
+  "Filed. The board can see you know your numbers, and that matters come contract time.",
 ];
 
 const PRACTICE_CORRECT = [
@@ -72,7 +72,7 @@ const PRACTICE_CORRECT = [
 ];
 
 const PRACTICE_CONSEQUENCE = [
-  "Your understanding of this topic is improving — I can see it in the numbers.",
+  "Your understanding of this topic is improving. I can see it in the numbers.",
   "Solid work. That kind of preparation makes a difference in the boardroom.",
 ];
 
@@ -139,7 +139,7 @@ export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode 
 
     addMsg({
       kind: 'npc',
-      text: `Boss — we've got a situation that needs your head for numbers. ${challenge.context}`,
+      text: `Boss, we've got a situation that needs your head for numbers. ${challenge.context}`,
       sender: NPC_NAME,
     });
 
@@ -292,7 +292,7 @@ export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode 
           setTimeout(() => {
             addMsg({
               kind:   'npc',
-              text:   "Not to worry — we'll have to go with one of the other options instead. " +
+              text:   "Not to worry. We'll have to go with one of the other options instead. " +
                       "It'll cost us a bit more, but we can't let this drag on.",
               sender: NPC_NAME,
             });
@@ -531,7 +531,7 @@ export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode 
                       setMasteryNudge(null);
                       addMsg({
                         kind: 'npc',
-                        text: `Brilliant — we've stepped things up to ${curriculumDisplayName(masteryNudge)}. The questions will be tougher now, but so will the rewards.`,
+                        text: `Brilliant. We've stepped things up to ${curriculumDisplayName(masteryNudge)}. The questions will be tougher now, but so will the rewards.`,
                         sender: 'Val Webb',
                       });
                     }}
