@@ -1,14 +1,14 @@
 ---
 project: "Calculating Glory"
 type: "build"
-lastUpdated: "2026-03-30"
+lastUpdated: "2026-03-31"
 ---
 
 # Calculating Glory - Next Steps
 
 ## Immediate (Next Session)
 
-1. **Open PR for nifty-ride branch** — morale ticker milestones + Groundskeeper's Drill; both browser-verified.
+1. **Merge PR #89** — Owner's Box polish + Dani observations; browser-verified, ready.
 2. **Balance pass** — full L2 → L1 play-through; observe growth/retirement rates, budget scaling, question difficulty progression; compare Year 7 vs Year 9 starting experience.
 
 ## Short Term (Next 2–4 Weeks)

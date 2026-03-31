@@ -1,39 +1,46 @@
-# Session Progress - 2026-03-30
+# Session Progress - 2026-03-31
 
 ## Session Goals
-- Morale news ticker milestone messages (domain event, fires once per streak crossing)
-- Geometry challenges in Stadium View (Groundskeeper's Drill panel)
+- Verify Dani facility observation cards fire correctly in browser
+- Remove green styling from Owner's Box messages; replace with physics bump animations
+- Fix duplicate consecutive commentary lines in Owner's Box
 
 ## Completed Work
 
-### 1. Morale news ticker milestone messages ✅
-- New domain event `MORALE_TICKER_EVENT` fires exactly once per form-streak milestone crossing (W3, W5, L3, L5)
-- `detectFormMilestone()` + `FORM_MILESTONE_HEADLINES` added to `simulation/morale.ts`
-- `lastFormMilestone` field on `GameState` tracks last known milestone so re-fires don't happen
-- `handleSimulateWeek` in `handlers.ts` detects crossing by comparing prospective form to `state.lastFormMilestone`
-- `WEEK_ADVANCED` reducer resets `lastFormMilestone` to current form state (naturally returns `null` when no streak)
-- `NewsTicker.tsx` now reads `MORALE_TICKER_EVENT` from `state.events[]` instead of computing from live form — eliminates the "always showing" bug
+### 1. Dani facility observations — verified ✅
+- `generateDaniFacilityObservationEvents()` wired into `handleSimulateWeek` in `handlers.ts`
+- Fires roughly every 6–8 weeks with an inbox card observing a rival club's facility investment
+- Verified at Week 6: card appeared with correct amber "Dani Lopes · Operations" badge, proper Dani voice, "Noted. I'll keep an eye on it" single choice, "No financial impact" label
 
-### 2. Geometry challenges — Groundskeeper's Drill ✅
-- New `angles.ts` question bank: 8 questions (5 × D1 Year 8, 3 × D2 Year 9) — angles on a line, vertically opposite, triangle rules, polygon interior/exterior, parallel lines
-- Registered in `bank.ts` (`...anglesBank`)
-- `GeometryDrillCard` gains `onAttempt` callback; first submission dispatches `RECORD_MATH_ATTEMPT`
-- `StadiumView` below-fold: "📐 Groundskeeper's Drill" panel renders when `stadiumLevel >= 1`
-- `generateChallenge` called with topic override `'geometry'` (maps to AREA_AND_PERIMETER + ANGLES + SCALE_AND_PROPORTION + PROPERTIES_OF_SHAPES)
-- Verified in browser: panel appears after upgrading Stadium to Level 1; question + hints + submit all working
+### 2. Owner's Box physics animations ✅
+- Removed goal-green styling (`bg-pitch-green/10`, `text-pitch-green`, border, avatar ring)
+- Three-tier animation system using both `beatType` and `mood`:
+  - Normal messages → `animate-fade-in`
+  - CHANCE / NEAR_MISS beats → `animate-msg-bump origin-left` (springy single bump)
+  - Player GOAL reaction (`mood: 'elated'`) → `animate-msg-goal-bump origin-left` (quadruple flash, 1.4s)
+  - Player GOAL buildup (`mood: 'excited'`) → `animate-msg-bump origin-left` (single bump)
+  - Opposition GOAL reaction (`mood: 'frustrated'`) → `animate-msg-goal-bump-oppo origin-left` (double bump, 0.9s)
+- Three new tailwind keyframes added: `msgBump`, `msgGoalBump`, `msgGoalBumpOppo`
+- `origin-left` keeps scale anchored to the bubble's left edge
+
+### 3. No-duplicate commentary ✅
+- `pick()` in `commentary.ts` now tracks `lastPicked`; re-rolls once if same value would appear back-to-back
+- Preserves seeded determinism (at most one extra RNG draw, not a loop)
+- Verified: no consecutive identical messages across full Week 13 match
+
+### 4. Text polish (em-dash → period/comma) ✅
+- Replaced em-dashes throughout NPC dialogue: intro screen, events, club-events, social feed, facility card, commentary templates
 
 ## Architecture Notes
 
-- Domain events pattern: both features follow the `FINANCIAL_THRESHOLD_EVENT` precedent — fire once on crossing, store "last known" band in state
-- Worktree dist sync: domain changes always need `npm run build` in worktree dist then `cp -r dist/ /main/packages/domain/dist/`
-- `stadiumLevel >= 1` gate: Groundskeeper only appears once the stadium has been built (level 0 = derelict = no Kev on site)
+- Animation discriminant: `mood` field on `PhoneMessage` is used to distinguish player vs opposition goals; player buildup is `'excited'`, player reaction is `'elated'`, opposition is `'frustrated'`
+- `lastPicked` is closure-scoped inside `generateMatchTimeline()` — resets per match; no cross-match state leakage
 
 ## Current Status
 
 ### ✅ Working
-- Both features shipped and browser-verified
-- Domain dist synced
-- TypeScript clean
+- All features browser-verified across Week 12 + Week 13 matches
+- PR #89 open: https://github.com/Oaks3000/calculating-glory/pull/89
 
 ### 🟡 In Progress
 - Nothing
@@ -53,21 +60,18 @@ npm run dev --workspace=@calculating-glory/frontend
 ```
 
 Key files:
-- `packages/domain/src/events/types.ts` — MoraleTickerEvent
-- `packages/domain/src/simulation/morale.ts` — detectFormMilestone, FORM_MILESTONE_HEADLINES
-- `packages/domain/src/commands/handlers.ts` — morale event emission
-- `packages/domain/src/reducers/index.ts` — MORALE_TICKER_EVENT case + lastFormMilestone reset
-- `packages/domain/src/content/questions/angles.ts` — new angles bank
-- `packages/domain/src/content/questions/bank.ts` — anglesBank registration
-- `packages/frontend/src/components/stadium-view/GeometryDrillCard.tsx` — onAttempt callback
-- `packages/frontend/src/components/stadium-view/StadiumView.tsx` — Kev's Drill panel
+- `packages/domain/src/simulation/commentary.ts` — pick() duplicate fix + Dani event integration
+- `packages/domain/src/simulation/events.ts` — generateDaniFacilityObservationEvents()
+- `packages/domain/src/commands/handlers.ts` — Dani events wired into handleSimulateWeek
+- `packages/frontend/src/components/owner-box/OwnerBox.tsx` — KevBubble animation tiers
+- `packages/frontend/tailwind.config.js` — msgBump, msgGoalBump, msgGoalBumpOppo keyframes
 
 ## Next Session Goals
 
-1. **Commit this branch** and open PR against main
-2. **Balance pass** — full L2 → L1 play-through; observe growth/retirement, question difficulty progression
-3. **Multiple leagues** — League One NPC team data, division-aware match sim, promotion/relegation
+1. Merge PR #89
+2. Balance pass — full L2 → L1 play-through
+3. Pick next polish issue from #81/#82/#83/#85/#86
 
 ---
 
-**Status**: Morale ticker milestones + Groundskeeper's Drill both shipped. Browser verified. Ready to commit.
+**Status**: Owner's Box polish + Dani observations shipped. PR #89 open and browser-verified. Ready to merge.

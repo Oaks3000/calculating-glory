@@ -3,16 +3,16 @@ project: "Calculating Glory"
 type: "build"
 priority: 2
 phase: "Phase 8 — Polish"
-progress: 94
-lastUpdated: "2026-03-30"
-lastTouched: "2026-03-30"
+progress: 97
+lastUpdated: "2026-03-31"
+lastTouched: "2026-03-31"
 status: "in-progress"
 ---
 
 # Calculating Glory - Current Status
 
-**Phase:** Phase 8 — Polish (94% complete)
-**Last Updated:** 2026-03-30
+**Phase:** Phase 8 — Polish (97% complete)
+**Last Updated:** 2026-03-31
 
 ## What's Done
 
@@ -43,7 +43,7 @@ status: "in-progress"
 - Owner's Box: real-time Kev commentary over ~75 real seconds, 8 crowd states, 60+ templates
 - Val financial threshold inbox messages: amber/red/critical/recovery bands
 
-**Phase 8 — Polish (PR #80 + nifty-ride worktree)**
+**Phase 8 — Polish (PRs #80, #89 + open issues)**
 
 *PR #80 — Morale & Groundskeeper (merged):*
 - Morale news ticker milestone messages: W3, W5, L3, L5 streaks + morale high/low thresholds
@@ -53,16 +53,17 @@ status: "in-progress"
 - Architecture futureproofing for CIRCLES + VOLUME_AND_SURFACE_AREA (GCSE Higher)
 - `DiagramLibrary` + `diagram?` field threaded through QuestionTemplate → MathChallenge
 
-*nifty-ride worktree (open, not yet PR'd):*
-- **Intro spotlight**: each NPC beat reveals its corresponding CC section at full brightness; all others dimmed via per-section overlay divs (CSS opacity transition, not global filter)
-- **Single-message intro**: one card at a time, bottom-anchored — never covers the spotlighted section
-- **Club identity**: `[TEAM]` placeholder in Kev commentary (kickoff, goal reaction/aftermath, full-time win)
-- **Stadium name**: derived from club name at game start; `GameStartedEvent.stadiumName?` optional for backward compat
-- **Club + stadium naming flow**: "Name your club" step in new game setup; stadium auto-suggests, fully editable; names thread through to all NPCs and commentary
+*Also merged in #80: Intro spotlight, single-message intro, club identity ([TEAM] in commentary), club + stadium naming flow*
+
+*PR #89 — Owner's Box polish + Dani observations (open):*
+- **Owner's Box animations**: removed goal-green styling; physics bump system (fade-in / single bump / quadruple flash for player goals / double bump for opposition goals); tailwind keyframes `msg-bump`, `msg-goal-bump`, `msg-goal-bump-oppo`
+- **No-duplicate commentary**: `pick()` tracks `lastPicked`, re-rolls once to prevent identical back-to-back lines
+- **Dani facility observations**: wired into weekly sim — rival club observation inbox card every ~6–8 weeks
+- **Text polish**: em-dashes → periods/commas throughout NPC dialogue
 
 ## What's In Progress
 
-- nifty-ride worktree — polish batch 1, ready to PR
+- PR #89 — Owner's Box polish (open, ready to merge)
 - Open polish issues: #81 (match day), #82 (transfers), #83 (season arc), #85 (NPC cast), #86 (mobile)
 - Balance pass — passive, during play-testing
 
