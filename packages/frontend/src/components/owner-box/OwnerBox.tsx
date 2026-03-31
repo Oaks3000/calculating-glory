@@ -6,6 +6,7 @@ import {
   MatchScore,
   BeatType,
 } from '@calculating-glory/domain';
+import { MatchPitch, BlipState } from './MatchPitch';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -62,6 +63,10 @@ export function OwnerBox({ timeline, playerTeamName, opponentTeamName, onComplet
   const [currentCrowd, setCurrentCrowd]       = useState<CrowdState>('MURMUR');
   const [currentScore, setCurrentScore]       = useState<MatchScore>({ home: 0, away: 0 });
   const [completed, setCompleted]             = useState(false);
+  const [blipState, setBlipState]             = useState<BlipState>('IDLE');
+  const [playerGoalFlash, setPlayerGoalFlash] = useState(false);
+  const [opponentGoalFlash, setOpponentGoalFlash] = useState(false);
+  const [scoreBounce, setScoreBounce]         = useState<'home' | 'away' | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const homeTeam = timeline.isHome ? playerTeamName : opponentTeamName;
@@ -79,11 +84,48 @@ export function OwnerBox({ timeline, playerTeamName, opponentTeamName, onComplet
     timeline.beats.forEach(beat => {
       const beatDelay = beat.realTimeOffset * 1000;
 
-      // Update scoreboard / minute / crowd at beat start
+      // Update scoreboard / minute / crowd / blip state at beat start
       timeouts.push(setTimeout(() => {
         setCurrentMinute(beat.matchMinute);
         setCurrentCrowd(beat.crowdState);
-        if (beat.scoreboardUpdate) setCurrentScore(beat.scoreboardUpdate);
+
+        if (beat.scoreboardUpdate) {
+          setCurrentScore(prev => {
+            // Detect which side scored for the bounce animation
+            if (beat.scoreboardUpdate!.home > prev.home) setScoreBounce('home');
+            else if (beat.scoreboardUpdate!.away > prev.away) setScoreBounce('away');
+            return beat.scoreboardUpdate!;
+          });
+          // Reset bounce after animation completes
+          timeouts.push(setTimeout(() => setScoreBounce(null), 600));
+        }
+
+        // Drive blip state machine from beat type
+        if (beat.type === 'GOAL') {
+          const isPlayerGoal = beat.content.some(m => m.mood === 'elated');
+          const homeScored = timeline.isHome ? isPlayerGoal : !isPlayerGoal;
+          setBlipState(homeScored ? 'CELEBRATE_HOME' : 'CELEBRATE_AWAY');
+
+          if (isPlayerGoal) setPlayerGoalFlash(true);
+          else setOpponentGoalFlash(true);
+
+          // Reset flash and blip state after celebration
+          timeouts.push(setTimeout(() => {
+            setBlipState('RESET');
+            setPlayerGoalFlash(false);
+            setOpponentGoalFlash(false);
+          }, 3000));
+          timeouts.push(setTimeout(() => setBlipState('IDLE'), 4000));
+        } else if (beat.type === 'CHANCE') {
+          setBlipState('BUILD_UP');
+          timeouts.push(setTimeout(() => setBlipState('CHANCE'), 400));
+          timeouts.push(setTimeout(() => setBlipState('IDLE'), 2500));
+        } else if (beat.type === 'NEAR_MISS') {
+          setBlipState('CHANCE');
+          timeouts.push(setTimeout(() => setBlipState('IDLE'), 1800));
+        } else if (beat.type === 'HALF_TIME' || beat.type === 'FULL_TIME') {
+          setBlipState('IDLE');
+        }
       }, beatDelay));
 
       // Reveal each message with stagger within the beat
@@ -125,7 +167,7 @@ export function OwnerBox({ timeline, playerTeamName, opponentTeamName, onComplet
       </div>
 
       {/* ── Scoreboard ───────────────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center justify-center gap-6 py-5 bg-bg-surface border-b border-bg-raised">
+      <div className="shrink-0 flex items-center justify-center gap-6 py-3 bg-bg-surface border-b border-bg-raised">
         <span
           className={[
             'text-sm font-semibold truncate max-w-[120px] text-right',
@@ -135,11 +177,11 @@ export function OwnerBox({ timeline, playerTeamName, opponentTeamName, onComplet
           {homeTeam}
         </span>
         <div className="flex items-center gap-3 shrink-0">
-          <span className="text-4xl font-bold text-txt-primary tabular-nums w-8 text-center">
+          <span className={`text-4xl font-bold text-txt-primary tabular-nums w-8 text-center ${scoreBounce === 'home' ? 'animate-score-bounce' : ''}`}>
             {currentScore.home}
           </span>
           <span className="text-xl text-txt-muted">—</span>
-          <span className="text-4xl font-bold text-txt-primary tabular-nums w-8 text-center">
+          <span className={`text-4xl font-bold text-txt-primary tabular-nums w-8 text-center ${scoreBounce === 'away' ? 'animate-score-bounce' : ''}`}>
             {currentScore.away}
           </span>
         </div>
@@ -153,11 +195,22 @@ export function OwnerBox({ timeline, playerTeamName, opponentTeamName, onComplet
         </span>
       </div>
 
-      {/* ── Crowd state ──────────────────────────────────────────────────────── */}
-      <div className="shrink-0 flex items-center justify-center py-1.5 border-b border-bg-raised/40">
-        <span className={`text-xs2 uppercase tracking-widest font-medium transition-colors duration-500 ${CROWD_COLOR[currentCrowd]}`}>
-          {CROWD_LABEL[currentCrowd]}
-        </span>
+      {/* ── Pitch visualisation ──────────────────────────────────────────────── */}
+      <div className="shrink-0 py-2 px-4 bg-bg-deep border-b border-bg-raised/40">
+        <MatchPitch
+          blipState={blipState}
+          crowdState={currentCrowd}
+          isHome={timeline.isHome}
+          matchMinute={currentMinute}
+          playerGoalFlash={playerGoalFlash}
+          opponentGoalFlash={opponentGoalFlash}
+        />
+        {/* Crowd state label below pitch */}
+        <div className="flex items-center justify-center pt-1">
+          <span className={`text-xs2 uppercase tracking-widest font-medium transition-colors duration-500 ${CROWD_COLOR[currentCrowd]}`}>
+            {CROWD_LABEL[currentCrowd]}
+          </span>
+        </div>
       </div>
 
       {/* ── Message thread ───────────────────────────────────────────────────── */}
