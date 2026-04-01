@@ -15,6 +15,7 @@ import { ForcedOutScreen } from './components/forced-out/ForcedOutScreen';
 import { MenuScreen } from './components/menu/MenuScreen';
 import { IntroScreen } from './components/intro/IntroScreen';
 import { OwnerBox } from './components/owner-box/OwnerBox';
+import { PostMatchScreen } from './components/owner-box/PostMatchScreen';
 import { PreMatchOverlay } from './components/owner-box/PreMatchOverlay';
 import { isIntroCompleted, clearIntroCompleted } from './lib/introState';
 
@@ -32,6 +33,7 @@ export default function App() {
   const [activeView, setActiveView] = useState<ActiveView>('command');
   const [error, setError] = useState<string | null>(null);
   const [ownerBoxData, setOwnerBoxData] = useState<OwnerBoxData | null>(null);
+  const [showPostMatch, setShowPostMatch] = useState(false);
   const [showPreMatch, setShowPreMatch] = useState(false);
   const processedEventCount = useRef<number | null>(null);
 
@@ -206,12 +208,23 @@ export default function App() {
         />
       )}
 
-      {ownerBoxData && (
+      {ownerBoxData && !showPostMatch && (
         <OwnerBox
           timeline={ownerBoxData.timeline}
           playerTeamName={ownerBoxData.playerTeamName}
           opponentTeamName={ownerBoxData.opponentTeamName}
-          onComplete={() => setOwnerBoxData(null)}
+          onComplete={() => setShowPostMatch(true)}
+        />
+      )}
+
+      {ownerBoxData && showPostMatch && (
+        <PostMatchScreen
+          timeline={ownerBoxData.timeline}
+          playerTeamName={ownerBoxData.playerTeamName}
+          opponentTeamName={ownerBoxData.opponentTeamName}
+          state={state}
+          events={events}
+          onContinue={() => { setOwnerBoxData(null); setShowPostMatch(false); }}
         />
       )}
     </div>
