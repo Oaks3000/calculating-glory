@@ -67,15 +67,21 @@ export function InboxCard({
     : [];
   const newsItems = buildNewsItems(currentWeek, rivalNames, dismissed, clubName, stadiumName);
 
-  // Combined preview pool: decisions first, then matches, then news
-  const totalMatches = allNotable.length;
-  const totalNews    = newsItems.length;
-  const previewMatchCount = Math.min(totalMatches, PREVIEW_LIMIT);
-  const previewNewsCount  = Math.min(totalNews, Math.max(0, PREVIEW_LIMIT - previewMatchCount));
+  // Combined preview pool: decisions (capped at 2) → matches → news
+  // Remaining slots after decisions are shared between matches and news.
+  const DECISION_PREVIEW  = 2;
+  const displayDecisions  = unresolvedDecisions.slice(0, DECISION_PREVIEW);
+  const hiddenDecisions   = unresolvedDecisions.length - displayDecisions.length;
+
+  const totalMatches      = allNotable.length;
+  const totalNews         = newsItems.length;
+  const remainingSlots    = Math.max(0, PREVIEW_LIMIT - displayDecisions.length);
+  const previewMatchCount = Math.min(totalMatches, remainingSlots);
+  const previewNewsCount  = Math.min(totalNews, Math.max(0, remainingSlots - previewMatchCount));
 
   const displayMatches = allNotable.slice(0, previewMatchCount);
   const displayNews    = newsItems.slice(0, previewNewsCount);
-  const hiddenCount    = (totalMatches - previewMatchCount) + (totalNews - previewNewsCount);
+  const hiddenCount    = hiddenDecisions + (totalMatches - previewMatchCount) + (totalNews - previewNewsCount);
 
   const isEmpty = unresolvedDecisions.length === 0 && totalMatches === 0 && totalNews === 0 && npcMessages.length === 0;
 
@@ -105,8 +111,8 @@ export function InboxCard({
           </div>
         )}
 
-        {/* Decisions — always at the top */}
-        {unresolvedDecisions.map(evt => (
+        {/* Decisions — capped at DECISION_PREVIEW in the card, rest in "view all" */}
+        {displayDecisions.map(evt => (
           <PendingEventCard
             key={evt.id}
             event={evt}
@@ -119,7 +125,7 @@ export function InboxCard({
         {/* Notable match results — preview */}
         {displayMatches.length > 0 && (
           <>
-            {unresolvedDecisions.length > 0 && (
+            {displayDecisions.length > 0 && (
               <div className="border-t border-bg-deep/60 mt-0.5 mb-0.5" />
             )}
             <p className="text-xs2 text-txt-muted uppercase tracking-wider px-1">
@@ -202,7 +208,7 @@ export function InboxCard({
         {/* News items — texture, no gameplay effect */}
         {displayNews.length > 0 && (
           <>
-            {(unresolvedDecisions.length > 0 || displayMatches.length > 0) && (
+            {(displayDecisions.length > 0 || displayMatches.length > 0) && (
               <div className="border-t border-bg-deep/60 mt-0.5 mb-0.5" />
             )}
             <p className="text-xs2 text-txt-muted uppercase tracking-wider px-1">
