@@ -3,7 +3,7 @@ project: "Calculating Glory"
 type: "build"
 priority: 2
 phase: "Phase 8 — Polish"
-progress: 97
+progress: 98
 lastUpdated: "2026-03-31"
 lastTouched: "2026-03-31"
 status: "in-progress"
@@ -11,7 +11,7 @@ status: "in-progress"
 
 # Calculating Glory - Current Status
 
-**Phase:** Phase 8 — Polish (97% complete)
+**Phase:** Phase 8 — Polish (98% complete)
 **Last Updated:** 2026-03-31
 
 ## What's Done
@@ -31,41 +31,58 @@ status: "in-progress"
 - Owner forced-out cascade + parachute re-entry flow
 - Morale event system, inbox cards, morale news ticker
 
-**Phase 6 Educational Depth — COMPLETE (PRs #72, #74, #75, #76)**
+**Phase 6 Educational Depth — COMPLETE (PRs #72–#76)**
 - Two-axis decoupling: football division vs curriculum level fully independent
-- Year group picker in New Game flow (5 levels)
-- 60-question bank across 6 topics; `generateChallenge.ts` rewritten as bank adapter
-- `bankTopic` on events — 4 events wired to specific curriculum topics
-- Adaptive curriculum advancement: `checkMastery()` → Val Webb gold nudge card → `UPGRADE_CURRICULUM`
+- Year group picker, 60-question bank, adaptive curriculum advancement
 
 **Phase 7 — Practice Mode + Owner's Box + Financial Alerts — COMPLETE (PRs #77–#79)**
-- 🎯 Practice HubTile with Marcus Webb drill flow, all 6 topics
-- Owner's Box: real-time Kev commentary over ~75 real seconds, 8 crowd states, 60+ templates
-- Val financial threshold inbox messages: amber/red/critical/recovery bands
+- Practice HubTile, Owner's Box commentary, Val financial threshold messages
 
-**Phase 8 — Polish (PRs #80, #89 + open issues)**
+**Phase 8 — Polish (PRs #80, #82, #88–#94)**
 
 *PR #80 — Morale & Groundskeeper (merged):*
-- Morale news ticker milestone messages: W3, W5, L3, L5 streaks + morale high/low thresholds
-- `MORALE_TICKER_EVENT` fires once per crossing; `lastFormMilestone` on GameState
-- Groundskeeper's Drill: geometry challenges from Stadium View plot clicks
-- `AREA_AND_PERIMETER` + `ANGLES` questions tagged `bankTopic: 'geometry'`
-- Architecture futureproofing for CIRCLES + VOLUME_AND_SURFACE_AREA (GCSE Higher)
-- `DiagramLibrary` + `diagram?` field threaded through QuestionTemplate → MathChallenge
+- Morale news ticker milestone messages
+- Groundskeeper's Drill: geometry challenges from Stadium View
 
-*Also merged in #80: Intro spotlight, single-message intro, club identity ([TEAM] in commentary), club + stadium naming flow*
+*PR #82/88 — Polish batch 1+2 (merged):*
+- Intro spotlight system with per-NPC section reveals
+- Club identity: naming flow, stadium name, [TEAM] placeholders
+- Transfer market drama: negotiation friction, formation boxes
+- Season arc: memorable moments, club identity system
+- News ticker slowdown, potential rating fix
 
-*PR #89 — Owner's Box polish + Dani observations (open):*
-- **Owner's Box animations**: removed goal-green styling; physics bump system (fade-in / single bump / quadruple flash for player goals / double bump for opposition goals); tailwind keyframes `msg-bump`, `msg-goal-bump`, `msg-goal-bump-oppo`
-- **No-duplicate commentary**: `pick()` tracks `lastPicked`, re-rolls once to prevent identical back-to-back lines
-- **Dani facility observations**: wired into weekly sim — rival club observation inbox card every ~6–8 weeks
-- **Text polish**: em-dashes → periods/commas throughout NPC dialogue
+*PR #89 — Owner's Box polish (merged):*
+- Physics-based message animations (bump, goal bump, opponent bump)
+- No-duplicate commentary lines
+- Dani facility observations during match
+
+*PR #93 — UX fixes (merged):*
+- Contract label simplified: "Contract: Xw left" with tooltip
+- Negotiations auto-close 2.5s after result
+- Budget flash animation with +/- delta badge
+
+*PR #94 — NPC depth + Stadium tour (merged):*
+- Dani intro stadium tour: 6 steps with facility highlight pulse
+- NPC match reactions: 30+ templates, 3 NPCs × 7 scenarios
+
+*#65 — Match pitch visualisation (committed, awaiting PR):*
+- Top-down SVG pitch with 22 blips in Owner's Box
+- Beat-driven blip state machine (IDLE/BUILD_UP/CHANCE/CELEBRATE/RESET)
+- Goal celebration: radial pulse + blip convergence + scoreboard bounce
+- Crowd atmosphere glow, prefers-reduced-motion support
 
 ## What's In Progress
 
-- PR #89 — Owner's Box polish (open, ready to merge)
-- Open polish issues: #81 (match day), #82 (transfers), #83 (season arc), #85 (NPC cast), #86 (mobile)
+- #65 match pitch on branch `claude/plan-next-priorities-VHNXw`, ready to PR
 - Balance pass — passive, during play-testing
+
+## What's Next
+
+- #91 Season-end experience (final table, awards, promotion/relegation)
+- #92 Inbox overflow fix (multiple events stacking)
+- #87 Stadium view — isometric facility panels
+- #86 Math challenge difficulty scaling
+- #80 Sponsor negotiation
 
 ## Blockers
 
@@ -76,6 +93,5 @@ status: "in-progress"
 - Target device: Chromebook 1366×768 (keyboard + trackpad)
 - **Live URL**: https://oaks3000.github.io/calculating-glory/ — auto-deploys on push to main
 - Dev server: `npm run dev --workspace=@calculating-glory/frontend`
-- Domain tests: `cd packages/domain && npm test`
+- Domain tests: `cd packages/domain && npm test` (478 tests)
 - **Design principle**: two-axis model — football division vs curriculum level fully independent
-- **Worktree rule**: always rebuild domain in worktree, then `cp -r dist/ /main/packages/domain/dist/`

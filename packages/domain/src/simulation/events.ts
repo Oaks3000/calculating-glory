@@ -807,3 +807,222 @@ export function generateDaniFacilityObservationEvents(
     resolved: false,
   }];
 }
+
+// ── NPC match reaction messages ──────────────────────────────────────────────
+
+export const NPC_REACTION_TEMPLATE_IDS = new Set([
+  'npc-match-reaction',
+]);
+
+interface MatchContext {
+  result: 'W' | 'D' | 'L';
+  goalsFor: number;
+  goalsAgainst: number;
+  opponentName: string;
+  form: ('W' | 'D' | 'L')[];
+  leaguePosition: number;
+}
+
+// Kev — football-obsessed, warm, occasionally over-enthusiastic
+const KEV_REACTIONS = {
+  big_win: [
+    "That's what I'm talking about. {goals} goals, boss. The lads put on a show against {opponent}. If we can keep this up, we'll be in the conversation come April.",
+    "Brilliant. Absolutely brilliant. {opponent} didn't know what hit them. This is the kind of result that changes a season.",
+    "The boys were outstanding today. {goals} goals and they ran {opponent} ragged. You could hear the crowd lifting them. More of that, please.",
+  ],
+  win: [
+    "Job done against {opponent}. Not always pretty but three points is three points. The lads are starting to believe.",
+    "Good result. {opponent} are no mugs either. I'm pleased with that.",
+    "Solid win. The squad's in a good place right now. Keep backing them and they'll keep delivering.",
+  ],
+  draw: [
+    "Frustrating one, that. We had chances against {opponent} but couldn't find the finish. Not the end of the world, but draws don't win leagues.",
+    "A point. Could've been three, could've been none. {opponent} made it hard for us. We go again next week.",
+  ],
+  loss: [
+    "Tough day. {opponent} were the better side and I won't pretend otherwise. We need to regroup.",
+    "Disappointing. The players know it too. Sometimes it goes against you. The important thing is how we respond.",
+  ],
+  bad_loss: [
+    "That was painful. {goals_against} goals conceded. I've spoken to the lads, they know that's not acceptable. We need to sort the defence out sharpish.",
+    "Won't sugarcoat it. {opponent} took us apart. I'm angry, the players are angry. We owe the fans better than that.",
+  ],
+  winning_streak: [
+    "That's {streak} in a row now. Don't say it out loud in case we jinx it, but this run of form is exactly what promotion pushes are made of.",
+    "Another win. {streak} straight. The confidence in the dressing room is sky high. Even the reserves are training like their lives depend on it.",
+  ],
+  losing_streak: [
+    "I'm not going to panic and neither should you, but {streak} losses on the bounce is... it's not great. The lads need a lift.",
+    "We're in a rut. {streak} losses. Heads are dropping and I can see it in training. We might need to do something, a new face, a tactical change, something.",
+  ],
+};
+
+// Val — sharp, commercial, never wastes words
+const VAL_REACTIONS = {
+  big_win: [
+    "Nice result. Gate receipts will be healthy after that. Winning breeds attendance.",
+    "Good for the spreadsheet, that. Wins like this against {opponent} keep the sponsors interested.",
+  ],
+  loss: [
+    "I've seen the attendance figures trend after runs like this. People stop showing up. Results matter to the bottom line, not just the table.",
+  ],
+  bad_loss: [
+    "I'm already fielding calls from the board. Results like that against {opponent} don't just cost points, they cost confidence. And confidence costs money.",
+  ],
+  winning_streak: [
+    "The commercial team have had three sponsorship enquiries this week. Funny how that works. Win games, make money. Keep it going.",
+  ],
+  losing_streak: [
+    "Two season ticket holders have asked for refunds. I talked them down, but if this run continues I won't be able to. Results affect revenue. Fix it.",
+  ],
+};
+
+// Marcus — warm, enthusiastic, fan-focused
+const MARCUS_REACTIONS = {
+  big_win: [
+    "Boss! The social media numbers after that game are through the roof. {goals} goals against {opponent}! The fans are buzzing, I've got enquiries about hospitality packages already.",
+    "What a result! The fan forum is going wild. This is exactly the kind of performance that builds a fanbase. People will remember days like this.",
+  ],
+  loss: [
+    "The fan mood's taken a hit after {opponent}. I'll put something positive on the socials but the best PR is a result on Saturday.",
+  ],
+  winning_streak: [
+    "The fans are singing your name on the forums. {streak} wins in a row! I'm putting together a matchday special offer to ride the wave. Momentum is everything.",
+  ],
+  losing_streak: [
+    "I'll be honest, the fan engagement numbers are down. People go quiet when results are bad. A win would do more than any marketing campaign right now.",
+  ],
+};
+
+function pickReaction(templates: string[], rng: { next: () => number }): string {
+  return templates[Math.floor(rng.next() * templates.length)];
+}
+
+function fillReaction(
+  template: string,
+  ctx: MatchContext,
+  streak?: number,
+): string {
+  return template
+    .replace(/\{opponent\}/g, ctx.opponentName)
+    .replace(/\{goals\}/g, String(ctx.goalsFor))
+    .replace(/\{goals_against\}/g, String(ctx.goalsAgainst))
+    .replace(/\{streak\}/g, String(streak ?? 0));
+}
+
+/**
+ * Generate 0–1 NPC reaction inbox cards after notable match results.
+ *
+ * Notable = big win (3+ goals), bad loss (3+ conceded), or form streak (3+ W/L).
+ * Each NPC has a distinct voice. Only one reacts per week (seeded pick).
+ * Won't stack — skips if an unresolved reaction card is already pending.
+ * Roughly 60% chance of firing on a notable result (to avoid every week).
+ */
+export function generateNpcMatchReactionEvents(
+  state: GameState,
+  week: number,
+  season: number,
+  seed: string,
+  matchResult: MatchContext,
+): PendingClubEvent[] {
+  if (state.phase === 'PRE_SEASON' || state.phase === 'SEASON_END') return [];
+
+  // Don't stack
+  if (state.pendingEvents.some(
+    e => NPC_REACTION_TEMPLATE_IDS.has(e.templateId) && !e.resolved
+  )) return [];
+
+  const rng = createRng(`${seed}-S${season}-W${week}-npc-reaction`);
+
+  // Determine the form streak length
+  const form = matchResult.form;
+  const lastResult = form[form.length - 1];
+  let streak = 0;
+  for (let i = form.length - 1; i >= 0; i--) {
+    if (form[i] === lastResult) streak++;
+    else break;
+  }
+
+  // Classify the result
+  type Scenario = 'big_win' | 'win' | 'draw' | 'loss' | 'bad_loss' | 'winning_streak' | 'losing_streak';
+  let scenario: Scenario | null = null;
+
+  if (streak >= 3 && lastResult === 'W') scenario = 'winning_streak';
+  else if (streak >= 3 && lastResult === 'L') scenario = 'losing_streak';
+  else if (matchResult.result === 'W' && matchResult.goalsFor >= 3) scenario = 'big_win';
+  else if (matchResult.result === 'L' && matchResult.goalsAgainst >= 3) scenario = 'bad_loss';
+  else if (matchResult.result === 'W') scenario = 'win';
+  else if (matchResult.result === 'L') scenario = 'loss';
+  else if (matchResult.result === 'D') scenario = 'draw';
+
+  if (!scenario) return [];
+
+  // Only fire on notable results (skip ordinary wins/draws/losses ~60% of the time)
+  const isNotable = ['big_win', 'bad_loss', 'winning_streak', 'losing_streak'].includes(scenario);
+  if (!isNotable && rng.next() > 0.4) return [];
+
+  // Pick which NPC reacts (weighted by scenario relevance)
+  type NpcId = 'kev' | 'val' | 'marcus';
+  const candidates: { npc: NpcId; templates: string[] }[] = [];
+
+  // Kev always has something to say about football
+  const kevPool = KEV_REACTIONS[scenario as keyof typeof KEV_REACTIONS];
+  if (kevPool) candidates.push({ npc: 'kev', templates: kevPool });
+
+  // Val speaks up on big results and streaks
+  const valPool = VAL_REACTIONS[scenario as keyof typeof VAL_REACTIONS];
+  if (valPool) candidates.push({ npc: 'val', templates: valPool });
+
+  // Marcus reacts to fan-facing moments
+  const marcusPool = MARCUS_REACTIONS[scenario as keyof typeof MARCUS_REACTIONS];
+  if (marcusPool) candidates.push({ npc: 'marcus', templates: marcusPool });
+
+  if (candidates.length === 0) return [];
+
+  // Kev gets higher weight for football scenarios
+  const weighted: typeof candidates = [];
+  for (const c of candidates) {
+    weighted.push(c);
+    if (c.npc === 'kev') weighted.push(c); // double weight for Kev
+  }
+
+  const picked = weighted[Math.floor(rng.next() * weighted.length)];
+  const template = pickReaction(picked.templates, rng);
+  const text = fillReaction(template, matchResult, streak);
+
+  const NPC_NAMES: Record<NpcId, string> = {
+    kev: 'Kev Mulligan',
+    val: 'Val Okoro',
+    marcus: 'Marcus Webb',
+  };
+
+  const scenarioTitles: Record<Scenario, string> = {
+    big_win: `${NPC_NAMES[picked.npc]} on the big win`,
+    win: `${NPC_NAMES[picked.npc]} on the result`,
+    draw: `${NPC_NAMES[picked.npc]} on the draw`,
+    loss: `${NPC_NAMES[picked.npc]} on the defeat`,
+    bad_loss: `${NPC_NAMES[picked.npc]} on the heavy defeat`,
+    winning_streak: `${NPC_NAMES[picked.npc]} on the winning run`,
+    losing_streak: `${NPC_NAMES[picked.npc]} on the losing run`,
+  };
+
+  return [{
+    id: `evt-S${season}-W${week}-npc-reaction`,
+    templateId: 'npc-match-reaction',
+    week,
+    title: scenarioTitles[scenario],
+    description: text,
+    severity: 'minor',
+    npc: picked.npc,
+    choices: [
+      {
+        id: 'noted',
+        label: scenario.includes('win') || scenario === 'draw'
+          ? 'Thanks. Let\'s keep pushing'
+          : 'Understood. We\'ll turn it around',
+        description: 'Acknowledge and move on.',
+      },
+    ],
+    resolved: false,
+  }];
+}

@@ -38,6 +38,14 @@ export default {
         'msg-bump':            'msgBump 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
         'msg-goal-bump':      'msgGoalBump 1.4s ease-out forwards',
         'msg-goal-bump-oppo': 'msgGoalBumpOppo 0.9s ease-out forwards',
+        // Match pitch blip animations
+        'blip-jitter':    'blipJitter 1.2s ease-in-out infinite',
+        'blip-drift':     'blipDrift 2s ease-in-out infinite',
+        'blip-tense':     'blipTense 0.4s ease-in-out infinite',
+        'blip-celebrate': 'blipCelebrate 0.6s ease-in-out infinite',
+        'goal-pulse':     'goalPulse 1.8s ease-out forwards',
+        'crowd-glow':     'crowdGlow 1.5s ease-in-out infinite',
+        'score-bounce':   'scoreBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
       },
       keyframes: {
         slideInRight: {
@@ -90,6 +98,33 @@ export default {
           '48%':  { transform: 'scale(1.08)' },
           '65%':  { transform: 'scale(1.0)' },
           '100%': { transform: 'scale(1.0)' },
+        },
+        // Match pitch animations
+        blipJitter: {
+          '0%, 100%': { transform: 'translate(0, 0)' },
+          '25%':      { transform: 'translate(1.5px, -1px)' },
+          '50%':      { transform: 'translate(-1px, 1.5px)' },
+          '75%':      { transform: 'translate(1px, 0.5px)' },
+        },
+        blipDrift: {
+          '0%, 100%': { transform: 'translate(0, 0)' },
+          '50%':      { transform: 'translate(1px, -2px)' },
+        },
+        blipTense: {
+          '0%, 100%': { transform: 'translate(0, 0)' },
+          '25%':      { transform: 'translate(2px, -2px)' },
+          '50%':      { transform: 'translate(-2px, 1.5px)' },
+          '75%':      { transform: 'translate(1.5px, 2px)' },
+        },
+        blipCelebrate: {
+          '0%, 100%': { transform: 'scale(1)', opacity: '0.9' },
+          '50%':      { transform: 'scale(1.5)', opacity: '1' },
+        },
+        scoreBounce: {
+          '0%':   { transform: 'scale(1)' },
+          '40%':  { transform: 'scale(1.35)' },
+          '70%':  { transform: 'scale(0.95)' },
+          '100%': { transform: 'scale(1)' },
         },
       },
     },
