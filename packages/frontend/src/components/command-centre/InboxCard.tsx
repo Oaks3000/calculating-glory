@@ -1,4 +1,4 @@
-import { GameEvent, GameCommand, PendingClubEvent, LeagueTableEntry } from '@calculating-glory/domain';
+import { GameEvent, GameCommand, PendingClubEvent, LeagueTableEntry, NpcMessage, NpcSender } from '@calculating-glory/domain';
 import { PendingEventCard } from './PendingEventCard';
 import {
   buildNotableMatches,
@@ -6,6 +6,15 @@ import {
   OUTCOME_STYLES,
   REASON_ORDER,
 } from './inboxUtils';
+
+// ── NPC sender display config ─────────────────────────────────────────────────
+
+const NPC_CONFIG: Record<NpcSender, { initial: string; name: string; avatarClass: string; nameClass: string }> = {
+  VAL:    { initial: 'V', name: 'Val Chen',       avatarClass: 'bg-warn-amber/20 text-warn-amber',   nameClass: 'text-warn-amber'   },
+  KEV:    { initial: 'K', name: 'Kev Mulligan',   avatarClass: 'bg-data-blue/20 text-data-blue',     nameClass: 'text-data-blue'    },
+  MARCUS: { initial: 'M', name: 'Marcus Webb',    avatarClass: 'bg-pitch-green/20 text-pitch-green', nameClass: 'text-pitch-green'  },
+  DANI:   { initial: 'D', name: 'Dani Osei',      avatarClass: 'bg-alert-red/20 text-alert-red',     nameClass: 'text-alert-red'    },
+};
 
 interface InboxCardProps {
   pendingEvents: PendingClubEvent[];
@@ -21,6 +30,7 @@ interface InboxCardProps {
   onError: (msg: string) => void;
   onMathChallenge: (event: PendingClubEvent) => void;
   onViewAll: () => void;
+  npcMessages?: NpcMessage[];
 }
 
 const PREVIEW_LIMIT = 4;
@@ -39,6 +49,7 @@ export function InboxCard({
   onError,
   onMathChallenge,
   onViewAll,
+  npcMessages = [],
 }: InboxCardProps) {
   const unresolvedDecisions = pendingEvents.filter(e => !e.resolved);
 
@@ -66,7 +77,7 @@ export function InboxCard({
   const displayNews    = newsItems.slice(0, previewNewsCount);
   const hiddenCount    = (totalMatches - previewMatchCount) + (totalNews - previewNewsCount);
 
-  const isEmpty = unresolvedDecisions.length === 0 && totalMatches === 0 && totalNews === 0;
+  const isEmpty = unresolvedDecisions.length === 0 && totalMatches === 0 && totalNews === 0 && npcMessages.length === 0;
 
   return (
     <div className="absolute inset-0 bg-bg-raised rounded-card p-4 overflow-hidden flex flex-col">
@@ -156,6 +167,35 @@ export function InboxCard({
                 </div>
               </div>
             ))}
+          </>
+        )}
+
+        {/* NPC character messages */}
+        {npcMessages.length > 0 && (
+          <>
+            {(unresolvedDecisions.length > 0 || displayMatches.length > 0) && (
+              <div className="border-t border-bg-deep/60 mt-0.5 mb-0.5" />
+            )}
+            <p className="text-xs2 text-txt-muted uppercase tracking-wider px-1">
+              From the Team
+            </p>
+            {npcMessages.map((msg) => {
+              const cfg = NPC_CONFIG[msg.sender];
+              return (
+                <div
+                  key={msg.id}
+                  className="flex items-start gap-2 px-3 py-2 rounded-card bg-bg-surface/80 border border-bg-deep/30"
+                >
+                  <div className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${cfg.avatarClass}`}>
+                    {cfg.initial}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-xs2 font-semibold mb-0.5 ${cfg.nameClass}`}>{cfg.name}</p>
+                    <p className="text-xs leading-relaxed text-txt-primary">{msg.text}</p>
+                  </div>
+                </div>
+              );
+            })}
           </>
         )}
 

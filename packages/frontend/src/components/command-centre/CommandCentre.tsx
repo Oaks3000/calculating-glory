@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GameState, GameEvent, GameCommand, PendingClubEvent } from '@calculating-glory/domain';
+import { GameState, GameEvent, GameCommand, PendingClubEvent, generateNpcMessages } from '@calculating-glory/domain';
 import { DataTiles } from './DataTiles';
 import { LeagueTable } from './LeagueTable';
 import { SquadAuditTable } from './SquadAuditTable';
@@ -59,6 +59,7 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
   }
 
   const unresolvedEvents = state.pendingEvents.filter(e => !e.resolved);
+  const npcMessages = generateNpcMessages(state, events);
   const maxFacilityLevel = state.club.facilities.length > 0
     ? Math.max(...state.club.facilities.map(f => f.level))
     : 0;
@@ -149,6 +150,7 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
               onError={setError}
               onMathChallenge={handleMathChallenge}
               onViewAll={() => setInboxOpen(true)}
+              npcMessages={npcMessages}
             />
             {dim('inbox')}
           </div>

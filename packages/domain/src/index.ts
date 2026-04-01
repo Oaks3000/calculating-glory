@@ -29,6 +29,7 @@ export * from './simulation/match';
 export * from './simulation/season';
 export * from './simulation/events';
 export * from './simulation/commentary';
+export * from './simulation/npc-messages';
 
 // Validation
 export * from './validation/rules';
