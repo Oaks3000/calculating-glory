@@ -28,6 +28,7 @@ import { FixturesSlideOver }                from './FixturesSlideOver';
 import { BoardConfidenceSlideOver }         from './BoardConfidenceSlideOver';
 import { ScoutingSlideOver }                from './ScoutingSlideOver';
 import { ScoutNetworkSlideOver }           from './ScoutNetworkSlideOver';
+import { ClubCommercialSlideOver }         from './ClubCommercialSlideOver';
 import { GeometryDrillCard }               from './GeometryDrillCard';
 import { generateChallenge }               from '../social-feed/generateChallenge';
 
@@ -49,10 +50,12 @@ export function StadiumView({ state, dispatch, onError }: StadiumViewProps) {
   const { club } = state;
 
   // ── Slide-over open state ──────────────────────────────────────────────────
-  const [upgradeTarget, setUpgradeTarget] = useState<FacilityType | null>(null);
-  const [fixturesOpen,  setFixturesOpen]  = useState(false);
+  const [upgradeTarget,    setUpgradeTarget]    = useState<FacilityType | null>(null);
+  const [commercialOpen,   setCommercialOpen]   = useState(false);
+  const [commercialActive, setCommercialActive] = useState<FacilityType | null>(null);
+  const [fixturesOpen,     setFixturesOpen]     = useState(false);
   const [trainingOpen,     setTrainingOpen]     = useState(false);
-  const [backroomOpen,  setBackroomOpen]  = useState(false);
+  const [backroomOpen,     setBackroomOpen]     = useState(false);
   const [boardOpen,        setBoardOpen]        = useState(false);
   const [scoutingOpen,     setScoutingOpen]     = useState(false);
   const [scoutNetworkOpen, setScoutNetworkOpen] = useState(false);
@@ -96,17 +99,24 @@ export function StadiumView({ state, dispatch, onError }: StadiumViewProps) {
     const facility = club.facilities.find(f => f.type === facilityType);
     const level    = facility?.level ?? 0;
 
-    // Commercial facilities and unbuilt (level-0) plots → upgrade/build panel
-    if (COMMERCIAL_TYPES.has(facilityType) || level === 0) {
+    // Commercial facilities → dedicated commercial panel (all levels, built or not)
+    if (COMMERCIAL_TYPES.has(facilityType)) {
+      setCommercialActive(facilityType);
+      setCommercialOpen(true);
+      return;
+    }
+
+    // Unbuilt (level-0) non-commercial plots → generic upgrade/build panel
+    if (level === 0) {
       setUpgradeTarget(facilityType);
       return;
     }
 
     // Level 1+ navigation facilities → type-specific slide-over
     switch (facilityType) {
-      case 'STADIUM':         setFixturesOpen(true);  break;
-      case 'TRAINING_GROUND': setTrainingOpen(true);     break;
-      case 'MEDICAL_CENTER':  setBackroomOpen(true);  break;
+      case 'STADIUM':         setFixturesOpen(true);      break;
+      case 'TRAINING_GROUND': setTrainingOpen(true);      break;
+      case 'MEDICAL_CENTER':  setBackroomOpen(true);      break;
       case 'YOUTH_ACADEMY':   setScoutingOpen(true);      break;
       case 'SCOUT_NETWORK':   setScoutNetworkOpen(true);  break;
       case 'CLUB_OFFICE':     setBoardOpen(true);         break;
@@ -178,13 +188,23 @@ export function StadiumView({ state, dispatch, onError }: StadiumViewProps) {
 
       {/* ── Slide-overs ──────────────────────────────────────────────────── */}
 
-      {/* Upgrade / BuildPanel — commercial facilities + level-0 plots */}
+      {/* Upgrade / BuildPanel — level-0 non-commercial plots */}
       <FacilityUpgradeSlideOver
         facilityType={upgradeTarget}
         state={state}
         dispatch={dispatch}
         onError={onError}
         onClose={() => setUpgradeTarget(null)}
+      />
+
+      {/* COMMERCIAL_TYPES → Val's commercial panel */}
+      <ClubCommercialSlideOver
+        isOpen={commercialOpen}
+        activeType={commercialActive}
+        state={state}
+        dispatch={dispatch}
+        onError={onError}
+        onClose={() => { setCommercialOpen(false); setCommercialActive(null); }}
       />
 
       {/* STADIUM → Fixtures & League Standing */}
