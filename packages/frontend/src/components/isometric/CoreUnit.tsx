@@ -25,6 +25,7 @@ import {
   groundCenter,
 } from './isometric-utils';
 import { CoreUnitDef } from './stadium-layout';
+import { constructionDuration } from '@calculating-glory/domain';
 
 interface CoreUnitProps {
   def:       CoreUnitDef;
@@ -41,7 +42,19 @@ interface CoreUnitProps {
 
 export function CoreUnit({ def, level, constructionWeeksRemaining, isHovered, isHighlighted, onClick, onHover }: CoreUnitProps) {
   const isBuilding = (constructionWeeksRemaining ?? 0) > 0;
-  const bh   = def.blockHeights[Math.min(level, 5)];
+
+  // During construction interpolate block height between current and target level.
+  // Starts at old-level height, grows toward new-level height as weeks tick down.
+  const bhCurrent = def.blockHeights[Math.min(level, 5)];
+  const bhTarget  = def.blockHeights[Math.min(level + 1, 5)];
+  const bh = isBuilding
+    ? Math.round(
+        bhCurrent +
+        (bhTarget - bhCurrent) *
+          (1 - (constructionWeeksRemaining! / constructionDuration(level + 1)))
+      )
+    : bhCurrent;
+
   const fv   = footprintVertices(def.gc, def.gr, def.cols, def.rows);
   const gnd  = footprintPath(fv);
 
@@ -175,8 +188,25 @@ export function CoreUnit({ def, level, constructionWeeksRemaining, isHovered, is
         {isBuilding ? '🏗' : def.icon}
       </text>
 
+      {/* ── Construction progress bar (replaces pips while building) */}
+      {isBuilding && bh > 0 && (() => {
+        const totalWeeks = constructionDuration(level + 1);
+        const weeksLeft  = constructionWeeksRemaining!;
+        const progress   = 1 - weeksLeft / totalWeeks; // 0 → 1
+        const barW = 28;
+        const barH = 4;
+        const bx   = iconPos.x - barW / 2;
+        const by   = iconPos.y - bh * 0.45 - 8;
+        return (
+          <g transform={`translate(${bx}, ${by})`} style={{ pointerEvents: 'none' }}>
+            <rect x={0} y={0} width={barW} height={barH} rx={2} fill="rgba(0,0,0,0.40)" />
+            <rect x={0} y={0} width={barW * progress} height={barH} rx={2} fill="#FFB400" />
+          </g>
+        );
+      })()}
+
       {/* ── Level pip row (level > 0, small dots above icon) ─────── */}
-      {level > 0 && bh > 0 && (
+      {level > 0 && bh > 0 && !isBuilding && (
         <g
           transform={`translate(${iconPos.x - (level * 7) / 2}, ${iconPos.y - (bh > 0 ? bh * 0.45 : 0) - 6})`}
           style={{ pointerEvents: 'none' }}

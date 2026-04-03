@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PendingClubEvent, GameCommand } from '@calculating-glory/domain';
+import { PendingClubEvent, GameCommand, formatMoney } from '@calculating-glory/domain';
 
 interface PendingEventCardProps {
   event: PendingClubEvent;
@@ -29,10 +29,12 @@ function EffectPills({
   budgetEffect,
   reputationEffect,
   performanceEffect,
+  moraleEffect,
 }: {
   budgetEffect?: number;
   reputationEffect?: number;
   performanceEffect?: number;
+  moraleEffect?: number;
 }) {
   const pills: { label: string; cls: string }[] = [];
 
@@ -63,6 +65,15 @@ function EffectPills({
     });
   }
 
+  if (moraleEffect !== undefined && moraleEffect !== 0) {
+    pills.push({
+      label: `Morale ${moraleEffect > 0 ? '+' : ''}${moraleEffect}`,
+      cls: moraleEffect > 0
+        ? 'bg-pitch-green/15 text-pitch-green border border-pitch-green/30'
+        : 'bg-warn-amber/15 text-warn-amber border border-warn-amber/30',
+    });
+  }
+
   if (pills.length === 0) {
     pills.push({ label: 'No financial impact', cls: 'bg-bg-raised text-txt-muted' });
   }
@@ -87,7 +98,8 @@ function isRiskyChoice(choice: PendingClubEvent['choices'][number]): boolean {
   const hasNegative =
     (choice.budgetEffect !== undefined && choice.budgetEffect < 0) ||
     (choice.reputationEffect !== undefined && choice.reputationEffect < 0) ||
-    (choice.performanceEffect !== undefined && choice.performanceEffect < 0);
+    (choice.performanceEffect !== undefined && choice.performanceEffect < 0) ||
+    (choice.moraleEffect !== undefined && choice.moraleEffect < 0);
   return !hasPositive && hasNegative;
 }
 
@@ -282,6 +294,24 @@ export function PendingEventCard({ event, dispatch, onError, onMathChallenge }: 
 
       <p className="text-xs text-txt-muted mb-3 leading-relaxed">{event.description}</p>
 
+      {/* Poach: player snapshot strip */}
+      {event.templateId === 'npc-poach' && event.metadata?.playerName && (
+        <div className="mb-3 flex items-center gap-3 bg-bg-raised rounded-card border border-white/5 px-3 py-2">
+          <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+            <span className="text-xs font-semibold text-txt-primary truncate">{event.metadata.playerName}</span>
+            <span className="text-[10px] text-txt-muted">
+              {event.metadata.playerPosition} · {event.metadata.playerWage ? formatMoney(event.metadata.playerWage) + '/wk' : ''}
+            </span>
+          </div>
+          {event.metadata.playerOverall !== undefined && (
+            <div className="text-right shrink-0">
+              <span className="text-data-blue font-bold text-sm">{event.metadata.playerOverall}</span>
+              <div className="text-[10px] text-txt-muted">OVR</div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Inline maths challenge for chain events */}
       {event.mathsChallenge && mathsResult === null && (
         <MathsChallengeWidget
@@ -331,6 +361,7 @@ export function PendingEventCard({ event, dispatch, onError, onMathChallenge }: 
                   budgetEffect={choice.budgetEffect}
                   reputationEffect={choice.reputationEffect}
                   performanceEffect={choice.performanceEffect}
+                  moraleEffect={choice.moraleEffect}
                 />
               </button>
             );

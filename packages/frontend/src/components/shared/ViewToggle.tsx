@@ -61,41 +61,43 @@ export function ViewToggle({
     <>
       <div className="flex items-center justify-between px-4 py-2 border-b border-bg-raised bg-bg-surface">
         {/* Left: Club info */}
-        <div className="flex items-center gap-4">
-          <div>
-            <h1 className="text-lg font-bold text-txt-primary tracking-tight">
+        <div className="flex items-center gap-4 min-w-0 shrink">
+          <div className="min-w-0">
+            <h1 className="text-base sm:text-lg font-bold text-txt-primary tracking-tight truncate max-w-[120px] sm:max-w-none">
               {state.club.name}
             </h1>
             <p className="text-xs text-txt-muted">
-              Season {state.season} · Week {state.currentWeek} ·{' '}
-              <span className="capitalize">{state.phase.replace('_', ' ').toLowerCase()}</span>
+              S{state.season} · W{state.currentWeek}
+              <span className="hidden sm:inline"> · <span className="capitalize">{state.phase.replace('_', ' ').toLowerCase()}</span></span>
             </p>
           </div>
         </div>
 
         {/* Centre: View toggle */}
-        <div className="flex items-center gap-1 bg-bg-raised rounded-card p-1">
+        <div className="flex items-center gap-1 bg-bg-raised rounded-card p-1 shrink-0">
           <button
             onClick={() => onViewChange('command')}
             className={[
-              'px-3 py-1.5 rounded-tag text-xs font-semibold transition-all duration-150',
+              'px-2 sm:px-3 py-1.5 rounded-tag text-xs font-semibold transition-all duration-150',
               activeView === 'command'
                 ? 'bg-bg-surface text-txt-primary shadow-sm'
                 : 'text-txt-muted hover:text-txt-primary',
             ].join(' ')}
           >
-            Command Centre
+            <span className="hidden sm:inline">Command Centre</span>
+            <span className="sm:hidden">CMD</span>
           </button>
           <button
             onClick={() => onViewChange('stadium')}
             className={[
-              'px-3 py-1.5 rounded-tag text-xs font-semibold transition-all duration-150',
+              'px-2 sm:px-3 py-1.5 rounded-tag text-xs font-semibold transition-all duration-150',
               activeView === 'stadium'
                 ? 'bg-bg-surface text-txt-primary shadow-sm'
                 : 'text-txt-muted hover:text-txt-primary',
             ].join(' ')}
           >
-            Stadium View
+            <span className="hidden sm:inline">Stadium View</span>
+            <span className="sm:hidden">Stadium</span>
           </button>
         </div>
 

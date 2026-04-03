@@ -24,7 +24,8 @@ export function MathChallengeCard({ challenge, hintIndex }: MathChallengeCardPro
         <span className="badge bg-data-blue/20 text-data-blue text-xs2">
           {TOPIC_LABELS[challenge.topic] ?? challenge.topic}
         </span>
-        <span className="text-warn-amber text-xs2 data-font">
+        <span className="text-warn-amber text-xs2 data-font flex items-center gap-1">
+          <span className="text-txt-muted text-[10px]">D{challenge.difficulty}</span>
           {DIFFICULTY_STARS[challenge.difficulty]}
         </span>
       </div>

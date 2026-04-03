@@ -1,7 +1,7 @@
 ---
 project: "Calculating Glory"
 type: "build"
-lastUpdated: "2026-03-31"
+lastUpdated: "2026-04-03"
 ---
 
 # Calculating Glory — Next Steps
@@ -59,33 +59,61 @@ lastUpdated: "2026-03-31"
 
 ---
 
+## Recently Completed (PRs #95–100, merged 2026-04-03)
+
+### ✅ NPC Message System
+- **Issue:** #95
+- **Status:** MERGED (PR #96)
+- Kev, Val, Marcus messages wired into Command Centre inbox
+- Message routing by sender with NPC avatar chips
+
+### ✅ Inbox Overflow Partial Fix
+- **Issue:** #92 (partial)
+- **Status:** MERGED (PR #97)
+- Pending decisions capped at 2 in InboxCard preview
+- PREVIEW_LIMIT = 4 controls total items shown
+
+### ✅ Post-Match Report Screen
+- **Issue:** #81
+- **Status:** MERGED (PR #98)
+- Full post-match summary after Owner's Box concludes
+
+### ✅ Owner's Box Phone-Screen UI
+- **Issue:** #91 (partial)
+- **Status:** MERGED (PR #99)
+- Mobile/phone-screen UI polish for Owner's Box
+
+### ✅ Commercial Facilities Panel
+- **Issue:** #87 (partial)
+- **Status:** MERGED (PR #100)
+- Commercial facility types open Val's ClubCommercialSlideOver
+- Groups CLUB_COMMERCIAL, FOOD_AND_BEVERAGE, FAN_ZONE, GROUNDS_SECURITY
+
+---
+
 ## Current Priority Queue
 
-### 1. 🔜 Season-End Experience
-- **Issue:** #91
-- **Priority:** HIGH — season loop completeness
-- Final table reveal, awards, promotion/relegation moment
-- "Next season" teaser
-
-### 2. 🔜 Inbox Overflow Fix
-- **Issue:** #92
-- **Priority:** HIGH — UX bug
-- Multiple events stacking on same week overflows inbox
-
-### 3. 🔜 Stadium View — Isometric Facility View
-- **Issue:** #87
-- **Priority:** MEDIUM — Phase 7 foundation
-- Facility info panels and upgrade actions from isometric view
-
-### 4. 🔜 Math Challenge Difficulty Scaling
+### 1. 🔄 Math Challenge Difficulty Scaling
 - **Issue:** #86
-- **Priority:** MEDIUM — educational quality
-- Early challenges too easy, late ones don't stretch
+- **Priority:** HIGH — educational quality
+- Progressive session difficulty: start D1, unlock D2 after 3 correct D1, unlock D3 after 3 correct D2
+- Brief unlock message in chat ("tougher challenges incoming")
+- Cap by MAX_DIFFICULTY_BY_LEVEL per curriculum level
 
-### 5. 🔜 Sponsor Negotiation
+### 2. 🔜 Sponsor Negotiation
 - **Issue:** #80
 - **Priority:** MEDIUM — decision density
 - Val presents deals, negotiate terms via maths challenge
+
+### 3. 🔜 Inbox Overflow — Full Fix
+- **Issue:** #92
+- **Priority:** MEDIUM — remaining stacking edge cases
+- Check NPC messages + pending events + news all showing correctly within PREVIEW_LIMIT
+
+### 4. 🔜 Stadium View — Remaining Facility Panels
+- **Issue:** #87 (remaining)
+- **Priority:** MEDIUM
+- Training, Medical, Scout, Youth Academy panels from isometric view
 
 ---
 

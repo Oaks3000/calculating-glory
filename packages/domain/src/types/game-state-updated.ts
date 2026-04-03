@@ -79,6 +79,11 @@ export interface PendingClubEvent {
     npcClubId?: string;
     npcClubName?: string;
     offeredFee?: number;
+    /** Snapshot of target player's details at time of bid (avoids squad lookup in UI) */
+    playerName?: string;
+    playerPosition?: string;
+    playerOverall?: number;
+    playerWage?: number;
   };
 }
 
