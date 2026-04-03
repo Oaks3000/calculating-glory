@@ -85,17 +85,6 @@ export function CoreUnit({ def, level, constructionWeeksRemaining, isHovered, is
         />
       )}
 
-      {/* ── Plot border — only shown at level 1+ for definition ──── */}
-      {level > 0 && (
-        <path
-          d={gnd}
-          fill="none"
-          stroke="#0B1622"
-          strokeWidth="1"
-          style={{ pointerEvents: 'none' }}
-        />
-      )}
-
       {/* ── Hover tint ───────────────────────────────────────────── */}
       {isHovered && (
         <path
