@@ -1,6 +1,14 @@
 import { GameEvent, MatchSimulatedEvent, MoraleTickerEvent, Player, avgSquadMorale, isUnsettled } from '@calculating-glory/domain';
 import { LeagueTableEntry } from '@calculating-glory/domain';
 
+// ── Ordinal helper ──────────────────────────────────────────────────────────
+
+function ordinal(n: number): string {
+  const s = ['th', 'st', 'nd', 'rd'];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] ?? s[v] ?? s[0]);
+}
+
 interface NewsTickerProps {
   events: GameEvent[];
   clubId: string;
@@ -9,6 +17,119 @@ interface NewsTickerProps {
   leagueEntries: LeagueTableEntry[];
   squad: Player[];
   currentWeek?: number;
+}
+
+// ── Season arc headlines ────────────────────────────────────────────────────
+//
+// Narrative headlines derived from the current state of the season.
+// Fire on streak milestones, zone entries, and new best-result records.
+// Added to the tail of the ticker so they appear alongside match scores.
+
+function buildSeasonArcHeadlines(
+  events: GameEvent[],
+  clubId: string,
+  clubName: string,
+  leagueEntries: LeagueTableEntry[],
+  currentWeek?: number,
+): string[] {
+  if (!currentWeek || currentWeek < 3) return [];
+
+  const headlines: string[] = [];
+  const nameMap = new Map(leagueEntries.map(e => [e.clubId, e.clubName]));
+
+  // ── Compute form from events ─────────────────────────────────────────────
+  const playerMatches = (events.filter(e =>
+    e.type === 'MATCH_SIMULATED' &&
+    (e as MatchSimulatedEvent).homeTeamId === clubId ||
+    (e.type === 'MATCH_SIMULATED' && (e as MatchSimulatedEvent).awayTeamId === clubId)
+  ) as MatchSimulatedEvent[]);
+
+  if (playerMatches.length < 3) return headlines;
+
+  type Result = 'W' | 'D' | 'L';
+  const results: Result[] = playerMatches.map(m => {
+    const isHome = m.homeTeamId === clubId;
+    const p = isHome ? m.homeGoals : m.awayGoals;
+    const o = isHome ? m.awayGoals : m.homeGoals;
+    return p > o ? 'W' : p < o ? 'L' : 'D';
+  });
+
+  // Current streak
+  const latest = results[results.length - 1];
+  let streak = 0;
+  for (let i = results.length - 1; i >= 0; i--) {
+    if (results[i] === latest) streak++;
+    else break;
+  }
+
+  // ── Win streak milestones (3 / 5 / 7+) ──────────────────────────────────
+  if (latest === 'W') {
+    if (streak === 3) headlines.push(`🔥 ${clubName} on a 3-game winning run — momentum building`);
+    else if (streak === 5) headlines.push(`🔥 Five straight wins — ${clubName} are flying`);
+    else if (streak === 7) headlines.push(`🔥 Seven in a row — one of the best runs in the division`);
+    else if (streak >= 9) headlines.push(`🔥 ${streak}-game winning run — extraordinary form from ${clubName}`);
+  }
+
+  // ── Loss streak milestones ───────────────────────────────────────────────
+  if (latest === 'L') {
+    if (streak === 3) headlines.push(`⚠ 3 straight defeats — the run has to end`);
+    else if (streak === 5) headlines.push(`⚠ Five straight defeats — crisis point for ${clubName}`);
+    else if (streak >= 7) headlines.push(`⚠ ${streak} games without a win — alarm bells ringing at ${clubName}`);
+  }
+
+  // ── Unbeaten run (mix of W/D, no L for 5+) ──────────────────────────────
+  if (latest !== 'L') {
+    let unbeaten = 0;
+    for (let i = results.length - 1; i >= 0; i--) {
+      if (results[i] !== 'L') unbeaten++;
+      else break;
+    }
+    if (unbeaten >= 5 && streak < 3) {
+      // Only show if not already covered by a win-streak headline
+      headlines.push(`${clubName} unbeaten in ${unbeaten} — solid and hard to beat`);
+    }
+  }
+
+  // ── New season-best win (fires on the week it happens) ──────────────────
+  const lastMatch = playerMatches[playerMatches.length - 1];
+  const lastIsHome = lastMatch.homeTeamId === clubId;
+  const lastP = lastIsHome ? lastMatch.homeGoals : lastMatch.awayGoals;
+  const lastO = lastIsHome ? lastMatch.awayGoals : lastMatch.homeGoals;
+  const lastDiff = lastP - lastO;
+
+  if (lastDiff >= 3) {
+    // Check if this is the biggest margin of the season
+    const margins = playerMatches.slice(0, -1).map(m => {
+      const ih = m.homeTeamId === clubId;
+      return (ih ? m.homeGoals : m.awayGoals) - (ih ? m.awayGoals : m.homeGoals);
+    });
+    const prevBest = margins.length > 0 ? Math.max(...margins) : 0;
+    if (lastDiff > prevBest) {
+      const opponentId = lastIsHome ? lastMatch.awayTeamId : lastMatch.homeTeamId;
+      const opponentName = nameMap.get(opponentId) ?? 'opposition';
+      headlines.push(`★ SEASON BEST — ${lastP}–${lastO} vs ${opponentName} — ${clubName}'s biggest win this season`);
+    }
+  }
+
+  // ── Zone banners (fires on weeks divisible by 5 to avoid every-week spam) ─
+  const playerEntry = leagueEntries.find(e => e.clubId === clubId);
+  if (playerEntry && currentWeek % 5 === 0) {
+    const pos   = playerEntry.position;
+    const total = leagueEntries.length;
+    const autoPromo   = 3;
+    const playoffEdge = 7;
+    const dropZone    = total - 1; // bottom 2 start here
+
+    if (pos <= autoPromo) {
+      headlines.push(`🏆 ${clubName} in the automatic promotion places — ${ordinal(pos)} in League Two`);
+    } else if (pos <= playoffEdge) {
+      headlines.push(`⚔️ Playoff contenders — ${clubName} sit ${ordinal(pos)} in the table`);
+    } else if (pos >= dropZone) {
+      headlines.push(`⚠ ${clubName} in the drop zone — ${ordinal(pos)} — every point is crucial`);
+    }
+  }
+
+  return headlines;
 }
 
 function buildMoraleHeadlines(squad: Player[]): string[] {
@@ -100,7 +221,8 @@ function buildHeadlines(
     }
   }
 
-  return [...headlines.slice(-30).reverse(), ...buildMoraleHeadlines(squad), ...milestoneHeadlines];
+  const arcHeadlines = buildSeasonArcHeadlines(events, clubId, clubName, leagueEntries, currentWeek);
+  return [...headlines.slice(-30).reverse(), ...buildMoraleHeadlines(squad), ...milestoneHeadlines, ...arcHeadlines];
 }
 
 export function NewsTicker({ events, clubId, clubName, stadiumName, leagueEntries, squad, currentWeek }: NewsTickerProps) {
