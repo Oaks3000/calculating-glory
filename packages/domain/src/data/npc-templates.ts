@@ -14,6 +14,9 @@
  *   [SCORE]    — match scoreline e.g. "2–1"
  *   [FORM]     — last 5 results string e.g. "W W D L W"
  *   [SQUAD]    — current squad count
+ *   [STREAK]   — current streak length (wins or losses)
+ *   [CLUB]     — club name (e.g. "Hartfield FC")
+ *   [STADIUM]  — stadium name (e.g. "Calder Park")
  */
 
 // ── Val Okoro — Finance Director ───────────────────────────────────────────
@@ -21,22 +24,22 @@
 /** Net positive (income exceeds wages). Val is dry, never effusive. */
 export const VAL_SUMMARY_SURPLUS = [
   'Weekly position: income [INCOME], wages [WAGES]. Net [NET]/wk. Nothing requiring your attention.',
-  'Finances in order. [NET]/wk net surplus. Budget [BUDGET]. Keep it steady.',
+  '[CLUB] finances in order. [NET]/wk net surplus. Budget [BUDGET]. Keep it steady.',
   'Weekly summary: [INCOME] in, [WAGES] out. Net [NET]. Comfortable position.',
   'Wage bill covered, revenue ahead of it. Net [NET]/wk. Runway healthy.',
   '[NET] net per week at current rates. Budget [BUDGET]. No flags from me.',
   'Income [INCOME], outgoings [WAGES]. Surplus of [NET]/wk. Fine.',
-  'Clean week financially. [NET]/wk net. Nothing to worry about — yet.',
-  'Summary: we made money this week. [NET] net. Budget [BUDGET]. Good.',
+  'Clean week financially at [CLUB]. [NET]/wk net. Nothing to worry about — yet.',
+  'Summary: [CLUB] made money this week. [NET] net. Budget [BUDGET]. Good.',
 ];
 
 /** Burning slowly (runway 20+ weeks). Val is calm but watching. */
 export const VAL_SUMMARY_GREEN = [
   'Weekly position: wages [WAGES], income [INCOME]. Burn [NET]/wk. Runway [RUNWAY] weeks — comfortable.',
   'Wages [WAGES], revenue [INCOME]. Net [NET]/wk. Runway [RUNWAY] weeks. Fine for now.',
-  'Burning [NET]/wk at current rates. Budget [BUDGET], [RUNWAY] weeks of runway. Not a concern.',
+  '[CLUB] burning [NET]/wk at current rates. Budget [BUDGET], [RUNWAY] weeks of runway. Not a concern.',
   'Weekly summary: [INCOME] in, [WAGES] out. Net [NET]. [RUNWAY] weeks runway. Watching it.',
-  'Finances stable. [RUNWAY] weeks of runway at this burn rate. Keep an eye on wages.',
+  '[CLUB] finances stable. [RUNWAY] weeks of runway at this burn rate. Keep an eye on wages.',
   'Budget [BUDGET]. Burning [NET]/wk. [RUNWAY] weeks. Nothing urgent — but worth tracking.',
   'Wage bill [WAGES], income [INCOME]. Net [NET]/wk. Runway [RUNWAY] weeks. As expected.',
   'Weekly outgoings [WAGES], weekly revenue [INCOME]. Net [NET]. [RUNWAY] weeks. Steady.',
@@ -44,11 +47,11 @@ export const VAL_SUMMARY_GREEN = [
 
 /** Runway amber (10–20 weeks). Val is measured but pointed. */
 export const VAL_SUMMARY_AMBER = [
-  'Weekly burn [NET]/wk. Budget [BUDGET], runway [RUNWAY] weeks. Getting tighter. Worth watching.',
+  '[CLUB] weekly burn [NET]/wk. Budget [BUDGET], runway [RUNWAY] weeks. Getting tighter. Worth watching.',
   'Wages [WAGES] against income [INCOME]. Net [NET]/wk. Runway down to [RUNWAY] weeks. I\'d start thinking about this.',
   'Summary: burning [NET]/wk. [RUNWAY] weeks of runway left. Not critical, but not comfortable either.',
   'Budget [BUDGET]. Burn rate [NET]/wk. Runway [RUNWAY] weeks. You should have a plan if this doesn\'t improve.',
-  '[RUNWAY] weeks of runway at current burn. That\'s not a lot of buffer if something unexpected comes up.',
+  '[RUNWAY] weeks of runway at current burn. That\'s not a lot of buffer if something unexpected comes up at [CLUB].',
   'Wage bill [WAGES]. Revenue [INCOME]. Net [NET]/wk. [RUNWAY] weeks. I\'d flag this as a concern.',
   'Burning [NET]/wk. [RUNWAY] weeks until the budget\'s gone. This needs attention.',
   'Net [NET]/wk outgoing. [RUNWAY] weeks runway. I\'ll keep saying it until the number improves.',
@@ -56,9 +59,9 @@ export const VAL_SUMMARY_AMBER = [
 
 /** Runway red/critical (<10 weeks). Val is direct. */
 export const VAL_SUMMARY_RED = [
-  'Budget [BUDGET]. Burning [NET]/wk. Runway [RUNWAY] weeks. This is serious. We need to cut costs or find revenue.',
+  '[CLUB] budget [BUDGET]. Burning [NET]/wk. Runway [RUNWAY] weeks. This is serious. We need to cut costs or find revenue.',
   '[RUNWAY] weeks of runway. At this burn rate, that\'s not enough. Something has to change.',
-  'Wage bill [WAGES] exceeds income [INCOME] by [NET]/wk. Budget [BUDGET]. I\'m not going to dress this up — we\'re in trouble.',
+  'Wage bill [WAGES] exceeds income [INCOME] by [NET]/wk. Budget [BUDGET]. I\'m not going to dress this up — [CLUB] is in trouble.',
   'Net [NET]/wk outgoing. [RUNWAY] weeks left. This is the situation I\'ve been warning you about.',
   'Summary: [RUNWAY] weeks of runway. Wages [WAGES], revenue [INCOME]. We cannot sustain this.',
   '[RUNWAY] weeks. That\'s all. Something needs to change this week, not next week.',
@@ -88,15 +91,15 @@ export const VAL_ALERT_RED = [
 /** Post-match: win */
 export const KEV_POST_MATCH_WIN = [
   'That\'s three points. The lads gave everything today — [OPPONENT] didn\'t like it. [SCORE].',
-  'Get in. [SCORE] against [OPPONENT]. Exactly what we needed.',
+  'Get in. [SCORE] against [OPPONENT]. Exactly what [CLUB] needed.',
   '[SCORE]. [OPPONENT] was a tough ask today but the lads delivered. Happy.',
-  'Three points in the bag. [SCORE] vs [OPPONENT]. Massive for the table.',
+  'Three points in the bag. [SCORE] vs [OPPONENT]. Massive for [CLUB]\'s table.',
   'Job done. [SCORE] — [OPPONENT] didn\'t have an answer for us today.',
-  'The lads were brilliant. [SCORE] against [OPPONENT]. That\'s a statement result.',
-  '[SCORE]. Big win that. [OPPONENT] are no pushovers. The squad should be proud.',
-  'Three points. The way we played against [OPPONENT] today — that\'s the standard I want.',
+  'The lads were brilliant. [SCORE] against [OPPONENT]. That\'s a [CLUB] statement result.',
+  '[SCORE]. Big win that. [OPPONENT] are no pushovers. [CLUB] should be proud.',
+  'Three points. The way we played against [OPPONENT] today — that\'s the standard I want from [CLUB].',
   '[SCORE] vs [OPPONENT]. Couldn\'t ask for more from the lads. Brilliant.',
-  'That\'s the result we needed. [SCORE]. [OPPONENT] made it hard but we found a way.',
+  'That\'s the result [CLUB] needed. [SCORE]. [OPPONENT] made it hard but we found a way.',
 ];
 
 /** Post-match: draw */
@@ -115,44 +118,44 @@ export const KEV_POST_MATCH_DRAW = [
 
 /** Post-match: loss */
 export const KEV_POST_MATCH_LOSS = [
-  '[SCORE] against [OPPONENT]. Not good enough. The lads know it.',
+  '[SCORE] against [OPPONENT]. Not good enough. The [CLUB] lads know it.',
   'That one hurts. [SCORE] vs [OPPONENT]. We were second best today.',
-  'Loss. [SCORE]. [OPPONENT] were sharper, more clinical. We have to be better.',
+  'Loss. [SCORE]. [OPPONENT] were sharper, more clinical. [CLUB] has to be better.',
   '[SCORE] — [OPPONENT] deserved that. We didn\'t turn up in the key moments.',
-  'Not a good day. [SCORE] vs [OPPONENT]. A few things to sort in the week.',
+  'Not a good day for [CLUB]. [SCORE] vs [OPPONENT]. A few things to sort in the week.',
   '[SCORE]. We gave [OPPONENT] too much respect. We played scared.',
   'Beaten [SCORE] by [OPPONENT]. Disappointing. The response next week is what matters now.',
-  '[SCORE] against [OPPONENT]. Hard to take. But we don\'t have time to dwell.',
+  '[SCORE] against [OPPONENT]. Hard to take. But [CLUB] don\'t have time to dwell.',
   'The lads are quiet. [SCORE] vs [OPPONENT]. That one\'s on all of us.',
-  '[SCORE]. [OPPONENT] were better. Simple as that. We need to respond.',
+  '[SCORE]. [OPPONENT] were better. Simple as that. [CLUB] need to respond.',
 ];
 
 /** Kev: squad concern (squad < 14) */
 export const KEV_SQUAD_CONCERN = [
-  'Boss, we\'ve got [SQUAD] players. That\'s thin. One injury and we\'re in trouble.',
+  'Boss, [CLUB] has got [SQUAD] players. That\'s thin. One injury and we\'re in trouble.',
   'I need to flag the squad depth — [SQUAD] players is not enough. We need bodies.',
-  '[SQUAD] in the squad. I\'m not going to panic, but I am going to flag this every week until it changes.',
+  '[SQUAD] in the [CLUB] squad. I\'m not going to panic, but I am going to flag this every week until it changes.',
   'Squad\'s at [SQUAD]. One or two knocks and we\'re struggling to fill positions. Worth addressing.',
   'Just to put it on record: [SQUAD] players. We need more cover. I\'d rather say it now than after someone gets injured.',
-  'Boss, [SQUAD] is light. I know the budget\'s tight but we need to address squad depth.',
+  'Boss, [SQUAD] is light. I know the budget\'s tight but [CLUB] needs to address squad depth.',
   '[SQUAD] players. Any manager would tell you that\'s not enough. The free agent list has options.',
-  'We\'re running lean at [SQUAD]. Might be worth a look at the transfer market.',
+  '[CLUB]\'s running lean at [SQUAD]. Might be worth a look at the transfer market.',
 ];
 
 /** Kev: good run of form (win streak 3+) */
 export const KEV_FORM_GOOD = [
-  'The lads are flying right now. Don\'t change what\'s working.',
+  'The [CLUB] lads are flying right now. Don\'t change what\'s working.',
   'Three wins on the bounce — the squad\'s in a great place. Momentum is real.',
   'Brilliant run of form. The training ground investment is paying off.',
-  'The lads are believing right now. Keep giving them reasons to.',
-  'Form\'s exceptional. This is a squad that knows how to win.',
+  'The lads are believing right now. Keep giving [CLUB] reasons to.',
+  'Form\'s exceptional. This is a [CLUB] squad that knows how to win.',
 ];
 
 /** Kev: poor run of form (loss streak 3+) */
 export const KEV_FORM_POOR = [
-  'Three losses in a row. I\'m not going to sugar-coat it — we need to turn this around fast.',
+  'Three losses in a row. I\'m not going to sugar-coat it — [CLUB] need to turn this around fast.',
   'The lads need a result. Morale is taking a hit from this run.',
-  'Poor form. Three straight defeats. Something has to change.',
+  'Poor form. Three straight defeats. Something has to change at [CLUB].',
   'We\'re in a bad run. The table doesn\'t lie. We need to respond this week.',
   'Three losses. The dressing room is quiet. We need a win — not a draw, a win.',
 ];
@@ -165,9 +168,9 @@ export const KEV_FORM_POOR = [
 
 /** Squad depth: strong (≥17 players). Marcus is measured, competent. */
 export const MARCUS_SQUAD_STRONG = [
-  'Squad at [SQUAD]. Good depth — we can handle rotation without worrying about injuries.',
+  '[CLUB] squad at [SQUAD]. Good depth — we can handle rotation without worrying about injuries.',
   '[SQUAD] registered. Comfortable with the numbers. [AGENTS] agents on the market if you want to upgrade anyone.',
-  'Scouting summary: [SQUAD] in the building, [AGENTS] free agents available. Good position to be in.',
+  'Scouting summary: [SQUAD] in the building at [CLUB], [AGENTS] free agents available. Good position to be in.',
   '[SQUAD] players — solid. Keep an eye on the free agent list though; it moves quickly.',
   'Squad depth looking healthy at [SQUAD]. The market has [AGENTS] options if anything comes up.',
 ];
@@ -183,10 +186,10 @@ export const MARCUS_SQUAD_OK = [
 
 /** Squad depth: thin (<14 players). Marcus is pointed. */
 export const MARCUS_SQUAD_THIN = [
-  '[SQUAD] players. That\'s the kind of squad where one hamstring pull becomes a selection problem. [AGENTS] agents are available now.',
+  '[CLUB] have [SQUAD] players. That\'s the kind of squad where one hamstring pull becomes a selection problem. [AGENTS] agents are available now.',
   'Flagging again: [SQUAD] is too thin for a full season. [AGENTS] free agents out there — some decent options.',
   'Squad at [SQUAD]. I know Kev\'s said it too, but I\'ll add: the free agent list has [AGENTS] names on it right now.',
-  '[SQUAD]. We\'re a small injury away from real trouble. [AGENTS] agents available — some of them won\'t be there next week.',
+  '[SQUAD]. [CLUB] are a small injury away from real trouble. [AGENTS] agents available — some of them won\'t be there next week.',
   'I keep saying [SQUAD] isn\'t enough. [AGENTS] free agents available. Some of them are better than you\'d expect.',
 ];
 
@@ -213,8 +216,8 @@ export const MARCUS_MARKET_QUIET = [
 
 /** League position: strong (top 8). Dani is smooth, managing from a good place. */
 export const DANI_PRESS_POSITIVE = [
-  '[POSITION]th in the division. That\'s the kind of number that keeps the board quiet. Long may it continue.',
-  'Good week from a narrative standpoint. [POSITION]th place — people are talking positively.',
+  '[CLUB] are [POSITION]th in the division. That\'s the kind of number that keeps the board quiet. Long may it continue.',
+  'Good week from a narrative standpoint. [POSITION]th place — people are talking positively about [CLUB].',
   'Position [POSITION]: fans engaged, board comfortable, press asking the right questions. Keep it going.',
   'Board confidence is at [BOARD]%. That\'s a healthy margin to work with. Nothing urgent from my side.',
   '[POSITION]th. Honest answer: this is the easy part to manage. Let\'s not waste it.',
@@ -222,18 +225,18 @@ export const DANI_PRESS_POSITIVE = [
 
 /** League position: mid-table (9–18). Dani is measured, cautiously optimistic. */
 export const DANI_PRESS_NEUTRAL = [
-  '[POSITION]th. Solid mid-table. Not the story for the wrong reasons, which is fine by me.',
+  '[CLUB] are [POSITION]th. Solid mid-table. Not the story for the wrong reasons, which is fine by me.',
   'Position [POSITION] — board\'s watching, not panicking. That\'s the goal for now.',
   '[POSITION]th in the table. Board confidence at [BOARD]%. Manageable.',
-  'Narrative\'s quiet this week — [POSITION]th, nothing inflammatory. That\'s a result in itself.',
+  'Narrative\'s quiet this week — [CLUB] at [POSITION]th, nothing inflammatory. That\'s a result in itself.',
   '[POSITION]th. Nothing to shout about, nothing to manage down. Mid-table is its own kind of peace.',
 ];
 
 /** League position: danger zone (19+). Dani is frank, managing expectations. */
 export const DANI_PRESS_NEGATIVE = [
-  '[POSITION]th. We\'re in the part of the table where questions start. I\'m managing it — but they\'re coming.',
+  '[CLUB] are [POSITION]th. We\'re in the part of the table where questions start. I\'m managing it — but they\'re coming.',
   'Board confidence at [BOARD]%. At [POSITION]th, every result carries weight. I can shape the narrative, but results are the only real fix.',
-  'Position [POSITION] — local press has noticed. Nothing hostile yet, but I\'d rather we weren\'t here.',
+  'Position [POSITION] — local press has noticed [CLUB]. Nothing hostile yet, but I\'d rather we weren\'t here.',
   '[POSITION]th and the tone is shifting. I\'ll hold the line on comms, but I need results to work with.',
   'At [POSITION]th I can only do so much. [BOARD]% board confidence. Results move the dial, not press releases.',
 ];
@@ -260,20 +263,20 @@ export const DANI_RESULT_LOSS = [
 
 /** Kev: 5+ game winning run. Quietly thrilled but still grounded. */
 export const KEV_STREAK_WIN_5 = [
-  'Five wins on the bounce. I keep waiting for us to slip up and it\'s not happening. The squad\'s in a brilliant place.',
+  'Five wins on the bounce. I keep waiting for [CLUB] to slip up and it\'s not happening. The squad\'s in a brilliant place.',
   '[STREAK] straight wins. I\'ve been doing this long enough to know — don\'t change a thing. Keep the rhythm going.',
-  'This is a proper run now. [STREAK] wins. The lads are competing like a team that believes it can go all the way.',
-  '[STREAK]-game winning streak. I don\'t want to jinx it but I\'m going to say it — this squad is something special right now.',
+  'This is a proper run now. [STREAK] wins. The [CLUB] lads are competing like a team that believes it can go all the way.',
+  '[STREAK]-game winning streak. I don\'t want to jinx it but I\'m going to say it — this [CLUB] squad is something special right now.',
   'That\'s [STREAK] in a row. At some point this stops being form and starts being standard. I like it.',
 ];
 
 /** Kev: 5+ game losing run. Frank, not panicking, but serious. */
 export const KEV_STREAK_LOSS_5 = [
-  '[STREAK] straight defeats. I\'m not going to lie to you — that\'s a crisis. We need to figure this out before it gets worse.',
+  '[STREAK] straight defeats. I\'m not going to lie to you — that\'s a crisis for [CLUB]. We need to figure this out before it gets worse.',
   'Five losses. Morale in the dressing room is the lowest I\'ve seen it. The lads need a result, not just a pep talk.',
-  '[STREAK] games. That\'s not bad form, that\'s a serious problem. Something has to change — tactics, squad, something.',
+  '[STREAK] games. That\'s not bad form, that\'s a serious problem. Something has to change at [CLUB] — tactics, squad, something.',
   'The run is [STREAK] now. Every manager goes through a bad patch. But this one needs to end this week.',
-  '[STREAK] defeats on the bounce. I\'ll be honest — I\'m worried. Not about my job, about the club. What\'s the plan?',
+  '[STREAK] defeats on the bounce. I\'ll be honest — I\'m worried. Not about my job, about [CLUB]. What\'s the plan?',
 ];
 
 // ── Kev: table position reactions ──────────────────────────────────────────
@@ -284,20 +287,20 @@ export const KEV_STREAK_LOSS_5 = [
 
 /** Kev: automatic promotion zone (top 3). Quietly excited, eyes on the prize. */
 export const KEV_PROMOTION_ZONE = [
-  'We\'re in the top three. I keep saying it to the lads — this is real. Don\'t throw it away.',
+  '[CLUB] are in the top three. I keep saying it to the lads — this is real. Don\'t throw it away.',
   '[POSITION]th. The lads can see the promotion places. It\'s not a dream anymore. Don\'t let them think it is.',
   'Top three. Every session this week I\'ve had to keep their feet on the ground. The focus has to stay sharp.',
-  'The table doesn\'t lie. [POSITION]th — we\'re in the hunt. Stay disciplined, don\'t get giddy.',
-  'Promotion places. We\'re there. Protect what we\'ve built — one game at a time.',
+  'The table doesn\'t lie. [CLUB] are [POSITION]th — we\'re in the hunt. Stay disciplined, don\'t get giddy.',
+  'Promotion places. [CLUB] are there. Protect what we\'ve built — one game at a time.',
 ];
 
 /** Kev: automatic relegation zone (bottom 4). Grim, practical, no drama. */
 export const KEV_RELEGATION_ZONE = [
-  'The table\'s honest. [POSITION]th — we\'re in the drop zone. I\'d rather say that clearly than dress it up.',
-  'Bottom four. Kev\'s not going to pretend otherwise. The lads know it. We need points, not excuses.',
+  'The table\'s honest. [CLUB] are [POSITION]th — we\'re in the drop zone. I\'d rather say that clearly than dress it up.',
+  'Bottom four. I\'m not going to pretend otherwise. The lads know it. [CLUB] need points, not excuses.',
   '[POSITION]th. Relegation zone. Every point from here is massive. Simple.',
-  'We\'re in the places you don\'t want to be in. [POSITION]th. The squad\'s been told — no hiding, no pointing fingers.',
-  'Down in [POSITION]th. I\'ve kept squads up from worse. But it takes honesty and hard work from everyone.',
+  '[CLUB] are in the places you don\'t want to be. [POSITION]th. The squad\'s been told — no hiding, no pointing fingers.',
+  'Down in [POSITION]th. I\'ve kept squads up from worse. But [CLUB] need honesty and hard work from everyone.',
 ];
 
 // ── Marcus: commercial observations ───────────────────────────────────────
@@ -308,12 +311,12 @@ export const KEV_RELEGATION_ZONE = [
 // Placeholders: [POSITION], [INCOME], [BUDGET], [SQUAD]
 
 export const MARCUS_COMMERCIAL_OBS = [
-  'Not really my area, but I walked past the fan zone yesterday and it was buzzing. That atmosphere carries into the stadium — I genuinely believe it helps the lads.',
-  'Had a look at the matchday attendance numbers. When we\'re playing well, the ground fills up. The connection between results and revenue is real. Win more, earn more — simple.',
-  'Saw some of the hospitality figures. There\'s real money in making the matchday experience good. The commercial side matters more than people think.',
-  'The stadium\'s generating [INCOME]/week. That\'s the engine. Every facility upgrade is an investment in what we can build next. Worth knowing.',
+  'Not really my area, but I walked past the fan zone at [STADIUM] yesterday and it was buzzing. That atmosphere carries into the ground — I genuinely believe it helps the lads.',
+  'Had a look at the matchday attendance numbers. When [CLUB] are playing well, the ground fills up. The connection between results and revenue is real. Win more, earn more — simple.',
+  'Saw some of the hospitality figures. There\'s real money in making the matchday experience at [STADIUM] good. The commercial side matters more than people think.',
+  '[STADIUM]\'s generating [INCOME]/week. That\'s the engine. Every facility upgrade is an investment in what [CLUB] can build next. Worth knowing.',
   'I know this is Val\'s territory, but I pay attention: the clubs that invest in the commercial side early are the ones who can afford better players later. Just saying.',
-  'Bit of unsolicited analysis: we\'re [POSITION]th in the league and our fanbase feels it. Winning brings people in, people in means income, income means better players. It\'s all connected.',
-  'Word from the youth players — they want to play for a club with a buzz about it. Commercial investment creates that. It\'s not just about money.',
-  'The food and beverage revenue on matchday is underrated. I know it sounds unglamorous but a well-run concession adds up over a season. Val\'s probably already told you this.',
+  'Bit of unsolicited analysis: [CLUB] are [POSITION]th in the league and the fanbase feels it. Winning brings people in, people in means income, income means better players. It\'s all connected.',
+  'Word from the youth players — they want to play for a club with a buzz about it. Commercial investment creates that at [CLUB]. It\'s not just about money.',
+  'The food and beverage revenue on matchday at [STADIUM] is underrated. I know it sounds unglamorous but a well-run concession adds up over a season. Val\'s probably already told you this.',
 ];

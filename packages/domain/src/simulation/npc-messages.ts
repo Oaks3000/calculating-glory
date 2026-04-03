@@ -127,6 +127,8 @@ export function generateNpcMessages(
     POSITION: playerPosition > 0 ? String(playerPosition) : '?',
     TOTAL:    String(state.league.entries.length),
     BOARD:    String(state.boardConfidence),
+    CLUB:     state.club.name,
+    STADIUM:  state.club.stadium.name,
   };
 
   // ── Val weekly summary ─────────────────────────────────────────────────
