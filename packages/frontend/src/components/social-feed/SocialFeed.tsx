@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { GameState, GameCommand, GameEvent, PendingClubEvent, CurriculumLevel, checkMastery, curriculumDisplayName, CURRICULUM_LEVELS } from '@calculating-glory/domain';
+import { GameState, GameCommand, GameEvent, PendingClubEvent, CurriculumLevel, checkMastery, curriculumDisplayName, CURRICULUM_LEVELS, MAX_DIFFICULTY_BY_LEVEL } from '@calculating-glory/domain';
 import { ChatBubble } from './ChatBubble';
 import { NegotiationKeyboard } from './NegotiationKeyboard';
 import { MathChallengeCard } from './MathChallengeCard';
@@ -76,6 +76,12 @@ const PRACTICE_CONSEQUENCE = [
   "Solid work. That kind of preparation makes a difference in the boardroom.",
 ];
 
+const DIFFICULTY_UNLOCK = [
+  "The board are impressed — tougher challenges incoming.",
+  "You're ready for harder problems. Let's step it up.",
+  "Sharp thinking. Time to raise the stakes.",
+];
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function uid() {
@@ -116,8 +122,13 @@ export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode,
   const [practiceTopicOverride, setPracticeTopic]   = useState<ChallengeTopic | null>(null);
   const [wasNegotiation, setWasNegotiation]         = useState(false);
   const [masteryNudge, setMasteryNudge]             = useState<CurriculumLevel | null>(null);
+  // Progressive session difficulty: starts at D1, unlocks D2/D3 as player demonstrates mastery
+  const [sessionDifficulty, setSessionDifficulty]   = useState<1 | 2 | 3>(1);
+  const [correctAtDiff, setCorrectAtDiff]           = useState(0);
   const bottomRef   = useRef<HTMLDivElement>(null);
   const seededRef   = useRef(false);
+
+  const curriculumMax = MAX_DIFFICULTY_BY_LEVEL[state.curriculum?.level ?? 'YEAR_7'];
 
   function addMsg(msg: Omit<Message, 'id'>) {
     setMessages(prev => [...prev, { ...msg, id: uid() }]);
@@ -158,7 +169,7 @@ export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode,
 
   // ── Seed a practice thread ────────────────────────────────────────────────
   function seedPractice(topic: ChallengeTopic) {
-    const challenge = generateChallenge(state, 0, getPerformance(state), topic);
+    const challenge = generateChallenge(state, 0, getPerformance(state), topic, undefined, sessionDifficulty);
 
     setActiveLinkedEvent(null);
     setPracticeTopic(topic);
@@ -246,6 +257,25 @@ export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode,
     if (correct) {
       setAwaitingAnswer(false);
       setSolved(true);
+
+      // ── Progressive difficulty tracking ─────────────────────────────────────
+      // Only count practice-session answers (not event negotiations) toward unlock
+      if (!activeLinkedEvent) {
+        const diffMatches = currentChallenge.difficulty === sessionDifficulty;
+        const newCount = diffMatches ? correctAtDiff + 1 : correctAtDiff;
+        const canUnlock = sessionDifficulty < curriculumMax && newCount >= 3;
+        if (canUnlock) {
+          const next = (sessionDifficulty + 1) as 1 | 2 | 3;
+          setSessionDifficulty(next);
+          setCorrectAtDiff(0);
+          setTimeout(() => addMsg({
+            kind: 'system',
+            text: `⬆ D${next} unlocked — ${pick(DIFFICULTY_UNLOCK)}`,
+          }), 1200);
+        } else {
+          setCorrectAtDiff(diffMatches ? newCount : 0);
+        }
+      }
 
       if (activeLinkedEvent) {
         const result = dispatch({
@@ -370,6 +400,7 @@ export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode,
       getPerformance(state),
       practiceTopicOverride ?? undefined,
       excludeSlug,
+      sessionDifficulty,
     );
 
     setChallengeIndex(nextIdx);

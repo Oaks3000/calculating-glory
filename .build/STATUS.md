@@ -3,16 +3,16 @@ project: "Calculating Glory"
 type: "build"
 priority: 2
 phase: "Phase 8 — Polish"
-progress: 98
-lastUpdated: "2026-03-31"
-lastTouched: "2026-03-31"
+progress: 99
+lastUpdated: "2026-04-03"
+lastTouched: "2026-04-03"
 status: "in-progress"
 ---
 
 # Calculating Glory - Current Status
 
-**Phase:** Phase 8 — Polish (98% complete)
-**Last Updated:** 2026-03-31
+**Phase:** Phase 8 — Polish (99% complete)
+**Last Updated:** 2026-04-03
 
 ## What's Done
 
@@ -71,18 +71,23 @@ status: "in-progress"
 - Goal celebration: radial pulse + blip convergence + scoreboard bounce
 - Crowd atmosphere glow, prefers-reduced-motion support
 
+*PRs #95–100 (merged 2026-04–03):*
+- NPC message system: Kev/Val/Marcus messages wired into Command Centre inbox (PR #96)
+- Inbox overflow partial fix: pending decisions capped at 2 in InboxCard preview (PR #97)
+- Post-match report screen after Owner's Box (PR #98)
+- Phone-screen UI polish for Owner's Box (PR #99)
+- Commercial facilities open Val's operations panel from Stadium View (PR #100)
+
 ## What's In Progress
 
-- #65 match pitch on branch `claude/plan-next-priorities-VHNXw`, ready to PR
+- #86 Math challenge difficulty scaling — progressive session difficulty gating
 - Balance pass — passive, during play-testing
 
 ## What's Next
 
-- #91 Season-end experience (final table, awards, promotion/relegation)
-- #92 Inbox overflow fix (multiple events stacking)
-- #87 Stadium view — isometric facility panels
-- #86 Math challenge difficulty scaling
-- #80 Sponsor negotiation
+- #80 Sponsor negotiation — Val presents deals, negotiate via math challenge
+- #92 Inbox overflow — fully resolve multi-event stacking (partial fix in PR #97)
+- #87 Stadium view — remaining isometric facility panels (commercial done in PR #100)
 
 ## Blockers
 

@@ -101,6 +101,7 @@ export const MATH_TOPIC_TO_CHALLENGE: Partial<Record<MathTopic, ChallengeTopic>>
  * Selection logic:
  * - Filters bank by student's curriculum level (minCurriculumLevel ≤ studentLevel)
  * - Caps difficulty by MAX_DIFFICULTY_BY_LEVEL[curriculumLevel]
+ * - Optionally further capped by sessionMaxDifficulty (progressive in-session unlock)
  * - Optionally filters to a single topic (topicOverride)
  * - Excludes the previous template to avoid back-to-back duplicates
  * - With performance data: applies adaptive difficulty weighting (struggling → easier, mastered → harder)
@@ -112,11 +113,17 @@ export function generateChallenge(
   performance?: TopicPerformance,
   topicOverride?: ChallengeTopic,
   excludeTemplateSlug?: string,
+  /** Optional per-session difficulty cap (1–3). When provided, overrides the curriculum max downward. */
+  sessionMaxDifficulty?: 1 | 2 | 3,
 ): MathChallenge {
   const vars          = extractVariables(state);
   const curriculumLevel = state.curriculum?.level ?? 'YEAR_7';
   const studentIdx    = CURRICULUM_LEVEL_ORDER.indexOf(curriculumLevel);
-  const maxDifficulty = MAX_DIFFICULTY_BY_LEVEL[curriculumLevel];
+  const curriculumMax = MAX_DIFFICULTY_BY_LEVEL[curriculumLevel];
+  // Session difficulty cap: take the tighter of curriculum max and session unlock level
+  const maxDifficulty: 1 | 2 | 3 = sessionMaxDifficulty !== undefined
+    ? (Math.min(sessionMaxDifficulty, curriculumMax) as 1 | 2 | 3)
+    : curriculumMax;
 
   // ── Build pool: level- and difficulty-filtered ───────────────────────────────
   let pool: QuestionTemplate[] = QUESTION_BANK.filter(q => {
