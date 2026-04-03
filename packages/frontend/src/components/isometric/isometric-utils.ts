@@ -162,6 +162,59 @@ export function blockPaths(fv: FootprintVertices, bh: number): BlockPaths {
 }
 
 // ---------------------------------------------------------------------------
+// Plot sub-object geometry
+// ---------------------------------------------------------------------------
+
+/**
+ * Map a normalised rectangle (u1,v1)→(u2,v2) within a plot's ground diamond
+ * to a FootprintVertices for use with blockPaths().
+ *
+ * Coordinate system on the plot diamond:
+ *   u=0 → NW edge,  u=1 → NE edge
+ *   v=0 → back (NW→NE), v=1 → front (SW→SE)
+ *
+ * Example: subObjectFootprint(fv, 0.1, 0.1, 0.5, 0.6) places a box in the
+ * back-left quarter of the plot.
+ */
+export function subObjectFootprint(
+  fv: FootprintVertices,
+  u1: number, v1: number,
+  u2: number, v2: number,
+): FootprintVertices {
+  const TL = fv.top, TR = fv.right, BL = fv.left;
+  const p = (u: number, v: number) => ({
+    x: TL.x + u * (TR.x - TL.x) + v * (BL.x - TL.x),
+    y: TL.y + u * (TR.y - TL.y) + v * (BL.y - TL.y),
+  });
+  return { top: p(u1,v1), right: p(u2,v1), bottom: p(u2,v2), left: p(u1,v2) };
+}
+
+// ---------------------------------------------------------------------------
+// Tier geometry
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Colour utilities
+// ---------------------------------------------------------------------------
+
+/**
+ * Adjust a hex colour by a percentage.
+ * Positive percent = lighter, negative = darker.
+ * e.g. shadeColor('#448AFF', -15) → 15% darker version of that blue
+ */
+export function shadeColor(hex: string, percent: number): string {
+  const clean = hex.replace('#', '');
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  const factor = 1 + percent / 100;
+  const nr = Math.min(255, Math.max(0, Math.round(r * factor)));
+  const ng = Math.min(255, Math.max(0, Math.round(g * factor)));
+  const nb = Math.min(255, Math.max(0, Math.round(b * factor)));
+  return `#${nr.toString(16).padStart(2, '0')}${ng.toString(16).padStart(2, '0')}${nb.toString(16).padStart(2, '0')}`;
+}
+
+// ---------------------------------------------------------------------------
 // Helpers for icon / label placement
 // ---------------------------------------------------------------------------
 
