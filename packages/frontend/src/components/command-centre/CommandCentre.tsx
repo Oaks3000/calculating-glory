@@ -102,6 +102,7 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
           leagueEntries={state.league.entries}
           squad={state.club.squad}
           freeAgents={state.freeAgentPool ?? []}
+          pendingEvents={state.pendingEvents}
           currentWeek={state.currentWeek}
         />
         {dim('news-ticker')}

@@ -1,4 +1,4 @@
-import { GameEvent, MatchSimulatedEvent, MoraleTickerEvent, Player, avgSquadMorale, isUnsettled } from '@calculating-glory/domain';
+import { GameEvent, MatchSimulatedEvent, MoraleTickerEvent, Player, PendingClubEvent, avgSquadMorale, isUnsettled } from '@calculating-glory/domain';
 import { LeagueTableEntry } from '@calculating-glory/domain';
 
 // ── Ordinal helper ──────────────────────────────────────────────────────────
@@ -17,6 +17,7 @@ interface NewsTickerProps {
   leagueEntries: LeagueTableEntry[];
   squad: Player[];
   freeAgents?: Player[];
+  pendingEvents?: PendingClubEvent[];
   currentWeek?: number;
 }
 
@@ -173,6 +174,12 @@ function getNpcInterestForTicker(playerId: string): number {
   return Math.abs(h) % 4;
 }
 
+function buildPoachHeadlines(pendingEvents: PendingClubEvent[]): string[] {
+  return pendingEvents
+    .filter(e => e.templateId === 'npc-poach' && !e.resolved && e.metadata?.playerName)
+    .map(e => `🚨 BREAKING · ${e.metadata!.npcClubName} submit formal bid for ${e.metadata!.playerName} — decision pending`);
+}
+
 function buildRumourHeadlines(freeAgents: Player[], clubName: string): string[] {
   // Only surface the top 3 most-wanted agents (npcInterest >= 2), max 3 rumours
   const hotAgents = freeAgents
@@ -257,11 +264,12 @@ function buildHeadlines(
   return [...headlines.slice(-30).reverse(), ...buildMoraleHeadlines(squad), ...milestoneHeadlines, ...arcHeadlines];
 }
 
-export function NewsTicker({ events, clubId, clubName, stadiumName, leagueEntries, squad, freeAgents, currentWeek }: NewsTickerProps) {
+export function NewsTicker({ events, clubId, clubName, stadiumName, leagueEntries, squad, freeAgents, pendingEvents, currentWeek }: NewsTickerProps) {
   const nameMap = new Map<string, string>(leagueEntries.map(e => [e.clubId, e.clubName]));
   const eventHeadlines = buildHeadlines(events, clubId, clubName, stadiumName, nameMap, squad, leagueEntries, currentWeek);
   const rumourHeadlines = freeAgents && freeAgents.length > 0 ? buildRumourHeadlines(freeAgents, clubName) : [];
-  const headlines = [...eventHeadlines, ...rumourHeadlines];
+  const poachHeadlines = pendingEvents ? buildPoachHeadlines(pendingEvents) : [];
+  const headlines = [...poachHeadlines, ...eventHeadlines, ...rumourHeadlines];
 
   if (headlines.length === 0) return null;
 

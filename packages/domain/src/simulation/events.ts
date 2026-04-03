@@ -341,6 +341,10 @@ export function generatePoachAttempts(
       npcClubId: npcClub.id,
       npcClubName: npcClub.name,
       offeredFee: fee,
+      playerName: target.name,
+      playerPosition: target.position,
+      playerOverall: computeOverallRating(target),
+      playerWage: target.wage,
     },
     choices: [
       {
