@@ -1,4 +1,4 @@
-import { Facility, FacilityType, FACILITY_CONFIG, formatMoney } from '@calculating-glory/domain';
+import { Facility, FacilityType, FACILITY_CONFIG, formatMoney, constructionDuration } from '@calculating-glory/domain';
 
 const LEVEL_LABELS = ['Derelict', 'Basic', 'Decent', 'Good', 'Excellent', 'World-Class'];
 
@@ -76,17 +76,32 @@ export function FacilityCard({
       </div>
 
       {/* Construction in progress */}
-      {isBuilding && (
-        <div className="flex items-center gap-2 pt-1 border-t border-bg-raised">
-          <span className="text-base">🏗</span>
-          <div>
-            <span className="text-xs font-semibold text-warn-amber">Under Construction</span>
-            <span className="text-xs2 text-txt-muted ml-1.5">
-              — {facility.constructionWeeksRemaining} week{facility.constructionWeeksRemaining === 1 ? '' : 's'} remaining
-            </span>
+      {isBuilding && (() => {
+        const targetLevel = facility.level + 1;
+        const totalWeeks  = constructionDuration(targetLevel);
+        const weeksLeft   = facility.constructionWeeksRemaining!;
+        const progress    = Math.round(((totalWeeks - weeksLeft) / totalWeeks) * 100);
+        return (
+          <div className="flex flex-col gap-1.5 pt-1 border-t border-bg-raised">
+            <div className="flex items-center gap-2">
+              <span className="text-base">🏗</span>
+              <div className="flex-1 min-w-0">
+                <span className="text-xs font-semibold text-warn-amber">Under Construction</span>
+                <span className="text-xs2 text-txt-muted ml-1.5">
+                  — {weeksLeft} week{weeksLeft === 1 ? '' : 's'} remaining
+                </span>
+              </div>
+              <span className="text-xs2 text-warn-amber font-semibold data-font shrink-0">{progress}%</span>
+            </div>
+            <div className="h-1.5 bg-bg-deep rounded-full overflow-hidden">
+              <div
+                className="h-full bg-warn-amber rounded-full transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Upgrade section */}
       {!isMaxLevel && !isBuilding && (

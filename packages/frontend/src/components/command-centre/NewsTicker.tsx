@@ -241,6 +241,12 @@ function buildHeadlines(
       }
     } else if (e.type === 'FACILITY_UPGRADED') {
       headlines.push(`${clubName} invest at ${stadiumName}: ${e.facilityType} upgraded to Level ${e.level}`);
+    } else if (e.type === 'FACILITY_UPGRADE_STARTED') {
+      const label = e.facilityType.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase());
+      headlines.push(`🏗 Construction started: ${label} upgrade underway at ${stadiumName} — Level ${e.targetLevel} in ${e.weeksToComplete} week${e.weeksToComplete === 1 ? '' : 's'}`);
+    } else if (e.type === 'FACILITY_CONSTRUCTION_COMPLETED') {
+      const label = e.facilityType.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase());
+      headlines.push(`✅ Construction complete: ${label} now Level ${e.newLevel} at ${stadiumName}`);
     } else if (e.type === 'SEASON_ENDED') {
       const status = e.promoted ? '🏆 PROMOTED!' : e.relegated ? '⚠ RELEGATED' : 'Season complete';
       headlines.push(`${clubName}: ${status} — Final position: ${e.finalPosition}`);
