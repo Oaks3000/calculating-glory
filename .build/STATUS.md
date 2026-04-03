@@ -12,7 +12,7 @@ status: "in-progress"
 # Calculating Glory - Current Status
 
 **Phase:** Phase 8 — Polish (99% complete)
-**Last Updated:** 2026-04-03
+**Last Updated:** 2026-04-03 (session 2)
 
 ## What's Done
 
@@ -71,23 +71,31 @@ status: "in-progress"
 - Goal celebration: radial pulse + blip convergence + scoreboard bounce
 - Crowd atmosphere glow, prefers-reduced-motion support
 
-*PRs #95–100 (merged 2026-04–03):*
+*PRs #95–100 (merged 2026-04-03):*
 - NPC message system: Kev/Val/Marcus messages wired into Command Centre inbox (PR #96)
 - Inbox overflow partial fix: pending decisions capped at 2 in InboxCard preview (PR #97)
 - Post-match report screen after Owner's Box (PR #98)
 - Phone-screen UI polish for Owner's Box (PR #99)
 - Commercial facilities open Val's operations panel from Stadium View (PR #100)
 
+*PR #102 — Polish batch 3 (merged 2026-04-03):*
+- #86 Progressive session difficulty: D1→D2→D3 unlock gating + D{n} card label
+- #85 NPC cast depth: Kev streak/zone reactions, Marcus commercial obs, 5 new template pools
+- #84 Club identity: `[CLUB]`/`[STADIUM]` across all NPC template pools; TS6 tsconfig fix
+- #83 Season arc ticker headlines: streaks, unbeaten runs, zone banners; leagueEntries bug fix
+- #82 Transfer friction: "hold firm" rejection risk (0/1/2+ rivals), transfer rumours in ticker
+- #36 NPC poaching frontend: player snapshot in event metadata, morale pills, BREAKING ticker
+- #28 Construction lag visuals: interpolated block height, amber progress bars, ticker events
+
 ## What's In Progress
 
-- #86 Math challenge difficulty scaling — progressive session difficulty gating
 - Balance pass — passive, during play-testing
 
 ## What's Next
 
-- #80 Sponsor negotiation — Val presents deals, negotiate via math challenge
+- #80 Sponsor negotiation — Val presents deals, negotiate via maths challenge
 - #92 Inbox overflow — fully resolve multi-event stacking (partial fix in PR #97)
-- #87 Stadium view — remaining isometric facility panels (commercial done in PR #100)
+- #87 Stadium view — remaining isometric facility panels (Training, Medical, Scout, Youth Academy)
 
 ## Blockers
 
