@@ -251,3 +251,69 @@ export const DANI_RESULT_LOSS = [
   'More to navigate after that result. Nothing unmanageable, but I\'d rather have better news.',
   'Loss means the questions sharpen. I\'ll handle the comms side — you focus on the next result.',
 ];
+
+// ── Kev: extended streaks ──────────────────────────────────────────────────
+//
+// Fires on a 5-game winning/losing run. Distinct from the 3-game pools —
+// Kev is more emphatic when the streak has gone on this long.
+// Placeholders: [STREAK]
+
+/** Kev: 5+ game winning run. Quietly thrilled but still grounded. */
+export const KEV_STREAK_WIN_5 = [
+  'Five wins on the bounce. I keep waiting for us to slip up and it\'s not happening. The squad\'s in a brilliant place.',
+  '[STREAK] straight wins. I\'ve been doing this long enough to know — don\'t change a thing. Keep the rhythm going.',
+  'This is a proper run now. [STREAK] wins. The lads are competing like a team that believes it can go all the way.',
+  '[STREAK]-game winning streak. I don\'t want to jinx it but I\'m going to say it — this squad is something special right now.',
+  'That\'s [STREAK] in a row. At some point this stops being form and starts being standard. I like it.',
+];
+
+/** Kev: 5+ game losing run. Frank, not panicking, but serious. */
+export const KEV_STREAK_LOSS_5 = [
+  '[STREAK] straight defeats. I\'m not going to lie to you — that\'s a crisis. We need to figure this out before it gets worse.',
+  'Five losses. Morale in the dressing room is the lowest I\'ve seen it. The lads need a result, not just a pep talk.',
+  '[STREAK] games. That\'s not bad form, that\'s a serious problem. Something has to change — tactics, squad, something.',
+  'The run is [STREAK] now. Every manager goes through a bad patch. But this one needs to end this week.',
+  '[STREAK] defeats on the bounce. I\'ll be honest — I\'m worried. Not about my job, about the club. What\'s the plan?',
+];
+
+// ── Kev: table position reactions ──────────────────────────────────────────
+//
+// Fires when the club enters or holds a notable table position.
+// Kev picks this up because it directly affects the squad\'s mentality.
+// Placeholders: [POSITION]
+
+/** Kev: automatic promotion zone (top 3). Quietly excited, eyes on the prize. */
+export const KEV_PROMOTION_ZONE = [
+  'We\'re in the top three. I keep saying it to the lads — this is real. Don\'t throw it away.',
+  '[POSITION]th. The lads can see the promotion places. It\'s not a dream anymore. Don\'t let them think it is.',
+  'Top three. Every session this week I\'ve had to keep their feet on the ground. The focus has to stay sharp.',
+  'The table doesn\'t lie. [POSITION]th — we\'re in the hunt. Stay disciplined, don\'t get giddy.',
+  'Promotion places. We\'re there. Protect what we\'ve built — one game at a time.',
+];
+
+/** Kev: automatic relegation zone (bottom 4). Grim, practical, no drama. */
+export const KEV_RELEGATION_ZONE = [
+  'The table\'s honest. [POSITION]th — we\'re in the drop zone. I\'d rather say that clearly than dress it up.',
+  'Bottom four. Kev\'s not going to pretend otherwise. The lads know it. We need points, not excuses.',
+  '[POSITION]th. Relegation zone. Every point from here is massive. Simple.',
+  'We\'re in the places you don\'t want to be in. [POSITION]th. The squad\'s been told — no hiding, no pointing fingers.',
+  'Down in [POSITION]th. I\'ve kept squads up from worse. But it takes honesty and hard work from everyone.',
+];
+
+// ── Marcus: commercial observations ───────────────────────────────────────
+//
+// Fires roughly every 6 weeks. Marcus steps outside his scouting brief
+// to share an observation about the commercial side of the club — fan zone,
+// attendance, income trends. Warm, football-obsessed, slightly over-enthusiastic.
+// Placeholders: [POSITION], [INCOME], [BUDGET], [SQUAD]
+
+export const MARCUS_COMMERCIAL_OBS = [
+  'Not really my area, but I walked past the fan zone yesterday and it was buzzing. That atmosphere carries into the stadium — I genuinely believe it helps the lads.',
+  'Had a look at the matchday attendance numbers. When we\'re playing well, the ground fills up. The connection between results and revenue is real. Win more, earn more — simple.',
+  'Saw some of the hospitality figures. There\'s real money in making the matchday experience good. The commercial side matters more than people think.',
+  'The stadium\'s generating [INCOME]/week. That\'s the engine. Every facility upgrade is an investment in what we can build next. Worth knowing.',
+  'I know this is Val\'s territory, but I pay attention: the clubs that invest in the commercial side early are the ones who can afford better players later. Just saying.',
+  'Bit of unsolicited analysis: we\'re [POSITION]th in the league and our fanbase feels it. Winning brings people in, people in means income, income means better players. It\'s all connected.',
+  'Word from the youth players — they want to play for a club with a buzz about it. Commercial investment creates that. It\'s not just about money.',
+  'The food and beverage revenue on matchday is underrated. I know it sounds unglamorous but a well-run concession adds up over a season. Val\'s probably already told you this.',
+];

@@ -24,11 +24,16 @@ import {
   KEV_SQUAD_CONCERN,
   KEV_FORM_GOOD,
   KEV_FORM_POOR,
+  KEV_STREAK_WIN_5,
+  KEV_STREAK_LOSS_5,
+  KEV_PROMOTION_ZONE,
+  KEV_RELEGATION_ZONE,
   MARCUS_SQUAD_STRONG,
   MARCUS_SQUAD_OK,
   MARCUS_SQUAD_THIN,
   MARCUS_MARKET_BUSY,
   MARCUS_MARKET_QUIET,
+  MARCUS_COMMERCIAL_OBS,
   DANI_PRESS_POSITIVE,
   DANI_PRESS_NEUTRAL,
   DANI_PRESS_NEGATIVE,
@@ -45,7 +50,10 @@ export type NpcMessageCategory =
   | 'POST_MATCH'
   | 'FINANCIAL_ALERT'
   | 'SQUAD_CONCERN'
-  | 'FORM_UPDATE';
+  | 'FORM_UPDATE'
+  | 'STREAK_UPDATE'
+  | 'TABLE_UPDATE'
+  | 'COMMERCIAL_UPDATE';
 
 export interface NpcMessage {
   /** Stable ID for React keys: `${sender}-${category}-w${week}-s${season}` */
@@ -205,13 +213,38 @@ export function generateNpcMessages(
       category: 'POST_MATCH',
     });
 
-    // Kev form update — only after a 3+ streak, once per run
+    // Kev streak messages — differentiate 3-game and 5-game runs
     const form = state.club.form;
     if (form.length >= 3) {
+      const last5 = form.slice(-5);
       const last3 = form.slice(-3);
-      const allWin = last3.every(r => r === 'W');
-      const allLoss = last3.every(r => r === 'L');
-      if (allWin) {
+      const win5  = last5.length >= 5 && last5.every(r => r === 'W');
+      const loss5 = last5.length >= 5 && last5.every(r => r === 'L');
+      const win3  = last3.every(r => r === 'W');
+      const loss3 = last3.every(r => r === 'L');
+
+      if (win5) {
+        // 5-game win streak — emphatic
+        messages.push({
+          id: `KEV-STREAK_UPDATE-w${week}-s${season}`,
+          sender: 'KEV',
+          text: fillPlaceholders(pick(KEV_STREAK_WIN_5, rng), { ...fillVars, STREAK: String(last5.filter(r => r === 'W').length) }),
+          week,
+          season,
+          category: 'STREAK_UPDATE',
+        });
+      } else if (loss5) {
+        // 5-game loss streak — serious
+        messages.push({
+          id: `KEV-STREAK_UPDATE-w${week}-s${season}`,
+          sender: 'KEV',
+          text: fillPlaceholders(pick(KEV_STREAK_LOSS_5, rng), { ...fillVars, STREAK: String(last5.filter(r => r === 'L').length) }),
+          week,
+          season,
+          category: 'STREAK_UPDATE',
+        });
+      } else if (win3) {
+        // 3-game win streak (not yet 5)
         messages.push({
           id: `KEV-FORM_UPDATE-w${week}-s${season}`,
           sender: 'KEV',
@@ -220,7 +253,8 @@ export function generateNpcMessages(
           season,
           category: 'FORM_UPDATE',
         });
-      } else if (allLoss) {
+      } else if (loss3) {
+        // 3-game loss streak (not yet 5)
         messages.push({
           id: `KEV-FORM_UPDATE-w${week}-s${season}`,
           sender: 'KEV',
@@ -231,6 +265,34 @@ export function generateNpcMessages(
         });
       }
     }
+  }
+
+  // ── Kev table position reaction ────────────────────────────────────────
+  // Fire once when entering promo/relegation zone — seeded so it doesn't fire every week.
+  // Use week % 3 === 0 as a simple throttle (not every week, not too rare).
+
+  const relegationStart = state.league.entries.length - (state.league.relegation?.length ?? 4) + 1;
+  const inPromoAuto     = playerPosition >= 1 && playerPosition <= state.league.automaticPromotion;
+  const inRelegation    = playerPosition >= relegationStart;
+
+  if (inPromoAuto && week % 3 === 1) {
+    messages.push({
+      id: `KEV-TABLE_UPDATE-promo-w${week}-s${season}`,
+      sender: 'KEV',
+      text: fillPlaceholders(pick(KEV_PROMOTION_ZONE, rng), fillVars),
+      week,
+      season,
+      category: 'TABLE_UPDATE',
+    });
+  } else if (inRelegation && week % 3 === 1) {
+    messages.push({
+      id: `KEV-TABLE_UPDATE-rele-w${week}-s${season}`,
+      sender: 'KEV',
+      text: fillPlaceholders(pick(KEV_RELEGATION_ZONE, rng), fillVars),
+      week,
+      season,
+      category: 'TABLE_UPDATE',
+    });
   }
 
   // ── Kev squad concern ──────────────────────────────────────────────────
@@ -282,6 +344,21 @@ export function generateNpcMessages(
       week,
       season,
       category: 'FINANCIAL_ALERT',
+    });
+  }
+
+  // ── Marcus commercial observation (~every 6 weeks) ─────────────────────
+  // Marcus steps outside his scouting brief to share a commercial observation.
+  // Seeded to week 2, 8, 14, 20, 26, 32, 38, 44 (week % 6 === 2).
+
+  if (week % 6 === 2) {
+    messages.push({
+      id: `MARCUS-COMMERCIAL_UPDATE-w${week}-s${season}`,
+      sender: 'MARCUS',
+      text: fillPlaceholders(pick(MARCUS_COMMERCIAL_OBS, rng), fillVars),
+      week,
+      season,
+      category: 'COMMERCIAL_UPDATE',
     });
   }
 
