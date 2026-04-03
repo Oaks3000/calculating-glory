@@ -40,6 +40,23 @@ function getNpcInterestCount(playerId: string): number {
 }
 
 /**
+ * Whether a reluctant player rejects a "hold firm" approach.
+ * 0 NPC clubs → never rejects (reluctance was wage-only).
+ * 1 NPC club  → 50/50 (deterministic from id).
+ * 2+ NPC clubs → always rejects (they had better options).
+ */
+function willRejectHoldFirm(playerId: string, npcInterest: number): boolean {
+  if (npcInterest === 0) return false;
+  if (npcInterest >= 2) return true;
+  // 1 rival club: coin-flip seeded on player id
+  let h = 0;
+  for (let i = 0; i < playerId.length; i++) {
+    h = (Math.imul(17, h) + playerId.charCodeAt(i)) | 0;
+  }
+  return (Math.abs(h) % 2) === 0;
+}
+
+/**
  * How keen a free agent is to join, based on your league position and the wage
  * you're offering relative to their asking wage.
  */
@@ -288,7 +305,7 @@ interface FreeAgentCardProps {
   onSign: (wage: number) => void;
 }
 
-type SignStep = 'idle' | 'countering' | 'confirming' | 'done';
+type SignStep = 'idle' | 'countering' | 'confirming' | 'done' | 'rejected';
 
 const NPC_INTEREST_LABELS: Record<number, string> = {
   1: '1 other club watching',
@@ -331,6 +348,15 @@ function FreeAgentCard({
   function handleAcceptOriginal() {
     onSign(player.wage);
     setStep('done');
+  }
+
+  function handleHoldFirm() {
+    if (willRejectHoldFirm(player.id, npcInterest)) {
+      setStep('rejected');
+    } else {
+      onSign(player.wage);
+      setStep('done');
+    }
   }
 
   function handleCancel() {
@@ -381,6 +407,13 @@ function FreeAgentCard({
       {/* Action row */}
       {step === 'done' ? (
         <div className="text-xs text-pitch-green font-semibold">Signed! {npcInterest > 0 ? 'You beat the competition.' : ''}</div>
+      ) : step === 'rejected' ? (
+        <div className="text-xs text-alert-red bg-alert-red/5 border border-alert-red/20 rounded px-2 py-1.5">
+          <span className="font-semibold">Gone.</span>{' '}
+          {npcInterest >= 2
+            ? `${npcInterest} clubs were waiting — ${player.name} chose elsewhere.`
+            : `${player.name} walked away. A rival club made their move.`}
+        </div>
       ) : step === 'countering' ? (
         /* Reluctant player counter-offer */
         <div className="flex flex-col gap-2 text-xs">
@@ -400,7 +433,7 @@ function FreeAgentCard({
               Accept {counterLabel}/wk
             </button>
             <button
-              onClick={handleAcceptOriginal}
+              onClick={handleHoldFirm}
               className="px-2 py-1 bg-pitch-green/10 text-pitch-green border border-pitch-green/30 rounded hover:bg-pitch-green/20 transition-colors"
             >
               Hold firm at {formatMoney(player.wage)}/wk

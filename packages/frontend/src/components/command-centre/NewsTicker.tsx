@@ -16,6 +16,7 @@ interface NewsTickerProps {
   stadiumName: string;
   leagueEntries: LeagueTableEntry[];
   squad: Player[];
+  freeAgents?: Player[];
   currentWeek?: number;
 }
 
@@ -159,6 +160,36 @@ function buildMoraleHeadlines(squad: Player[]): string[] {
   return headlines;
 }
 
+// ── Transfer rumours ────────────────────────────────────────────────────────
+//
+// Free agents with high NPC interest appear as rumours before any deal is done.
+// Uses the same deterministic hash as getNpcInterestCount in TransferMarketSlideOver.
+
+function getNpcInterestForTicker(playerId: string): number {
+  let h = 0;
+  for (let i = 0; i < playerId.length; i++) {
+    h = (Math.imul(31, h) + playerId.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h) % 4;
+}
+
+function buildRumourHeadlines(freeAgents: Player[], clubName: string): string[] {
+  // Only surface the top 3 most-wanted agents (npcInterest >= 2), max 3 rumours
+  const hotAgents = freeAgents
+    .map(p => ({ p, interest: getNpcInterestForTicker(p.id) }))
+    .filter(x => x.interest >= 2)
+    .sort((a, b) => b.interest - a.interest)
+    .slice(0, 3);
+
+  return hotAgents.map(({ p, interest }) => {
+    const clubs = interest === 3 ? 'three clubs' : 'two clubs';
+    const posLabel = p.position === 'GK' ? 'goalkeeper' :
+                     p.position === 'DEF' ? 'defender' :
+                     p.position === 'MID' ? 'midfielder' : 'forward';
+    return `📰 RUMOUR · ${p.name} attracting interest — ${clubs} tracking the ${posLabel}, including ${clubName}`;
+  });
+}
+
 function buildHeadlines(
   events: GameEvent[],
   clubId: string,
@@ -166,6 +197,7 @@ function buildHeadlines(
   stadiumName: string,
   nameMap: Map<string, string>,
   squad: Player[],
+  leagueEntries: LeagueTableEntry[],
   currentWeek?: number
 ): string[] {
   const headlines: string[] = [];
@@ -225,9 +257,11 @@ function buildHeadlines(
   return [...headlines.slice(-30).reverse(), ...buildMoraleHeadlines(squad), ...milestoneHeadlines, ...arcHeadlines];
 }
 
-export function NewsTicker({ events, clubId, clubName, stadiumName, leagueEntries, squad, currentWeek }: NewsTickerProps) {
+export function NewsTicker({ events, clubId, clubName, stadiumName, leagueEntries, squad, freeAgents, currentWeek }: NewsTickerProps) {
   const nameMap = new Map<string, string>(leagueEntries.map(e => [e.clubId, e.clubName]));
-  const headlines = buildHeadlines(events, clubId, clubName, stadiumName, nameMap, squad, currentWeek);
+  const eventHeadlines = buildHeadlines(events, clubId, clubName, stadiumName, nameMap, squad, leagueEntries, currentWeek);
+  const rumourHeadlines = freeAgents && freeAgents.length > 0 ? buildRumourHeadlines(freeAgents, clubName) : [];
+  const headlines = [...eventHeadlines, ...rumourHeadlines];
 
   if (headlines.length === 0) return null;
 
