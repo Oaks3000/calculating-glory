@@ -162,6 +162,56 @@ export function blockPaths(fv: FootprintVertices, bh: number): BlockPaths {
 }
 
 // ---------------------------------------------------------------------------
+// Vertical face patch (windows, doors, signs, awnings)
+// ---------------------------------------------------------------------------
+
+/**
+ * SVG path for a rectangular patch on one vertical face of an isometric box.
+ *
+ * Use this to add windows, doors, signs, or awning stripes to any Box.
+ * The same sfv + bh passed to blockPaths() should be passed here.
+ *
+ * Face coordinate system:
+ *   s: 0 = near (left) edge of the face, 1 = far (right) edge
+ *   t: 0 = top of the face (height bh), 1 = ground level
+ *
+ * @param sfv   Sub-object footprint vertices
+ * @param bh    Block height in pixels (same value used in blockPaths)
+ * @param side  'left' = SW parallelogram face, 'right' = SE parallelogram face
+ * @param s1    Horizontal start (0–1)
+ * @param t1    Vertical start   (0–1, 0=top)
+ * @param s2    Horizontal end
+ * @param t2    Vertical end
+ */
+export function facePatch(
+  sfv: FootprintVertices,
+  bh: number,
+  side: 'left' | 'right',
+  s1: number, t1: number,
+  s2: number, t2: number,
+): string {
+  let TL: {x:number;y:number}, TR: {x:number;y:number},
+      BR: {x:number;y:number}, BL: {x:number;y:number};
+  if (side === 'left') {
+    TL = { x: sfv.left.x,   y: sfv.left.y - bh };
+    TR = { x: sfv.bottom.x, y: sfv.bottom.y - bh };
+    BR = { x: sfv.bottom.x, y: sfv.bottom.y };
+    BL = { x: sfv.left.x,   y: sfv.left.y };
+  } else {
+    TL = { x: sfv.bottom.x, y: sfv.bottom.y - bh };
+    TR = { x: sfv.right.x,  y: sfv.right.y - bh };
+    BR = { x: sfv.right.x,  y: sfv.right.y };
+    BL = { x: sfv.bottom.x, y: sfv.bottom.y };
+  }
+  const p = (s: number, t: number) => ({
+    x: TL.x*(1-s)*(1-t) + TR.x*s*(1-t) + BR.x*s*t + BL.x*(1-s)*t,
+    y: TL.y*(1-s)*(1-t) + TR.y*s*(1-t) + BR.y*s*t + BL.y*(1-s)*t,
+  });
+  const a = p(s1,t1), b = p(s2,t1), c = p(s2,t2), d = p(s1,t2);
+  return `M ${a.x},${a.y} L ${b.x},${b.y} L ${c.x},${c.y} L ${d.x},${d.y} Z`;
+}
+
+// ---------------------------------------------------------------------------
 // Plot sub-object geometry
 // ---------------------------------------------------------------------------
 

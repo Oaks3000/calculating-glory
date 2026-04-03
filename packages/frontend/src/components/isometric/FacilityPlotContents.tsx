@@ -21,7 +21,7 @@
  */
 
 import { FacilityType } from '@calculating-glory/domain';
-import { FootprintVertices, subObjectFootprint, blockPaths, footprintPath, shadeColor } from './isometric-utils';
+import { FootprintVertices, subObjectFootprint, blockPaths, footprintPath, shadeColor, facePatch } from './isometric-utils';
 
 interface Props {
   facilityType: FacilityType;
@@ -55,6 +55,58 @@ function Box({
       <path d={bp.left}  fill={lc} />
       <path d={bp.right} fill={rc} />
       <path d={bp.top}   fill={base} />
+    </g>
+  );
+}
+
+/**
+ * Single rectangular detail patch on one vertical face of a Box.
+ * Pass the same u1/v1/u2/v2/h as the parent Box so the sfv is recomputed
+ * consistently.  s/t coords: s=left→right across face, t=0 top → 1 ground.
+ */
+function FaceDetail({
+  fv, u1, v1, u2, v2, h, side, s1, t1, s2, t2, fill,
+}: {
+  fv: FootprintVertices; u1: number; v1: number; u2: number; v2: number;
+  h: number; side: 'left' | 'right';
+  s1: number; t1: number; s2: number; t2: number; fill: string;
+}) {
+  const sfv = subObjectFootprint(fv, u1, v1, u2, v2);
+  return <path d={facePatch(sfv, h, side, s1, t1, s2, t2)} fill={fill} style={{ pointerEvents: 'none' }} />;
+}
+
+/**
+ * Uniform grid of windows on one vertical face of a Box.
+ * margin controls the inset from all four edges of the face; gap is the
+ * fraction of a cell left as wall between windows.
+ */
+function FaceWindows({
+  fv, u1, v1, u2, v2, h, side, cols, rows, fill, margin = 0.10, gap = 0.20,
+}: {
+  fv: FootprintVertices; u1: number; v1: number; u2: number; v2: number;
+  h: number; side: 'left' | 'right'; cols: number; rows: number;
+  fill: string; margin?: number; gap?: number;
+}) {
+  const sfv = subObjectFootprint(fv, u1, v1, u2, v2);
+  const cw = (1 - 2 * margin) / cols;
+  const rh = (1 - 2 * margin) / rows;
+  return (
+    <g style={{ pointerEvents: 'none' }}>
+      {Array.from({ length: rows }).flatMap((_, r) =>
+        Array.from({ length: cols }).map((_, c) => {
+          const s1 = margin + c * cw + cw * gap * 0.5;
+          const s2 = margin + (c + 1) * cw - cw * gap * 0.5;
+          const t1 = margin + r * rh + rh * gap * 0.5;
+          const t2 = margin + (r + 1) * rh - rh * gap * 0.5;
+          return (
+            <path
+              key={`${r}-${c}`}
+              d={facePatch(sfv, h, side, s1, t1, s2, t2)}
+              fill={fill}
+            />
+          );
+        })
+      )}
     </g>
   );
 }
@@ -117,6 +169,7 @@ export function FacilityPlotContents({ facilityType, fv, level }: Props) {
     // ── Medical Centre ─────────────────────────────────────────────────────
     // Back→front: clinic(v2=0.55) < tent(v2=0.60) < walkway(v2=0.72) < ambulance(v2=0.95) < annex(v2=0.96)
     case 'MEDICAL_CENTER': {
+      const WIN_MED = 'rgba(220,235,240,0.55)'; // frosted clinical white
       return (
         <g style={no}>
           {/* Base tarmac surface */}
@@ -128,6 +181,14 @@ export function FacilityPlotContents({ facilityType, fv, level }: Props) {
               <Box fv={fv} u1={0.10} v1={0.05} u2={0.90} v2={0.55} h={26} base="#8FA8B0" />
               {/* Red cross marking on clinic roof */}
               <Patch fv={fv} u1={0.42} v1={0.08} u2={0.58} v2={0.25} fill="#E53935" />
+              {/* Red cross on left & right face walls */}
+              <FaceDetail fv={fv} u1={0.10} v1={0.05} u2={0.90} v2={0.55} h={26} side="left"  s1={0.38} t1={0.18} s2={0.62} t2={0.55} fill="#E53935" />
+              <FaceDetail fv={fv} u1={0.10} v1={0.05} u2={0.90} v2={0.55} h={26} side="left"  s1={0.22} t1={0.30} s2={0.78} t2={0.44} fill="#E53935" />
+              <FaceDetail fv={fv} u1={0.10} v1={0.05} u2={0.90} v2={0.55} h={26} side="right" s1={0.38} t1={0.18} s2={0.62} t2={0.55} fill="#E53935" />
+              <FaceDetail fv={fv} u1={0.10} v1={0.05} u2={0.90} v2={0.55} h={26} side="right" s1={0.22} t1={0.30} s2={0.78} t2={0.44} fill="#E53935" />
+              {/* Windows either side of cross */}
+              <FaceWindows fv={fv} u1={0.10} v1={0.05} u2={0.90} v2={0.55} h={26} side="left"  cols={2} rows={1} fill={WIN_MED} margin={0.08} gap={0.50} />
+              <FaceWindows fv={fv} u1={0.10} v1={0.05} u2={0.90} v2={0.55} h={26} side="right" cols={2} rows={1} fill={WIN_MED} margin={0.08} gap={0.50} />
             </>
           ) : (
             /* BACK: first-aid tent (v2=0.60) — L1–2 only */
@@ -146,7 +207,11 @@ export function FacilityPlotContents({ facilityType, fv, level }: Props) {
 
           {/* FRONT: full centre annex (v2=0.96) — L5 */}
           {level >= 5 && (
-            <Box fv={fv} u1={0.50} v1={0.72} u2={0.96} v2={0.96} h={20} base="#8FA8B0" />
+            <>
+              <Box fv={fv} u1={0.50} v1={0.72} u2={0.96} v2={0.96} h={20} base="#8FA8B0" />
+              <FaceWindows fv={fv} u1={0.50} v1={0.72} u2={0.96} v2={0.96} h={20} side="left"  cols={2} rows={1} fill={WIN_MED} />
+              <FaceWindows fv={fv} u1={0.50} v1={0.72} u2={0.96} v2={0.96} h={20} side="right" cols={2} rows={1} fill={WIN_MED} />
+            </>
           )}
         </g>
       );
@@ -229,6 +294,8 @@ export function FacilityPlotContents({ facilityType, fv, level }: Props) {
     // Back→front: HQ tower(v2=0.55) < 3-storey(v2=0.70) < 2nd storey(v2=0.60)* < annex(v2=0.95)
     // *lower-level structures are subsumed at higher levels — suppress when superseded
     case 'CLUB_OFFICE': {
+      const WIN = 'rgba(120,170,255,0.52)';   // blue glass windows
+      const WIN_DIM = 'rgba(80,120,200,0.40)'; // darker glass for lower floors
       return (
         <g style={no}>
           {/* Tarmac base + car park markings */}
@@ -237,31 +304,55 @@ export function FacilityPlotContents({ facilityType, fv, level }: Props) {
 
           {/* BACK: HQ tower (v2=0.55) — L5 */}
           {level >= 5 && (
-            <Box fv={fv} u1={0.28} v1={0.08} u2={0.72} v2={0.55} h={62} base="#4A5E72" />
+            <>
+              <Box fv={fv} u1={0.28} v1={0.08} u2={0.72} v2={0.55} h={62} base="#4A5E72" />
+              <FaceWindows fv={fv} u1={0.28} v1={0.08} u2={0.72} v2={0.55} h={62} side="left"  cols={2} rows={5} fill={WIN} margin={0.12} />
+              <FaceWindows fv={fv} u1={0.28} v1={0.08} u2={0.72} v2={0.55} h={62} side="right" cols={2} rows={5} fill={WIN} margin={0.12} />
+            </>
           )}
 
           {/* BACK-MID: 3-storey office (v2=0.70) — L3–4, subsumed at L5 by tower+annex */}
           {level >= 3 && level < 5 && (
-            <Box fv={fv} u1={0.10} v1={0.10} u2={0.90} v2={0.70} h={42} base="#4A5E72" />
+            <>
+              <Box fv={fv} u1={0.10} v1={0.10} u2={0.90} v2={0.70} h={42} base="#4A5E72" />
+              <FaceWindows fv={fv} u1={0.10} v1={0.10} u2={0.90} v2={0.70} h={42} side="left"  cols={3} rows={2} fill={WIN} />
+              <FaceWindows fv={fv} u1={0.10} v1={0.10} u2={0.90} v2={0.70} h={42} side="right" cols={3} rows={2} fill={WIN} />
+            </>
           )}
           {/* At L5, keep the wide base but shorter — tower rises from centre */}
           {level >= 5 && (
-            <Box fv={fv} u1={0.10} v1={0.10} u2={0.90} v2={0.70} h={28} base="#3A4E62" />
+            <>
+              <Box fv={fv} u1={0.10} v1={0.10} u2={0.90} v2={0.70} h={28} base="#3A4E62" />
+              <FaceWindows fv={fv} u1={0.10} v1={0.10} u2={0.90} v2={0.70} h={28} side="left"  cols={3} rows={1} fill={WIN_DIM} />
+              <FaceWindows fv={fv} u1={0.10} v1={0.10} u2={0.90} v2={0.70} h={28} side="right" cols={3} rows={1} fill={WIN_DIM} />
+            </>
           )}
 
           {/* BACK-MID: 2-storey office (v2=0.60) — L2 only */}
           {level === 2 && (
-            <Box fv={fv} u1={0.25} v1={0.20} u2={0.75} v2={0.60} h={28} base="#4A5E72" />
+            <>
+              <Box fv={fv} u1={0.25} v1={0.20} u2={0.75} v2={0.60} h={28} base="#4A5E72" />
+              <FaceWindows fv={fv} u1={0.25} v1={0.20} u2={0.75} v2={0.60} h={28} side="left"  cols={2} rows={1} fill={WIN} />
+              <FaceWindows fv={fv} u1={0.25} v1={0.20} u2={0.75} v2={0.60} h={28} side="right" cols={2} rows={1} fill={WIN} />
+            </>
           )}
 
           {/* BACK-MID: porta-cabin (v2=0.65) — L1 only */}
           {level === 1 && (
-            <Box fv={fv} u1={0.20} v1={0.25} u2={0.80} v2={0.65} h={14} base="#4A5E72" />
+            <>
+              <Box fv={fv} u1={0.20} v1={0.25} u2={0.80} v2={0.65} h={14} base="#4A5E72" />
+              <FaceWindows fv={fv} u1={0.20} v1={0.25} u2={0.80} v2={0.65} h={14} side="left"  cols={1} rows={1} fill={WIN} margin={0.15} />
+              <FaceWindows fv={fv} u1={0.20} v1={0.25} u2={0.80} v2={0.65} h={14} side="right" cols={1} rows={1} fill={WIN} margin={0.15} />
+            </>
           )}
 
           {/* FRONT: complex annex (v2=0.95) — L4+ */}
           {level >= 4 && (
-            <Box fv={fv} u1={0.60} v1={0.62} u2={0.96} v2={0.96} h={24} base="#3A4E62" />
+            <>
+              <Box fv={fv} u1={0.60} v1={0.62} u2={0.96} v2={0.96} h={24} base="#3A4E62" />
+              <FaceWindows fv={fv} u1={0.60} v1={0.62} u2={0.96} v2={0.96} h={24} side="left"  cols={2} rows={1} fill={WIN_DIM} />
+              <FaceWindows fv={fv} u1={0.60} v1={0.62} u2={0.96} v2={0.96} h={24} side="right" cols={2} rows={1} fill={WIN_DIM} />
+            </>
           )}
         </g>
       );
@@ -270,6 +361,8 @@ export function FacilityPlotContents({ facilityType, fv, level }: Props) {
     // ── Club Commercial ────────────────────────────────────────────────────
     // Back→front: shop(v2=0.55) < shopfront(v2=0.65) < stall(v2=0.70) < store(v2=0.95) < wing(v2=0.95)
     case 'CLUB_COMMERCIAL': {
+      const SIGN = '#FDD835';      // gold signage stripe
+      const WIN_SHOP = 'rgba(255,220,100,0.35)'; // warm shop-window glow
       return (
         <g style={no}>
           {/* Paved surface */}
@@ -277,12 +370,23 @@ export function FacilityPlotContents({ facilityType, fv, level }: Props) {
 
           {/* BACK: shop unit (v2=0.55) — L2 only, subsumed by shopfront at L3 */}
           {level === 2 && (
-            <Box fv={fv} u1={0.10} v1={0.10} u2={0.55} v2={0.55} h={18} base="#8B6F52" />
+            <>
+              <Box fv={fv} u1={0.10} v1={0.10} u2={0.55} v2={0.55} h={18} base="#8B6F52" />
+              <FaceDetail fv={fv} u1={0.10} v1={0.10} u2={0.55} v2={0.55} h={18} side="left"  s1={0} t1={0} s2={1} t2={0.18} fill={SIGN} />
+              <FaceDetail fv={fv} u1={0.10} v1={0.10} u2={0.55} v2={0.55} h={18} side="right" s1={0} t1={0} s2={1} t2={0.18} fill={SIGN} />
+            </>
           )}
 
           {/* BACK: commercial shopfront (v2=0.65) — L3+ */}
           {level >= 3 && (
-            <Box fv={fv} u1={0.05} v1={0.05} u2={0.95} v2={0.65} h={24} base="#8B6F52" />
+            <>
+              <Box fv={fv} u1={0.05} v1={0.05} u2={0.95} v2={0.65} h={24} base="#8B6F52" />
+              {/* Gold sign band + large shop window */}
+              <FaceDetail   fv={fv} u1={0.05} v1={0.05} u2={0.95} v2={0.65} h={24} side="left"  s1={0} t1={0} s2={1} t2={0.18} fill={SIGN} />
+              <FaceDetail   fv={fv} u1={0.05} v1={0.05} u2={0.95} v2={0.65} h={24} side="right" s1={0} t1={0} s2={1} t2={0.18} fill={SIGN} />
+              <FaceWindows  fv={fv} u1={0.05} v1={0.05} u2={0.95} v2={0.65} h={24} side="left"  cols={2} rows={1} fill={WIN_SHOP} margin={0.08} gap={0.15} />
+              <FaceWindows  fv={fv} u1={0.05} v1={0.05} u2={0.95} v2={0.65} h={24} side="right" cols={2} rows={1} fill={WIN_SHOP} margin={0.08} gap={0.15} />
+            </>
           )}
 
           {/* MID: market stall (v2=0.70) — L1 only */}
@@ -292,12 +396,20 @@ export function FacilityPlotContents({ facilityType, fv, level }: Props) {
 
           {/* FRONT: merchandise store (v2=0.95, left) — L4+ */}
           {level >= 4 && (
-            <Box fv={fv} u1={0.05} v1={0.65} u2={0.50} v2={0.95} h={20} base="#7A6040" />
+            <>
+              <Box fv={fv} u1={0.05} v1={0.65} u2={0.50} v2={0.95} h={20} base="#7A6040" />
+              <FaceDetail fv={fv} u1={0.05} v1={0.65} u2={0.50} v2={0.95} h={20} side="left"  s1={0} t1={0} s2={1} t2={0.18} fill={SIGN} />
+              <FaceDetail fv={fv} u1={0.05} v1={0.65} u2={0.50} v2={0.95} h={20} side="right" s1={0} t1={0} s2={1} t2={0.18} fill={SIGN} />
+            </>
           )}
 
           {/* FRONT: full centre wing (v2=0.95, right) — L5 */}
           {level >= 5 && (
-            <Box fv={fv} u1={0.52} v1={0.62} u2={0.96} v2={0.96} h={28} base="#8B6F52" />
+            <>
+              <Box fv={fv} u1={0.52} v1={0.62} u2={0.96} v2={0.96} h={28} base="#8B6F52" />
+              <FaceDetail fv={fv} u1={0.52} v1={0.62} u2={0.96} v2={0.96} h={28} side="left"  s1={0} t1={0} s2={1} t2={0.14} fill={SIGN} />
+              <FaceDetail fv={fv} u1={0.52} v1={0.62} u2={0.96} v2={0.96} h={28} side="right" s1={0} t1={0} s2={1} t2={0.14} fill={SIGN} />
+            </>
           )}
         </g>
       );
@@ -307,6 +419,8 @@ export function FacilityPlotContents({ facilityType, fv, level }: Props) {
     // Back→front: second stall(v2=0.45) < kiosk(v2=0.48) < beer van(v2=0.92) < hot dog cart(v2=0.85)
     // Hot dog cart sits mid-front; beer van is further front-left; kiosk is back-right
     case 'FOOD_AND_BEVERAGE': {
+      const AWNING = '#FF5722';   // vivid orange awning stripe
+      const AWNING2 = '#E64A19';  // darker variant for second stall
       return (
         <g style={no}>
           {/* Gravel surface */}
@@ -314,17 +428,29 @@ export function FacilityPlotContents({ facilityType, fv, level }: Props) {
 
           {/* BACK: second stall (v2=0.45) — L4+ */}
           {level >= 4 && (
-            <Box fv={fv} u1={0.05} v1={0.05} u2={0.32} v2={0.45} h={14} base="#7A4228" />
+            <>
+              <Box fv={fv} u1={0.05} v1={0.05} u2={0.32} v2={0.45} h={14} base="#7A4228" />
+              <FaceDetail fv={fv} u1={0.05} v1={0.05} u2={0.32} v2={0.45} h={14} side="left"  s1={0} t1={0} s2={1} t2={0.22} fill={AWNING2} />
+              <FaceDetail fv={fv} u1={0.05} v1={0.05} u2={0.32} v2={0.45} h={14} side="right" s1={0} t1={0} s2={1} t2={0.22} fill={AWNING2} />
+            </>
           )}
 
           {/* BACK: kiosk (v2=0.48) — L3+ */}
           {level >= 3 && (
-            <Box fv={fv} u1={0.35} v1={0.08} u2={0.92} v2={0.48} h={18} base="#7A4228" />
+            <>
+              <Box fv={fv} u1={0.35} v1={0.08} u2={0.92} v2={0.48} h={18} base="#7A4228" />
+              <FaceDetail fv={fv} u1={0.35} v1={0.08} u2={0.92} v2={0.48} h={18} side="left"  s1={0} t1={0} s2={1} t2={0.20} fill={AWNING} />
+              <FaceDetail fv={fv} u1={0.35} v1={0.08} u2={0.92} v2={0.48} h={18} side="right" s1={0} t1={0} s2={1} t2={0.20} fill={AWNING} />
+            </>
           )}
 
           {/* FRONT: hot dog cart (v2=0.85) — L1–2 (subsumed by kiosk at L3+) */}
           {level < 3 && (
-            <Box fv={fv} u1={0.38} v1={0.55} u2={0.62} v2={0.85} h={10} base="#C86428" />
+            <>
+              <Box fv={fv} u1={0.38} v1={0.55} u2={0.62} v2={0.85} h={10} base="#C86428" />
+              <FaceDetail fv={fv} u1={0.38} v1={0.55} u2={0.62} v2={0.85} h={10} side="left"  s1={0} t1={0} s2={1} t2={0.25} fill={AWNING} />
+              <FaceDetail fv={fv} u1={0.38} v1={0.55} u2={0.62} v2={0.85} h={10} side="right" s1={0} t1={0} s2={1} t2={0.25} fill={AWNING} />
+            </>
           )}
 
           {/* FRONT: beer van (v2=0.92) — L2+ */}
@@ -334,7 +460,11 @@ export function FacilityPlotContents({ facilityType, fv, level }: Props) {
 
           {/* L5: full concessions replaces individual stalls */}
           {level >= 5 && (
-            <Box fv={fv} u1={0.04} v1={0.04} u2={0.96} v2={0.96} h={22} base="#7A4228" />
+            <>
+              <Box fv={fv} u1={0.04} v1={0.04} u2={0.96} v2={0.96} h={22} base="#7A4228" />
+              <FaceDetail fv={fv} u1={0.04} v1={0.04} u2={0.96} v2={0.96} h={22} side="left"  s1={0} t1={0} s2={1} t2={0.15} fill={AWNING} />
+              <FaceDetail fv={fv} u1={0.04} v1={0.04} u2={0.96} v2={0.96} h={22} side="right" s1={0} t1={0} s2={1} t2={0.15} fill={AWNING} />
+            </>
           )}
         </g>
       );
@@ -343,6 +473,8 @@ export function FacilityPlotContents({ facilityType, fv, level }: Props) {
     // ── Fan Zone ───────────────────────────────────────────────────────────
     // Back→front: poles(v2=0.20) < pavilion(v2=0.55) < screen(v2=0.70) < table(v2=0.90) < wings(v2=0.95)
     case 'FAN_ZONE': {
+      const BANNER = '#AB47BC'; // vivid purple banner stripe
+      const SCREEN = '#0D0D18'; // near-black screen face
       return (
         <g style={no}>
           {/* Paved plaza */}
@@ -354,12 +486,22 @@ export function FacilityPlotContents({ facilityType, fv, level }: Props) {
 
           {/* BACK-MID: entertainment pavilion (v2=0.55) — L3+ */}
           {level >= 3 && (
-            <Box fv={fv} u1={0.10} v1={0.10} u2={0.90} v2={0.55} h={16} base="#5C4A6A" />
+            <>
+              <Box fv={fv} u1={0.10} v1={0.10} u2={0.90} v2={0.55} h={16} base="#5C4A6A" />
+              {/* Banner stripe across top of pavilion faces */}
+              <FaceDetail fv={fv} u1={0.10} v1={0.10} u2={0.90} v2={0.55} h={16} side="left"  s1={0} t1={0} s2={1} t2={0.25} fill={BANNER} />
+              <FaceDetail fv={fv} u1={0.10} v1={0.10} u2={0.90} v2={0.55} h={16} side="right" s1={0} t1={0} s2={1} t2={0.25} fill={BANNER} />
+            </>
           )}
 
           {/* MID: big screen structure (v2=0.70) — L4+ */}
           {level >= 4 && (
-            <Box fv={fv} u1={0.35} v1={0.55} u2={0.65} v2={0.70} h={22} base="#3A2848" />
+            <>
+              <Box fv={fv} u1={0.35} v1={0.55} u2={0.65} v2={0.70} h={22} base="#3A2848" />
+              {/* Screen face — dark panel on the front faces */}
+              <FaceDetail fv={fv} u1={0.35} v1={0.55} u2={0.65} v2={0.70} h={22} side="left"  s1={0.08} t1={0.08} s2={0.92} t2={0.88} fill={SCREEN} />
+              <FaceDetail fv={fv} u1={0.35} v1={0.55} u2={0.65} v2={0.70} h={22} side="right" s1={0.08} t1={0.08} s2={0.92} t2={0.88} fill={SCREEN} />
+            </>
           )}
 
           {/* FRONT: merch table (v2=0.90) — L2 only */}
@@ -371,7 +513,11 @@ export function FacilityPlotContents({ facilityType, fv, level }: Props) {
           {level >= 5 && (
             <>
               <Box fv={fv} u1={0.04} v1={0.55} u2={0.32} v2={0.95} h={12} base="#5C4A6A" />
+              <FaceDetail fv={fv} u1={0.04} v1={0.55} u2={0.32} v2={0.95} h={12} side="left"  s1={0} t1={0} s2={1} t2={0.30} fill={BANNER} />
+              <FaceDetail fv={fv} u1={0.04} v1={0.55} u2={0.32} v2={0.95} h={12} side="right" s1={0} t1={0} s2={1} t2={0.30} fill={BANNER} />
               <Box fv={fv} u1={0.68} v1={0.55} u2={0.96} v2={0.95} h={12} base="#5C4A6A" />
+              <FaceDetail fv={fv} u1={0.68} v1={0.55} u2={0.96} v2={0.95} h={12} side="left"  s1={0} t1={0} s2={1} t2={0.30} fill={BANNER} />
+              <FaceDetail fv={fv} u1={0.68} v1={0.55} u2={0.96} v2={0.95} h={12} side="right" s1={0} t1={0} s2={1} t2={0.30} fill={BANNER} />
             </>
           )}
         </g>
