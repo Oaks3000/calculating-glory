@@ -219,6 +219,7 @@ export function ScoutNetworkSlideOver({
               </p>
               <input
                 type="number"
+                inputMode="numeric"
                 min={0}
                 step={1000}
                 value={Math.round(budgetCeil / 100)}
@@ -418,6 +419,7 @@ export function ScoutNetworkSlideOver({
                 </p>
                 <input
                   type="number"
+                  inputMode="numeric"
                   min={0}
                   step={100}
                   value={wageOfferedPounds}
@@ -441,6 +443,7 @@ export function ScoutNetworkSlideOver({
                 <div className="flex gap-2">
                   <input
                     type="number"
+                    inputMode="decimal"
                     placeholder="Your answer"
                     value={userAnswer}
                     onChange={e => setUserAnswer(e.target.value)}
