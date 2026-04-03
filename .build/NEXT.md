@@ -10,110 +10,106 @@ lastUpdated: "2026-04-03"
 
 ---
 
-## Recently Completed
+## Recently Completed (PR #102, merged 2026-04-03)
 
-### ✅ UX Polish — Contract Labels, Auto-exit, Budget Flash
-- **Issues:** #63, #64
-- **Status:** MERGED (PR #93)
-- Contract label simplified: "Contract: Xw left" with tooltip
-- Negotiations auto-close 2.5s after result
-- Budget flash animation with +/- delta badge
-- Runway label shortened to "Xw runway"
+### ✅ Progressive Session Difficulty
+- **Issue:** #86
+- **Status:** MERGED (PR #102)
+- Session starts at D1; unlock D2 after 3 correct, D3 after 3 correct at D2
+- Capped by `MAX_DIFFICULTY_BY_LEVEL` per curriculum level
+- D{n} badge visible on each challenge card
 
-### ✅ Dani Intro Stadium Tour
-- **Issue:** #90
-- **Status:** MERGED (PR #94)
-- 6 new intro steps with stadium backdrop
-- Facility highlight pulse (Training, Medical, Scout, Stadium)
-- Backdrop switching between Command Centre and IsometricBlueprint
-- Dani's voice: practical, dry, trade-off framing
-
-### ✅ NPC Match Reactions
+### ✅ NPC Cast Depth
 - **Issue:** #85
-- **Status:** MERGED (PR #94)
-- 30+ templates across 7 scenarios (big_win, loss, streaks, etc.)
-- Kev: football-obsessed. Val: commercial. Marcus: fan-focused.
-- Deterministic (seeded RNG), non-stacking, Kev double-weighted
-- Fires in SIMULATE_WEEK after match results
+- **Status:** MERGED (PR #102)
+- 5 new template pools: `KEV_STREAK_WIN_5/LOSS_5`, `KEV_PROMOTION_ZONE`, `KEV_RELEGATION_ZONE`, `MARCUS_COMMERCIAL_OBS`
+- W5/L5 streak with W3/L3 cascade (no double-firing)
+- Kev table reaction: fires every 3 weeks in promo/relegation zone
+- Marcus commercial observation: fires every 6 weeks
 
-### ✅ Match Pitch Visualisation
-- **Issue:** #65
-- **Status:** Committed on `claude/plan-next-priorities-VHNXw` (awaiting PR)
-- Top-down SVG pitch with 22 blips (11 home + 11 away, 4-4-2)
-- Beat-driven blip state machine (IDLE → BUILD_UP → CHANCE → CELEBRATE → RESET)
-- Goal celebration: radial pulse + blip convergence + scoreboard bounce
-- Crowd atmosphere glow on pitch border
-- CSS keyframes only (Chromebook-safe), prefers-reduced-motion support
+### ✅ Club Identity — NPC Personalisation
+- **Issue:** #84
+- **Status:** MERGED (PR #102)
+- `[CLUB]` and `[STADIUM]` fill vars added to `generateNpcMessages`
+- ~40% of entries across all NPC pools naturalise the club name/stadium
+- Fixed TS6 deprecation errors (`ignoreDeprecations: "6.0"`) in both tsconfigs
+- Fixed 3rd-person slip in `KEV_RELEGATION_ZONE`
 
-### ✅ Owner's Box Polish
-- **Issue:** #89
-- **Status:** MERGED (PR #89)
-- Message bump / goal bump physics animations
-- No-duplicate commentary, Dani facility observations
+### ✅ Season Arc Headlines in Ticker
+- **Issue:** #83
+- **Status:** MERGED (PR #102)
+- Win streaks (3/5/7/9+), loss streaks (3/5/7+), unbeaten runs (5+)
+- New season-best win detection (margin ≥ 3 and > previous best)
+- Zone banners every 5 weeks when in promo/relegation zone
+- Fixed latent bug: `leagueEntries` used inside `buildHeadlines()` without being a parameter
 
-### ✅ Polish Batch 2
-- **Issues:** #57, #59, #62, #81, #82, #83, #84
-- **Status:** MERGED (PR #82)
-- Owner's Box commentary, pre-match overlay, transfer market
-- Club identity, reputation, news ticker, season arc
+### ✅ Transfer Market Friction
+- **Issue:** #82
+- **Status:** MERGED (PR #102)
+- "Hold firm" has real consequences: 0 rivals = accepts, 1 = 50/50, 2+ = rejects
+- New `rejected` step: "Gone. X clubs were waiting — [name] chose elsewhere."
+- Free agents with npcInterest ≥ 2 appear as 📰 RUMOUR headlines in ticker
+
+### ✅ NPC Poaching — Frontend Wiring
+- **Issue:** #36
+- **Status:** MERGED (PR #102)
+- Domain was complete; this wires the UI experience
+- Player snapshot (name, position, OVR, wage) embedded in event metadata at generation
+- `moraleEffect` now shown in EffectPills — reject/ignore morale penalties were hidden
+- `isRiskyChoice` updated to consider morale
+- Active poach bids → 🚨 BREAKING at front of ticker
+
+### ✅ Construction Lag Visuals
+- **Issue:** #28
+- **Status:** MERGED (PR #102)
+- Domain was complete; this wires the visual experience
+- CoreUnit block height interpolates between old and new level during construction
+- Level pips replaced by amber progress bar during construction
+- FacilityCard shows progress bar with % complete
+- Ticker: `FACILITY_UPGRADE_STARTED` + `FACILITY_CONSTRUCTION_COMPLETED` headlines
 
 ---
 
-## Recently Completed (PRs #95–100, merged 2026-04-03)
+## Recently Completed (PRs #95–101, merged 2026-04-03)
 
-### ✅ NPC Message System
-- **Issue:** #95
-- **Status:** MERGED (PR #96)
+### ✅ NPC Message System (PR #96)
 - Kev, Val, Marcus messages wired into Command Centre inbox
 - Message routing by sender with NPC avatar chips
 
-### ✅ Inbox Overflow Partial Fix
-- **Issue:** #92 (partial)
-- **Status:** MERGED (PR #97)
+### ✅ Inbox Overflow Partial Fix (PR #97)
 - Pending decisions capped at 2 in InboxCard preview
-- PREVIEW_LIMIT = 4 controls total items shown
 
-### ✅ Post-Match Report Screen
-- **Issue:** #81
-- **Status:** MERGED (PR #98)
+### ✅ Post-Match Report Screen (PR #98)
 - Full post-match summary after Owner's Box concludes
 
-### ✅ Owner's Box Phone-Screen UI
-- **Issue:** #91 (partial)
-- **Status:** MERGED (PR #99)
+### ✅ Owner's Box Phone-Screen UI (PR #99)
 - Mobile/phone-screen UI polish for Owner's Box
 
-### ✅ Commercial Facilities Panel
-- **Issue:** #87 (partial)
-- **Status:** MERGED (PR #100)
+### ✅ Commercial Facilities Panel (PR #100)
 - Commercial facility types open Val's ClubCommercialSlideOver
-- Groups CLUB_COMMERCIAL, FOOD_AND_BEVERAGE, FAN_ZONE, GROUNDS_SECURITY
 
 ---
 
 ## Current Priority Queue
 
-### 1. 🔄 Math Challenge Difficulty Scaling
-- **Issue:** #86
-- **Priority:** HIGH — educational quality
-- Progressive session difficulty: start D1, unlock D2 after 3 correct D1, unlock D3 after 3 correct D2
-- Brief unlock message in chat ("tougher challenges incoming")
-- Cap by MAX_DIFFICULTY_BY_LEVEL per curriculum level
-
-### 2. 🔜 Sponsor Negotiation
+### 1. 🔜 Sponsor Negotiation
 - **Issue:** #80
-- **Priority:** MEDIUM — decision density
-- Val presents deals, negotiate terms via maths challenge
+- **Priority:** HIGH — decision density
+- Val presents weekly sponsorship deals
+- Negotiate terms via maths challenge (percentage/ratio question gates a better deal)
+- Accept/reject with visible financial impact
 
-### 3. 🔜 Inbox Overflow — Full Fix
+### 2. 🔜 Inbox Overflow — Full Fix
 - **Issue:** #92
-- **Priority:** MEDIUM — remaining stacking edge cases
-- Check NPC messages + pending events + news all showing correctly within PREVIEW_LIMIT
+- **Priority:** MEDIUM
+- Remaining stacking edge cases: NPC messages + pending events + news within PREVIEW_LIMIT
+- Check for double-notification on poach + construction events
 
-### 4. 🔜 Stadium View — Remaining Facility Panels
+### 3. 🔜 Stadium View — Remaining Facility Panels
 - **Issue:** #87 (remaining)
 - **Priority:** MEDIUM
-- Training, Medical, Scout, Youth Academy panels from isometric view
+- Training Ground, Medical Centre, Scout Network, Youth Academy panels
+- Commercial panels already done (PR #100)
 
 ---
 
