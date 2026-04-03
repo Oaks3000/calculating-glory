@@ -7,11 +7,14 @@
  *
  *   LEFT COLUMN           CENTRE              RIGHT COLUMN
  *   ─────────────────────────────────────────────────────
- *   Training (0,1)      The Pitch (7,2)      Club Office  (14,1)
- *   Medical  (0,5)                           Commercial   (14,5)
- *   Scout    (0,8)                           Food & Bev   (14,8)
+ *   Training (0,1)      The Pitch (6,1)      Club Office  (15,1)
+ *   Medical  (0,5)       8×7 plot            Commercial   (15,5)
+ *   Scout    (0,8)    (1-tile stand border)  Food & Bev   (15,8)
  *   Youth    (0,11)
  *                   Fan Zone (6,11)  Security (11,11)
+ *
+ * The STADIUM plot is sized 8×7 (was 6×5) so that future stand sub-objects
+ * can fill the 1-tile border around the 6×5 grass pitch within the same plot.
  *
  * Every facility is represented by exactly one CoreUnitDef.  The STADIUM
  * facility is visualised as The Pitch only — The Stands will be added in a
@@ -84,7 +87,7 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     facilityType: 'STADIUM',
     label:        'The Pitch',
     icon:         '⚽',
-    gc: 7, gr: 2, cols: 6, rows: 5,
+    gc: 6, gr: 1, cols: 8, rows: 7,
     colors: {
       ground:    '#2D5A1B',
       base:      '#3A7D2C',
@@ -155,7 +158,7 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     facilityType: 'CLUB_OFFICE',
     label:        'Club Office',
     icon:         '🏢',
-    gc: 14, gr: 1, cols: 3, rows: 3,
+    gc: 15, gr: 1, cols: 3, rows: 3,
     colors: {
       ground:    '#141E2E',
       base:      '#4A5E72',
@@ -168,7 +171,7 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     facilityType: 'CLUB_COMMERCIAL',
     label:        'Commercial Centre',
     icon:         '💰',
-    gc: 14, gr: 5, cols: 3, rows: 2,
+    gc: 15, gr: 5, cols: 3, rows: 2,
     colors: {
       ground:   '#2A1C08',
       base:     '#8B6F52',
@@ -181,7 +184,7 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     facilityType: 'FOOD_AND_BEVERAGE',
     label:        'Food & Beverage',
     icon:         '🍔',
-    gc: 14, gr: 8, cols: 3, rows: 2,
+    gc: 15, gr: 8, cols: 3, rows: 2,
     colors: {
       ground:   '#281408',
       base:     '#7A4228',
