@@ -33,8 +33,8 @@ interface CoreUnitProps {
   level:     number;
   /** Weeks remaining on active construction; undefined or 0 = not building */
   constructionWeeksRemaining?: number;
-  isHovered: boolean;
-  /** When true, the building pulses with a highlight glow (used during intro tour). */
+  isHovered:     boolean;
+  /** When true, renders a pulsing amber ring (intro tour highlight). */
   isHighlighted?: boolean;
   onClick:   () => void;
   onHover:   (id: string | null) => void;
@@ -154,17 +154,6 @@ export function CoreUnit({ def, level, constructionWeeksRemaining, isHovered, is
         </>
       )}
 
-      {/* ── Intro tour highlight pulse ─────────────────────────── */}
-      {isHighlighted && (
-        <path
-          d={hitPath}
-          fill="rgba(68,138,255,0.15)"
-          stroke="#448AFF"
-          strokeWidth="2"
-          style={{ pointerEvents: 'none', animation: 'intro-highlight 1.5s ease-in-out infinite' }}
-        />
-      )}
-
       {/* ── Hover tint (sits above block faces, below icon) ──────── */}
       {isHovered && (
         <path
@@ -172,6 +161,18 @@ export function CoreUnit({ def, level, constructionWeeksRemaining, isHovered, is
           fill="rgba(255,255,255,0.10)"
           stroke="#448AFF"
           strokeWidth="1.5"
+          style={{ pointerEvents: 'none' }}
+        />
+      )}
+
+      {/* ── Intro tour highlight — pulsing amber ring ────────────── */}
+      {isHighlighted && (
+        <path
+          d={hitPath}
+          fill="rgba(255,180,0,0.14)"
+          stroke="#FFB400"
+          strokeWidth="2.5"
+          className="animate-pulse"
           style={{ pointerEvents: 'none' }}
         />
       )}
