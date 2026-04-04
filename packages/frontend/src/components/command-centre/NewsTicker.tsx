@@ -1,4 +1,4 @@
-import { GameEvent, MatchSimulatedEvent, MoraleTickerEvent, Player, PendingClubEvent, avgSquadMorale, isUnsettled } from '@calculating-glory/domain';
+import { GameEvent, MatchSimulatedEvent, MoraleTickerEvent, Player, PendingClubEvent, avgSquadMorale, isUnsettled, ClubRecords } from '@calculating-glory/domain';
 import { LeagueTableEntry } from '@calculating-glory/domain';
 
 // ── Ordinal helper ──────────────────────────────────────────────────────────
@@ -19,6 +19,7 @@ interface NewsTickerProps {
   freeAgents?: Player[];
   pendingEvents?: PendingClubEvent[];
   currentWeek?: number;
+  clubRecords?: ClubRecords;
 }
 
 // ── Season arc headlines ────────────────────────────────────────────────────
@@ -33,6 +34,7 @@ function buildSeasonArcHeadlines(
   clubName: string,
   leagueEntries: LeagueTableEntry[],
   currentWeek?: number,
+  clubRecords?: ClubRecords,
 ): string[] {
   if (!currentWeek || currentWeek < 3) return [];
 
@@ -107,9 +109,17 @@ function buildSeasonArcHeadlines(
     });
     const prevBest = margins.length > 0 ? Math.max(...margins) : 0;
     if (lastDiff > prevBest) {
-      const opponentId = lastIsHome ? lastMatch.awayTeamId : lastMatch.homeTeamId;
+      const opponentId   = lastIsHome ? lastMatch.awayTeamId : lastMatch.homeTeamId;
       const opponentName = nameMap.get(opponentId) ?? 'opposition';
-      headlines.push(`★ SEASON BEST — ${lastP}–${lastO} vs ${opponentName} — ${clubName}'s biggest win this season`);
+      const allTimeBest  = clubRecords?.biggestWin
+        ? clubRecords.biggestWin.playerGoals - clubRecords.biggestWin.opponentGoals
+        : 0;
+      const isAllTimeRecord = lastDiff > allTimeBest;
+      if (isAllTimeRecord) {
+        headlines.push(`🏆 ALL-TIME CLUB RECORD — ${lastP}–${lastO} vs ${opponentName} — ${clubName}'s biggest ever win`);
+      } else {
+        headlines.push(`★ SEASON BEST — ${lastP}–${lastO} vs ${opponentName} — ${clubName}'s biggest win this season`);
+      }
     }
   }
 
@@ -205,7 +215,8 @@ function buildHeadlines(
   nameMap: Map<string, string>,
   squad: Player[],
   leagueEntries: LeagueTableEntry[],
-  currentWeek?: number
+  currentWeek?: number,
+  clubRecords?: ClubRecords
 ): string[] {
   const headlines: string[] = [];
 
@@ -266,13 +277,13 @@ function buildHeadlines(
     }
   }
 
-  const arcHeadlines = buildSeasonArcHeadlines(events, clubId, clubName, leagueEntries, currentWeek);
+  const arcHeadlines = buildSeasonArcHeadlines(events, clubId, clubName, leagueEntries, currentWeek, clubRecords as ClubRecords | undefined);
   return [...headlines.slice(-30).reverse(), ...buildMoraleHeadlines(squad), ...milestoneHeadlines, ...arcHeadlines];
 }
 
-export function NewsTicker({ events, clubId, clubName, stadiumName, leagueEntries, squad, freeAgents, pendingEvents, currentWeek }: NewsTickerProps) {
+export function NewsTicker({ events, clubId, clubName, stadiumName, leagueEntries, squad, freeAgents, pendingEvents, currentWeek, clubRecords }: NewsTickerProps) {
   const nameMap = new Map<string, string>(leagueEntries.map(e => [e.clubId, e.clubName]));
-  const eventHeadlines = buildHeadlines(events, clubId, clubName, stadiumName, nameMap, squad, leagueEntries, currentWeek);
+  const eventHeadlines = buildHeadlines(events, clubId, clubName, stadiumName, nameMap, squad, leagueEntries, currentWeek, clubRecords);
   const rumourHeadlines = freeAgents && freeAgents.length > 0 ? buildRumourHeadlines(freeAgents, clubName) : [];
   const poachHeadlines = pendingEvents ? buildPoachHeadlines(pendingEvents) : [];
   const headlines = [...poachHeadlines, ...eventHeadlines, ...rumourHeadlines];

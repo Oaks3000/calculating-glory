@@ -146,6 +146,8 @@ export function buildState(events: GameEvent[]): GameState {
     npcStrengths: {},
     resolvedEventWeeks: {},
     mathsOutcomes: {},
+    clubRecords: { biggestWin: null, longestWinStreak: 0 },
+    currentWinStreak: 0,
   };
 
   return events.reduce(reduceEvent, initialState);
@@ -327,19 +329,60 @@ function handleMatchSimulated(state: GameState, event: MatchSimulatedEvent): Gam
 
   // Layer 1: result morale delta — applied when the player's club played this fixture
   let squad = state.club.squad;
+  const opponentId = state.club.id === homeTeamId ? awayTeamId : homeTeamId;
   if (clubResult && squad.length > 0) {
     const playerEntry   = sorted.find(e => e.clubId === state.club.id);
-    const opponentId    = state.club.id === homeTeamId ? awayTeamId : homeTeamId;
     const opponentEntry = sorted.find(e => e.clubId === opponentId);
     const playerPos     = playerEntry?.position   ?? 12;
     const opponentPos   = opponentEntry?.position ?? 12;
     squad = applyResultMoraleDelta(squad, clubResult, playerPos, opponentPos, clubForm);
   }
 
+  // Layer 2: club records + board confidence drift (only when player's club played)
+  let clubRecords = state.clubRecords;
+  let currentWinStreak = state.currentWinStreak ?? 0;
+  let boardConfidence = state.boardConfidence;
+
+  if (clubResult) {
+    const isHome = state.club.id === homeTeamId;
+    const playerGoals   = isHome ? homeGoals : awayGoals;
+    const opponentGoals = isHome ? awayGoals : homeGoals;
+    const margin        = playerGoals - opponentGoals;
+    const opponentEntry = state.league.entries.find(e => e.clubId === opponentId);
+    const opponentName  = opponentEntry?.clubName ?? 'Unknown';
+
+    // Update win streak
+    if (clubResult === 'W') {
+      currentWinStreak += 1;
+    } else {
+      currentWinStreak = 0;
+    }
+
+    // Update all-time records
+    const existingMargin = clubRecords.biggestWin
+      ? clubRecords.biggestWin.playerGoals - clubRecords.biggestWin.opponentGoals
+      : -1;
+
+    clubRecords = {
+      biggestWin:
+        clubResult === 'W' && margin > existingMargin
+          ? { playerGoals, opponentGoals, opponentName, week: state.currentWeek + 1, season: state.season }
+          : clubRecords.biggestWin,
+      longestWinStreak: Math.max(clubRecords.longestWinStreak, currentWinStreak),
+    };
+
+    // Board confidence drift — small per-match signal so form builds pressure
+    const confDelta = clubResult === 'W' ? 2 : clubResult === 'L' ? -3 : 0;
+    boardConfidence = Math.max(5, Math.min(95, boardConfidence + confDelta));
+  }
+
   return {
     ...state,
     league: { ...state.league, entries: sorted },
-    club: { ...state.club, form: clubForm, squad }
+    club: { ...state.club, form: clubForm, squad },
+    clubRecords,
+    currentWinStreak,
+    boardConfidence,
   };
 }
 

@@ -240,6 +240,40 @@ export interface GameState {
    * (e.g. a "re-inspection pass" hop vs "re-inspection fail" hop).
    */
   mathsOutcomes: Record<string, 'correct' | 'wrong'>;
+
+  /**
+   * All-time club records — persists across seasons.
+   * Updated whenever a new record is set during a match.
+   */
+  clubRecords: ClubRecords;
+
+  /**
+   * Current consecutive win streak (reset to 0 on draw or loss).
+   * Used to update clubRecords.longestWinStreak in real time.
+   */
+  currentWinStreak: number;
+}
+
+// ── Club Records ──────────────────────────────────────────────────────────────
+
+export interface ClubBestWin {
+  /** Goals scored by the player's club */
+  playerGoals: number;
+  /** Goals conceded */
+  opponentGoals: number;
+  /** Name of the beaten opponent */
+  opponentName: string;
+  /** Week the result happened */
+  week: number;
+  /** Season it happened in */
+  season: number;
+}
+
+export interface ClubRecords {
+  /** Biggest ever win by goal margin (null until first win by 2+ goals). */
+  biggestWin: ClubBestWin | null;
+  /** Longest ever consecutive win streak. */
+  longestWinStreak: number;
 }
 
 /**
