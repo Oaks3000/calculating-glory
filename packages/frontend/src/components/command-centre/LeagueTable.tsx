@@ -120,8 +120,8 @@ export function LeagueTable({ entries, playerClubId, promotionCutoff, relegation
           </div>
         )}
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs data-font">
+      <div className="overflow-x-auto scrollbar-thin" role="region" aria-label="League table — scroll to see full stats">
+        <table className="w-full text-xs data-font min-w-[320px]">
           <thead>
             <tr className="text-txt-muted border-b border-bg-raised">
               <th className="text-right pr-2 pb-1 w-6">#</th>
