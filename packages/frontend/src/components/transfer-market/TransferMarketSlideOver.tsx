@@ -77,6 +77,53 @@ const WILLINGNESS_CONFIG: Record<PlayerWillingness, { label: string; colour: str
   reluctant:{ label: 'Hesitant',      colour: 'text-alert-red',    icon: '?' },
 };
 
+/** Reason a reluctant player is hesitant — shown in the counter-offer card. */
+function getReluctanceReason(
+  player: Player,
+  tablePosition: number,
+  npcInterest: number,
+): string {
+  if (npcInterest >= 2) return `${npcInterest} clubs are after them. They know their value.`;
+  if (npcInterest === 1) return 'Another club is watching. They\'re not feeling any urgency.';
+  if (tablePosition >= 18) return 'They\'re not convinced by the league position. Hard to blame them.';
+  const wageRatio = player.wage / Math.max(1, player.wage);
+  if (wageRatio < 0.9) return 'The offer is below what they had in mind.';
+  return 'They want to think it over. Not an easy sell.';
+}
+
+/** Seeded signing celebration line from Val or Marcus. */
+const SIGNING_LINES: { name: string; colour: string; line: string }[] = [
+  { name: 'Marcus Webb',  colour: 'text-pitch-green', line: 'Smart business. Good player at a fair price.' },
+  { name: 'Val Webb',     colour: 'text-data-blue',   line: 'Good signing. That\'ll strengthen the side nicely.' },
+  { name: 'Marcus Webb',  colour: 'text-pitch-green', line: 'That\'s a solid addition. The squad needed it.' },
+  { name: 'Val Webb',     colour: 'text-data-blue',   line: 'Pleased with that one. He\'ll fit in well.' },
+  { name: 'Marcus Webb',  colour: 'text-pitch-green', line: 'The numbers work. Good call.' },
+  { name: 'Val Webb',     colour: 'text-data-blue',   line: 'Exactly what we needed. Well done.' },
+  { name: 'Marcus Webb',  colour: 'text-pitch-green', line: 'Happy with that. Adds real depth.' },
+  { name: 'Val Webb',     colour: 'text-data-blue',   line: 'That\'s the right player at the right time.' },
+];
+
+function getSigningLine(playerId: string): { name: string; colour: string; line: string } {
+  let h = 0;
+  for (let i = 0; i < playerId.length; i++) {
+    h = (Math.imul(13, h) + playerId.charCodeAt(i)) | 0;
+  }
+  return SIGNING_LINES[Math.abs(h) % SIGNING_LINES.length];
+}
+
+/**
+ * Pick a rival club name deterministically from a list of club names.
+ * Used to name the club that "beat you" to a signing.
+ */
+function getRivalClubName(playerId: string, clubNames: string[]): string {
+  if (clubNames.length === 0) return 'a rival club';
+  let h = 0;
+  for (let i = 0; i < playerId.length; i++) {
+    h = (Math.imul(23, h) + playerId.charCodeAt(i)) | 0;
+  }
+  return clubNames[Math.abs(h) % clubNames.length];
+}
+
 // ─── Formation gap panel ───────────────────────────────────────────────────────
 
 interface FormationGapPanelProps {
@@ -296,12 +343,14 @@ function PotBar({ player, scoutLevel }: { player: Player; scoutLevel: number }) 
 // ─── Free Agent Card ───────────────────────────────────────────────────────────
 
 interface FreeAgentCardProps {
-  player: Player;
-  canAfford: boolean;
-  hasSquadRoom: boolean;
-  scoutLevel: number;
-  willingness: PlayerWillingness;
-  npcInterest: number;
+  player:         Player;
+  canAfford:      boolean;
+  hasSquadRoom:   boolean;
+  scoutLevel:     number;
+  willingness:    PlayerWillingness;
+  npcInterest:    number;
+  tablePosition:  number;
+  rivalClubNames: string[];
   onSign: (wage: number) => void;
 }
 
@@ -320,6 +369,8 @@ function FreeAgentCard({
   scoutLevel,
   willingness,
   npcInterest,
+  tablePosition,
+  rivalClubNames,
   onSign,
 }: FreeAgentCardProps) {
   const [step, setStep] = useState<SignStep>('idle');
@@ -406,24 +457,44 @@ function FreeAgentCard({
 
       {/* Action row */}
       {step === 'done' ? (
-        <div className="text-xs text-pitch-green font-semibold">Signed! {npcInterest > 0 ? 'You beat the competition.' : ''}</div>
+        /* ── Signing celebration ─────────────────────────────────────────── */
+        (() => {
+          const signingLine = getSigningLine(player.id);
+          return (
+            <div className="flex flex-col gap-1.5 bg-pitch-green/5 border border-pitch-green/30 rounded px-3 py-2.5">
+              <div className="flex items-center gap-2">
+                <span className="text-pitch-green font-bold text-xs uppercase tracking-wide">DEAL DONE ✓</span>
+                {npcInterest > 0 && (
+                  <span className="text-[10px] text-txt-muted">You beat {npcInterest === 1 ? '1 club' : `${npcInterest} clubs`} to it.</span>
+                )}
+              </div>
+              <p className="text-[10px] text-txt-muted italic">
+                <span className={`font-semibold not-italic ${signingLine.colour}`}>{signingLine.name}:</span>{' '}
+                "{signingLine.line}"
+              </p>
+            </div>
+          );
+        })()
       ) : step === 'rejected' ? (
-        <div className="text-xs text-alert-red bg-alert-red/5 border border-alert-red/20 rounded px-2 py-1.5">
-          <span className="font-semibold">Gone.</span>{' '}
-          {npcInterest >= 2
-            ? `${npcInterest} clubs were waiting — ${player.name} chose elsewhere.`
-            : `${player.name} walked away. A rival club made their move.`}
-        </div>
+        /* ── Outbid — name the rival club ───────────────────────────────── */
+        (() => {
+          const rival = getRivalClubName(player.id, rivalClubNames);
+          return (
+            <div className="text-xs text-alert-red bg-alert-red/5 border border-alert-red/20 rounded px-2 py-1.5">
+              <span className="font-semibold">Gone.</span>{' '}
+              {npcInterest >= 2
+                ? `${rival} moved faster. ${player.name} had too many options.`
+                : `${rival} made their move. ${player.name} signed elsewhere.`}
+            </div>
+          );
+        })()
       ) : step === 'countering' ? (
-        /* Reluctant player counter-offer */
+        /* ── Reluctant counter-offer with reason ────────────────────────── */
         <div className="flex flex-col gap-2 text-xs">
           <div className="bg-alert-red/5 border border-alert-red/20 rounded px-2 py-1.5 text-txt-muted">
             <span className="text-alert-red font-semibold">Counter-offer!</span>{' '}
-            {player.name} is hesitant.{' '}
-            {npcInterest > 0
-              ? <>With {npcInterest > 1 ? `${npcInterest} clubs` : 'another club'} circling, they want {counterLabel}/wk to commit.</>
-              : <>They want {counterLabel}/wk (+15%) to sign.</>
-            }
+            {getReluctanceReason(player, tablePosition, npcInterest)}{' '}
+            They want {counterLabel}/wk to commit.
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <button
@@ -517,6 +588,7 @@ function SquadPlayerCard({ player, currentWeek, clubId, scoutLevel, onRelease, o
   const [action, setAction] = useState<SquadAction>('idle');
   const [selectedClubId, setSelectedClubId] = useState('');
   const [done, setDone] = useState<'released' | 'sold' | null>(null);
+  const [soldToClubName, setSoldToClubName] = useState<string | null>(null);
 
   const isFreeAgent = player.contractExpiresWeek === 0;
   const isExpired = !isFreeAgent && currentWeek >= player.contractExpiresWeek;
@@ -554,6 +626,7 @@ function SquadPlayerCard({ player, currentWeek, clubId, scoutLevel, onRelease, o
 
   function handleConfirmSell() {
     onSellToNpc(selectedClubId);
+    setSoldToClubName(selectedClub?.name ?? null);
     setDone('sold');
     setAction('idle');
   }
@@ -603,7 +676,10 @@ function SquadPlayerCard({ player, currentWeek, clubId, scoutLevel, onRelease, o
       {done === 'released' ? (
         <div className="text-xs text-warn-amber font-semibold">Released{fanFav ? ' — the fans won\'t forget.' : ''}</div>
       ) : done === 'sold' ? (
-        <div className="text-xs text-pitch-green font-semibold">Sold for {formatMoney(sellFee)}{fanFav ? ' — a tough call.' : ''}</div>
+        <div className="text-xs text-pitch-green font-semibold">
+          {soldToClubName ? `${soldToClubName} sign ${player.name} for ${formatMoney(sellFee)}.` : `Sold for ${formatMoney(sellFee)}.`}
+          {fanFav ? <span className="text-warn-amber"> The fans won't forget that easily.</span> : null}
+        </div>
       ) : action === 'confirm-release' ? (
         <div className="flex flex-col gap-1.5 text-xs">
           {fanFav && (
@@ -723,6 +799,11 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
   // Current league position (1–24). If table not yet populated, default to mid-table.
   const leagueEntry = state.league.entries.find(e => e.clubId === state.club.id);
   const tablePosition = leagueEntry?.position ?? 12;
+
+  // Rival club names (excluding player's own club) — used to name competitors in transfer drama.
+  const rivalClubNames = state.league.entries
+    .filter(e => e.clubId !== state.club.id)
+    .map(e => e.clubName);
 
   // ── Filter + sort free agents ──────────────────────────────────────────────
 
@@ -876,6 +957,8 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
                 scoutLevel={scoutLevel}
                 willingness={computeWillingness(player, player.wage, tablePosition)}
                 npcInterest={getNpcInterestCount(player.id)}
+                tablePosition={tablePosition}
+                rivalClubNames={rivalClubNames}
                 onSign={wage => handleSign(player.id, wage)}
               />
             ))
