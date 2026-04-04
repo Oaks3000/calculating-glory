@@ -7,21 +7,26 @@
  *
  *   LEFT COLUMN           CENTRE              RIGHT COLUMN
  *   ─────────────────────────────────────────────────────
- *   Training (1,1)      The Pitch (7,2)      Club Office (15,1)
- *   Medical  (1,5)                           Commercial  (15,5)
- *   Scout    (1,7)                           Food & Bev  (15,9)
- *   Youth    (1,9)
+ *   Training (0,1)      The Pitch (6,1)      Club Office  (15,1)
+ *   Medical  (0,5)       8×7 plot            Commercial   (15,5)
+ *   Scout    (0,8)    (1-tile stand border)  Food & Bev   (15,8)
+ *   Youth    (0,11)
  *                   Fan Zone (6,11)  Security (11,11)
+ *
+ * The STADIUM plot is sized 8×7 (was 6×5) so that future stand sub-objects
+ * can fill the 1-tile border around the 6×5 grass pitch within the same plot.
  *
  * Every facility is represented by exactly one CoreUnitDef.  The STADIUM
  * facility is visualised as The Pitch only — The Stands will be added in a
  * later PR as a separate surrounding element driven by STADIUM level.
  *
- * Shading model (Gemini visual spec, PR 6):
- *   Top face:  base colour (100% light)
- *   SW face:   base colour + rgba(0,0,0,0.30) overlay (70% light)
- *   SE face:   base colour + rgba(0,0,0,0.55) overlay (45% light)
- *   Highlight: 1px rgba(255,255,255,0.20) line on top front edge (T→R)
+ * Visual model:
+ *   Each facility is a PLOT that fills with sub-objects as levels increase.
+ *   Level 0: grass-textured plot with a faint dashed outline only.
+ *   Level 1–5: sub-objects from FacilityPlotContents rendered within the plot.
+ *   The `colors.base` token is the primary material used by plot sub-objects.
+ *   The `colors.ground` token is the plot base fill (soil/tarmac/concrete).
+ *   See FacilityPlotContents.tsx for per-facility progression details.
  */
 
 import { FacilityType } from '@calculating-glory/domain';
@@ -31,26 +36,24 @@ import { FacilityType } from '@calculating-glory/domain';
 // ---------------------------------------------------------------------------
 
 export interface CoreUnitColors {
-  /** Ground tile fill (level 0 — empty plot). */
+  /**
+   * Ground base fill for this plot type (level 1+ only).
+   * Level 0 always uses url(#pat-ground) from the SVG defs.
+   */
   ground: string;
   /**
-   * Building base colour — applied at 100% on the top face.
-   * SW face receives an rgba(0,0,0,0.30) overlay; SE face gets rgba(0,0,0,0.55).
-   * This produces 3-tone shading from a single hue without pre-baking hex values.
+   * Primary colour token for sub-objects in this plot.
+   * Used as the base colour for all FacilityPlotContents Box components.
+   * Should be muted/realistic; vivid colour belongs in flagColor.
    */
   base: string;
-  /**
-   * Optional SVG fill override for the top face (e.g. 'url(#pat-grass)').
-   * When set, the top face renders this pattern on top of the base colour.
-   */
-  topPattern?: string;
-  /**
-   * Optional SVG fill overlay for the SW face (e.g. 'url(#pat-concrete)').
-   * Applied on top of the base colour + 30% dark overlay.
-   */
-  swPattern?: string;
   /** Icon / pip text colour. */
   label: string;
+  /**
+   * Accent colour used to identify this facility (future use: hover glow,
+   * upgrade button highlight, chart colour).
+   */
+  flagColor: string;
 }
 
 export interface CoreUnitDef {
@@ -70,12 +73,6 @@ export interface CoreUnitDef {
   cols: number;
   /** Footprint depth in tiles. */
   rows: number;
-  /**
-   * Building block height in pixels for each level (indices 0–5).
-   * Level 0 = empty ground plot (height 0 = flat diamond only).
-   * Levels 1–5 = increasingly tall/wide buildings.
-   */
-  blockHeights: [number, number, number, number, number, number];
   colors: CoreUnitColors;
 }
 
@@ -85,19 +82,17 @@ export interface CoreUnitDef {
 
 export const STADIUM_LAYOUT: CoreUnitDef[] = [
   // ── The Pitch ────────────────────────────────────────────────────────────
-  // Central 6×5 footprint.  Driven by the STADIUM facility.
   {
     id:           'pitch',
     facilityType: 'STADIUM',
     label:        'The Pitch',
     icon:         '⚽',
-    gc: 7, gr: 2, cols: 6, rows: 5,
-    blockHeights: [4, 8, 12, 16, 20, 24],
+    gc: 6, gr: 1, cols: 8, rows: 7,
     colors: {
-      ground:     '#2D5A1B',
-      base:       '#4CAF50',
-      topPattern: 'url(#pat-grass)',  // grass stripe pattern on top face
-      label:      '#FFFFFF',
+      ground:    '#2D5A1B',
+      base:      '#3A7D2C',
+      label:     '#FFFFFF',
+      flagColor: '#FFFFFF',
     },
   },
 
@@ -108,13 +103,12 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     facilityType: 'TRAINING_GROUND',
     label:        'Training Ground',
     icon:         '🏋',
-    gc: 1, gr: 1, cols: 3, rows: 2,
-    blockHeights: [0, 20, 30, 40, 52, 64],
+    gc: 0, gr: 1, cols: 4, rows: 3,
     colors: {
-      ground:    '#5C4A18',
-      base:      '#FF8F00',
-      swPattern: 'url(#pat-concrete)',  // concrete stipple on SW (shadow) face
+      ground:    '#2E1A0A',
+      base:      '#7A5C3A',
       label:     '#FFFFFF',
+      flagColor: '#FF8F00',
     },
   },
   {
@@ -122,13 +116,12 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     facilityType: 'MEDICAL_CENTER',
     label:        'Medical Centre',
     icon:         '🏥',
-    gc: 1, gr: 5, cols: 2, rows: 2,
-    blockHeights: [0, 20, 30, 40, 52, 64],
+    gc: 0, gr: 5, cols: 3, rows: 2,
     colors: {
-      ground:    '#3A3A3A',
-      base:      '#ECEFF1',
-      swPattern: 'url(#pat-concrete)',
-      label:     '#263238',
+      ground:    '#1C2B30',
+      base:      '#8FA8B0',
+      label:     '#FFFFFF',
+      flagColor: '#E53935',
     },
   },
   {
@@ -136,12 +129,12 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     facilityType: 'SCOUT_NETWORK',
     label:        'Scout Network',
     icon:         '🔭',
-    gc: 1, gr: 7, cols: 2, rows: 2,
-    blockHeights: [0, 16, 24, 34, 44, 56],
+    gc: 0, gr: 8, cols: 3, rows: 2,
     colors: {
-      ground: '#0A1A2A',
-      base:   '#1565C0',
-      label:  '#FFFFFF',
+      ground:   '#0A1520',
+      base:     '#2E3F4F',
+      label:    '#FFFFFF',
+      flagColor:'#29B6F6',
     },
   },
   {
@@ -149,12 +142,12 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     facilityType: 'YOUTH_ACADEMY',
     label:        'Youth Academy',
     icon:         '🌱',
-    gc: 1, gr: 9, cols: 3, rows: 2,
-    blockHeights: [0, 20, 30, 40, 52, 64],
+    gc: 0, gr: 11, cols: 4, rows: 2,
     colors: {
-      ground: '#0D3A3A',
-      base:   '#26C6DA',
-      label:  '#FFFFFF',
+      ground:   '#122020',
+      base:     '#5B7E8A',
+      label:    '#FFFFFF',
+      flagColor:'#26C6DA',
     },
   },
 
@@ -165,13 +158,12 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     facilityType: 'CLUB_OFFICE',
     label:        'Club Office',
     icon:         '🏢',
-    gc: 15, gr: 1, cols: 2, rows: 2,
-    blockHeights: [0, 24, 36, 48, 60, 72],
+    gc: 15, gr: 1, cols: 3, rows: 3,
     colors: {
-      ground:    '#1A2A4A',
-      base:      '#448AFF',
-      swPattern: 'url(#pat-concrete)',
+      ground:    '#141E2E',
+      base:      '#4A5E72',
       label:     '#FFFFFF',
+      flagColor: '#448AFF',
     },
   },
   {
@@ -179,12 +171,12 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     facilityType: 'CLUB_COMMERCIAL',
     label:        'Commercial Centre',
     icon:         '💰',
-    gc: 15, gr: 5, cols: 2, rows: 2,
-    blockHeights: [0, 20, 30, 42, 54, 66],
+    gc: 15, gr: 5, cols: 3, rows: 2,
     colors: {
-      ground: '#3A2A08',
-      base:   '#FDD835',
-      label:  '#212121',
+      ground:   '#2A1C08',
+      base:     '#8B6F52',
+      label:    '#FFFFFF',
+      flagColor:'#FDD835',
     },
   },
   {
@@ -192,12 +184,12 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     facilityType: 'FOOD_AND_BEVERAGE',
     label:        'Food & Beverage',
     icon:         '🍔',
-    gc: 15, gr: 9, cols: 2, rows: 2,
-    blockHeights: [0, 16, 24, 34, 44, 56],
+    gc: 15, gr: 8, cols: 3, rows: 2,
     colors: {
-      ground: '#3A1A08',
-      base:   '#FF7043',
-      label:  '#FFFFFF',
+      ground:   '#281408',
+      base:     '#7A4228',
+      label:    '#FFFFFF',
+      flagColor:'#FF7043',
     },
   },
 
@@ -208,12 +200,12 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     facilityType: 'FAN_ZONE',
     label:        'Fan Zone',
     icon:         '🎉',
-    gc: 6, gr: 11, cols: 3, rows: 2,
-    blockHeights: [0, 14, 22, 32, 42, 52],
+    gc: 6, gr: 11, cols: 4, rows: 2,
     colors: {
-      ground: '#2A0A3A',
-      base:   '#AB47BC',
-      label:  '#FFFFFF',
+      ground:   '#1A0A28',
+      base:     '#5C4A6A',
+      label:    '#FFFFFF',
+      flagColor:'#AB47BC',
     },
   },
   {
@@ -221,13 +213,12 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
     facilityType: 'GROUNDS_SECURITY',
     label:        'Grounds & Security',
     icon:         '🎟',
-    gc: 11, gr: 11, cols: 3, rows: 2,
-    blockHeights: [0, 14, 22, 32, 42, 52],
+    gc: 11, gr: 11, cols: 4, rows: 2,
     colors: {
-      ground:    '#2A2A2A',
-      base:      '#78909C',
-      swPattern: 'url(#pat-concrete)',
+      ground:    '#1A1A1A',
+      base:      '#3D4F58',
       label:     '#FFFFFF',
+      flagColor: '#FFD740',
     },
   },
 ];
@@ -239,9 +230,13 @@ export const STADIUM_LAYOUT: CoreUnitDef[] = [
 /**
  * Core units sorted for correct SVG painter's algorithm rendering.
  *
- * Sort key = gc + gr (smaller = further back = rendered first).
- * For multi-tile footprints use the front edge: (gc + cols) + (gr + rows).
+ * Sort key = front corner of the footprint: (gc + cols - 1) + (gr + rows - 1).
+ * This is the isometric tile closest to the viewer for each plot, which is what
+ * determines whether one plot visually overlaps another.
+ * Smaller key = further from viewer = rendered first (painted underneath).
  */
 export const STADIUM_LAYOUT_SORTED: CoreUnitDef[] = [...STADIUM_LAYOUT].sort(
-  (a, b) => (a.gc + a.gr) - (b.gc + b.gr),
+  (a, b) =>
+    (a.gc + a.cols - 1 + a.gr + a.rows - 1) -
+    (b.gc + b.cols - 1 + b.gr + b.rows - 1),
 );

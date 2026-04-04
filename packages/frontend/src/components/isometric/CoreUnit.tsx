@@ -1,31 +1,24 @@
 /**
- * CoreUnit — renders one isometric building on the stadium grid.
+ * CoreUnit — renders one facility plot on the stadium grid.
  *
- * Visual behaviour:
- *   level 0  → flat ground diamond with "empty plot" marker (icon + dashed border)
- *   level 1+ → isometric block whose height scales with level, icon on top face
- *
- * Shading model (Gemini visual spec — PR 6):
- *   Top face:  base colour (100% light)   + optional topPattern overlay
- *   SW face:   base colour + rgba(0,0,0,0.30) overlay + optional swPattern overlay
- *   SE face:   base colour + rgba(0,0,0,0.55) overlay
- *   Highlight: 1px rgba(255,255,255,0.20) on top front edge (T→R)
- *              1px rgba(255,255,255,0.10) on top back edge  (T→L)
+ * Visual model (plot-based — see FacilityPlotContents for per-facility detail):
+ *   level 0  → ground diamond with grass fill (url(#pat-ground)) + faint dashed
+ *              white outline — blends into the background, shows plot boundary
+ *   level 1+ → solid ground base (def.colors.ground) + FacilityPlotContents
+ *              sub-objects accumulate per level within the plot
  *
  * Interaction:
- *   - hover: block highlights with a blue outline + internal white tint
- *   - click: fires onCoreUnitClick (wired to navigation in PR 4)
+ *   - hover: blue outline + subtle white tint over the full plot
+ *   - click: fires onClick (wired to facility detail in parent)
  */
 
 import {
   footprintVertices,
   footprintPath,
-  blockPaths,
-  topFaceCenter,
   groundCenter,
 } from './isometric-utils';
 import { CoreUnitDef } from './stadium-layout';
-import { constructionDuration } from '@calculating-glory/domain';
+import { FacilityPlotContents } from './FacilityPlotContents';
 
 interface CoreUnitProps {
   def:       CoreUnitDef;
@@ -42,37 +35,14 @@ interface CoreUnitProps {
 
 export function CoreUnit({ def, level, constructionWeeksRemaining, isHovered, isHighlighted, onClick, onHover }: CoreUnitProps) {
   const isBuilding = (constructionWeeksRemaining ?? 0) > 0;
-
-  // During construction interpolate block height between current and target level.
-  // Starts at old-level height, grows toward new-level height as weeks tick down.
-  const bhCurrent = def.blockHeights[Math.min(level, 5)];
-  const bhTarget  = def.blockHeights[Math.min(level + 1, 5)];
-  const bh = isBuilding
-    ? Math.round(
-        bhCurrent +
-        (bhTarget - bhCurrent) *
-          (1 - (constructionWeeksRemaining! / constructionDuration(level + 1)))
-      )
-    : bhCurrent;
-
   const fv   = footprintVertices(def.gc, def.gr, def.cols, def.rows);
   const gnd  = footprintPath(fv);
 
-  // Block paths (only meaningful when bh > 0)
-  const bp = bh > 0 ? blockPaths(fv, bh) : null;
+  // Icon placement: always ground centre for plot-based rendering
+  const iconPos = groundCenter(fv);
 
-  // Icon placement
-  const iconPos = bh > 0
-    ? topFaceCenter(fv, bh)
-    : groundCenter(fv);
-
-  // Top-face raised vertex coords — used for highlight lines
-  const txTop   = fv.top.x,   tyTop   = fv.top.y - bh;
-  const txRight = fv.right.x, tyRight = fv.right.y - bh;
-  const txLeft  = fv.left.x,  tyLeft  = fv.left.y - bh;
-
-  // Hit region for click / hover — full block silhouette if built, ground diamond otherwise
-  const hitPath = bp ? bp.hitRegion : gnd;
+  // Hit region = ground diamond always (entire plot is clickable)
+  const hitPath = gnd;
 
   return (
     <g
@@ -83,25 +53,16 @@ export function CoreUnit({ def, level, constructionWeeksRemaining, isHovered, is
       onMouseEnter={() => onHover(def.id)}
       onMouseLeave={() => onHover(null)}
     >
-      {/* ── Ground base (always drawn) ───────────────────────────── */}
+      {/* ── Ground base ─────────────────────────────────────────────
+           Level 0: grass fill blending into background, faint outline.
+           Level 1+: soil / plot fill as distinct base. */}
       <path
         d={gnd}
-        fill={def.colors.ground}
-        stroke="#0B1622"
-        strokeWidth="1"
+        fill={level === 0 ? 'url(#pat-ground)' : def.colors.ground}
+        stroke={level === 0 ? 'rgba(255,255,255,0.18)' : '#0B1622'}
+        strokeWidth={level === 0 ? '1' : '1'}
+        strokeDasharray={level === 0 ? '5 3' : undefined}
       />
-
-      {/* ── Dashed "empty plot" border at level 0 ────────────────── */}
-      {level === 0 && !isBuilding && (
-        <path
-          d={gnd}
-          fill="none"
-          stroke={isHovered ? '#448AFF' : '#546E7A'}
-          strokeWidth="1.5"
-          strokeDasharray="4 3"
-          style={{ pointerEvents: 'none' }}
-        />
-      )}
 
       {/* ── Construction outline (amber dashes while building) ────── */}
       {isBuilding && (
@@ -115,50 +76,20 @@ export function CoreUnit({ def, level, constructionWeeksRemaining, isHovered, is
         />
       )}
 
-      {/* ── Building block (level > 0) ───────────────────────────── */}
-      {bp && (
-        <>
-          {/* SW face — base colour + 30% dark overlay */}
-          <path d={bp.left} fill={def.colors.base} />
-          <path d={bp.left} fill="rgba(0,0,0,0.30)" style={{ pointerEvents: 'none' }} />
-          {def.colors.swPattern && (
-            <path d={bp.left} fill={def.colors.swPattern} style={{ pointerEvents: 'none' }} />
-          )}
-
-          {/* SE face — base colour + 55% dark overlay */}
-          <path d={bp.right} fill={def.colors.base} />
-          <path d={bp.right} fill="rgba(0,0,0,0.55)" style={{ pointerEvents: 'none' }} />
-
-          {/* Top face — base colour (+ optional pattern) */}
-          <path d={bp.top} fill={def.colors.base} />
-          {def.colors.topPattern && (
-            <path d={bp.top} fill={def.colors.topPattern} style={{ pointerEvents: 'none' }} />
-          )}
-
-          {/* 1px highlight on top front edge (north → east) — 20% white */}
-          <line
-            x1={txTop}   y1={tyTop}
-            x2={txRight} y2={tyRight}
-            stroke="rgba(255,255,255,0.20)"
-            strokeWidth={1}
-            style={{ pointerEvents: 'none' }}
-          />
-          {/* Subtler highlight on top back edge (north → west) — 10% white */}
-          <line
-            x1={txTop}  y1={tyTop}
-            x2={txLeft} y2={tyLeft}
-            stroke="rgba(255,255,255,0.10)"
-            strokeWidth={1}
-            style={{ pointerEvents: 'none' }}
-          />
-        </>
+      {/* ── Plot contents (sub-objects per facility / level) ─────── */}
+      {level > 0 && !isBuilding && (
+        <FacilityPlotContents
+          facilityType={def.facilityType}
+          fv={fv}
+          level={level}
+        />
       )}
 
-      {/* ── Hover tint (sits above block faces, below icon) ──────── */}
+      {/* ── Hover tint ───────────────────────────────────────────── */}
       {isHovered && (
         <path
           d={hitPath}
-          fill="rgba(255,255,255,0.10)"
+          fill="rgba(255,255,255,0.08)"
           stroke="#448AFF"
           strokeWidth="1.5"
           style={{ pointerEvents: 'none' }}
@@ -177,39 +108,52 @@ export function CoreUnit({ def, level, constructionWeeksRemaining, isHovered, is
         />
       )}
 
-      {/* ── Icon ─────────────────────────────────────────────────── */}
-      <text
-        x={iconPos.x}
-        y={iconPos.y + (bh > 0 ? 8 : 6)}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontSize={def.cols >= 4 ? 22 : 16}
-        style={{ pointerEvents: 'none', userSelect: 'none' }}
-      >
-        {isBuilding ? '🏗' : def.icon}
-      </text>
+      {/* ── Facility icon ────────────────────────────────────────────
+           Level 0: centred in the plot so the player knows what's coming.
+           Construction: always show the crane.
+           Level 1+: small icon in the bottom corner so it doesn't fight
+                     the sub-objects but still provides quick identification. */}
+      {isBuilding ? (
+        <text
+          x={iconPos.x}
+          y={iconPos.y + 6}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={22}
+          style={{ pointerEvents: 'none', userSelect: 'none' }}
+        >
+          🏗
+        </text>
+      ) : level === 0 ? (
+        <text
+          x={iconPos.x}
+          y={iconPos.y + 4}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={def.cols >= 4 ? 20 : 16}
+          opacity={0.55}
+          style={{ pointerEvents: 'none', userSelect: 'none' }}
+        >
+          {def.icon}
+        </text>
+      ) : (
+        <text
+          x={fv.bottom.x - 6}
+          y={fv.bottom.y - 10}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={12}
+          opacity={0.7}
+          style={{ pointerEvents: 'none', userSelect: 'none' }}
+        >
+          {def.icon}
+        </text>
+      )}
 
-      {/* ── Construction progress bar (replaces pips while building) */}
-      {isBuilding && bh > 0 && (() => {
-        const totalWeeks = constructionDuration(level + 1);
-        const weeksLeft  = constructionWeeksRemaining!;
-        const progress   = 1 - weeksLeft / totalWeeks; // 0 → 1
-        const barW = 28;
-        const barH = 4;
-        const bx   = iconPos.x - barW / 2;
-        const by   = iconPos.y - bh * 0.45 - 8;
-        return (
-          <g transform={`translate(${bx}, ${by})`} style={{ pointerEvents: 'none' }}>
-            <rect x={0} y={0} width={barW} height={barH} rx={2} fill="rgba(0,0,0,0.40)" />
-            <rect x={0} y={0} width={barW * progress} height={barH} rx={2} fill="#FFB400" />
-          </g>
-        );
-      })()}
-
-      {/* ── Level pip row (level > 0, small dots above icon) ─────── */}
-      {level > 0 && bh > 0 && !isBuilding && (
+      {/* ── Level pip row (level > 0) ─────────────────────────────── */}
+      {level > 0 && !isBuilding && (
         <g
-          transform={`translate(${iconPos.x - (level * 7) / 2}, ${iconPos.y - (bh > 0 ? bh * 0.45 : 0) - 6})`}
+          transform={`translate(${iconPos.x - (level * 7) / 2}, ${iconPos.y - 10})`}
           style={{ pointerEvents: 'none' }}
         >
           {Array.from({ length: level }).map((_, i) => (
