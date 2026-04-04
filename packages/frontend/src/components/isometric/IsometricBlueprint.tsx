@@ -28,8 +28,10 @@ interface IsometricBlueprintProps {
   onError:  (msg: string) => void;
   /** Called when the player clicks a core unit. */
   onCoreUnitClick?: (facilityType: FacilityType) => void;
-  /** When set, the named facility pulses with a highlight glow (intro tour). */
-  highlightFacility?: FacilityType | null;
+  /** Highlights the named unit with a pulsing amber ring (intro tour). */
+  highlightedId?: string | null;
+  /** When true, SVG fills its container (used as intro backdrop). */
+  fillParent?: boolean;
 }
 
 interface TooltipState {
@@ -49,7 +51,8 @@ export function IsometricBlueprint({
   dispatch: _dispatch,
   onError: _onError,
   onCoreUnitClick,
-  highlightFacility,
+  highlightedId,
+  fillParent,
 }: IsometricBlueprintProps) {
   const { club } = state;
 
@@ -138,10 +141,11 @@ export function IsometricBlueprint({
       onMouseLeave={handleMouseLeave}
     >
       <svg
-        width={SVG_W}
-        height={SVG_H}
+        width={fillParent ? '100%' : SVG_W}
+        height={fillParent ? '100%' : SVG_H}
         viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-        style={{ display: 'block', margin: '0 auto' }}
+        preserveAspectRatio={fillParent ? 'xMidYMid slice' : undefined}
+        style={{ display: 'block', margin: fillParent ? undefined : '0 auto' }}
       >
         {/* ── Pattern library ─────────────────────────────────────────── */}
         <defs>
@@ -207,7 +211,7 @@ export function IsometricBlueprint({
             level={levelOf[def.facilityType] ?? 0}
             constructionWeeksRemaining={constructionOf[def.facilityType]}
             isHovered={hoveredId === def.id}
-            isHighlighted={highlightFacility === def.facilityType}
+            isHighlighted={!!highlightedId && highlightedId === def.id}
             onClick={() => onCoreUnitClick?.(def.facilityType)}
             onHover={handleHover}
           />

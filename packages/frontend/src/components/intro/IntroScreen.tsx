@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GameState, GameCommand, FacilityType, formatMoney, toPence } from '@calculating-glory/domain';
+import { GameState, GameCommand, formatMoney, toPence } from '@calculating-glory/domain';
 import { CommandCentre } from '../command-centre/CommandCentre';
 import { IsometricBlueprint } from '../isometric/IsometricBlueprint';
 import { NpcMessage } from './NpcMessage';
@@ -17,43 +17,34 @@ interface Props {
 
 // ── Step → backdrop mode ────────────────────────────────────────────────────
 //
-// 'command' steps show the Command Centre backdrop with spotlight.
-// 'stadium' steps show the isometric stadium with a highlighted facility.
+// Steps 7–11 use the stadium backdrop (no CommandCentre spotlight needed).
+// Steps 0–6 and 12+ use CommandCentre with a section spotlight.
 
-type BackdropMode = 'command' | 'stadium';
+const STEP_SPOTLIGHT: Record<number, string | null> = {
+  0:  null,             // title screen
+  1:  null,             // Val intro
+  2:  'financial-bar',  // Val: financial overview
+  3:  'financial-bar',  // Val: keep green
+  4:  'squad',          // Kev: squad reality check
+  5:  'data-tiles',     // Marcus: revenue
+  6:  'hub-tiles',      // Dani: stadium needs work
+  // 7–11: stadium tour (CommandCentre hidden)
+  12: 'hub-tiles',      // Dani: closing — pick one or two
+  13: 'squad',          // Kev: squad numbers
+  14: null,             // Val: I always do
+  15: 'hub-tiles',      // Kev: transfer window
+  16: 'inbox',          // Marcus: sponsor deal
+  17: 'financial-bar',  // Val: attendance context
+};
 
-interface StepConfig {
-  backdrop: BackdropMode;
-  /** Command Centre section spotlight (only used when backdrop === 'command') */
-  spotlight?: string | null;
-  /** Facility to highlight (only used when backdrop === 'stadium') */
-  facility?: FacilityType | null;
-}
+// ── Stadium tour: which building to highlight per step ───────────────────────
 
-// Steps 0–5: CC backdrop (Val, Kev, Marcus intros)
-// Steps 6–11: Stadium backdrop (Dani's tour — 6 steps for 4 facilities + intro/close)
-// Steps 12+: CC backdrop (Kev transfers, Marcus sponsor deal, maths)
-
-const STEP_CONFIG: Record<number, StepConfig> = {
-  0:  { backdrop: 'command', spotlight: null },
-  1:  { backdrop: 'command', spotlight: null },
-  2:  { backdrop: 'command', spotlight: 'financial-bar' },
-  3:  { backdrop: 'command', spotlight: 'financial-bar' },
-  4:  { backdrop: 'command', spotlight: 'squad' },
-  5:  { backdrop: 'command', spotlight: 'data-tiles' },
-  // Dani's stadium tour
-  6:  { backdrop: 'stadium', facility: null },              // Dani intro — full stadium visible
-  7:  { backdrop: 'stadium', facility: 'TRAINING_GROUND' }, // Training Ground
-  8:  { backdrop: 'stadium', facility: 'MEDICAL_CENTER' },  // Medical Centre
-  9:  { backdrop: 'stadium', facility: 'SCOUT_NETWORK' },   // Scout Network
-  10: { backdrop: 'stadium', facility: 'STADIUM' },         // Stadium itself
-  11: { backdrop: 'stadium', facility: null },               // Trade-off closing
-  // Back to Command Centre
-  12: { backdrop: 'command', spotlight: 'squad' },           // Kev: squad details
-  13: { backdrop: 'command', spotlight: null },               // Val: "I always do"
-  14: { backdrop: 'command', spotlight: 'hub-tiles' },       // Kev: transfer window
-  15: { backdrop: 'command', spotlight: 'inbox' },           // Marcus: sponsor deal
-  16: { backdrop: 'command', spotlight: 'financial-bar' },   // Val: attendance context
+const TOUR_HIGHLIGHT: Record<number, string | null> = {
+  7:  null,          // transition "Let me walk you through a few"
+  8:  'training',    // Training Ground
+  9:  'medical',     // Medical Centre
+  10: 'commercial',  // Commercial Centre
+  11: 'pitch',       // The Pitch
 };
 
 // ── NPC avatars ───────────────────────────────────────────────────────────────
@@ -76,8 +67,6 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
   const [step, setStep] = useState(0);
   const [mathsCorrect, setMathsCorrect] = useState<boolean | null>(null);
   const [choice, setChoice] = useState<'A' | 'B' | null>(null);
-  // Drives the fade-in animation key — incremented each step so the panel
-  // re-animates even when the same NPC speaks twice in a row.
   const [animKey, setAnimKey] = useState(0);
 
   const clubName = state.club.name;
@@ -90,6 +79,10 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
     )
   );
 
+  // Steps 7–11 show the stadium blueprint as the backdrop
+  const inStadiumTour = step >= 7 && step <= 11;
+  const tourHighlightId = inStadiumTour ? (TOUR_HIGHLIGHT[step] ?? null) : null;
+
   function advance() {
     setStep(s => s + 1);
     setAnimKey(k => k + 1);
@@ -97,7 +90,7 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
 
   function handleMathsResult(correct: boolean) {
     setMathsCorrect(correct);
-    setStep(18);
+    setStep(19);
     setAnimKey(k => k + 1);
   }
 
@@ -110,7 +103,7 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
       choice: picked,
       amount,
     });
-    setStep(20);
+    setStep(21);
     setAnimKey(k => k + 1);
   }
 
@@ -119,14 +112,12 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
     onComplete();
   }
 
-  const config = STEP_CONFIG[step];
-  const backdrop = config?.backdrop ?? 'command';
-  const spotlight = backdrop === 'command' ? (config?.spotlight ?? null) : null;
-  const highlightFacility = backdrop === 'stadium' ? (config?.facility ?? null) : null;
+  const spotlight = inStadiumTour ? undefined : (STEP_SPOTLIGHT[step] ?? null);
 
   // ── Render the message for the current step ───────────────────────────────
   function renderCurrentMessage() {
     switch (step) {
+      // ── Steps 1–6: original CommandCentre intro ──────────────────────────
       case 1: return (
         <NpcMessage {...NPC.val} delay>
           Morning. I'm Val. I handle the money at {clubName}. I should warn you: the previous owner didn't leave us in great shape. Let me show you where we stand.
@@ -152,56 +143,61 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
           Hey! Marcus here. Commercial and fan engagement. I've got some ideas to get revenue moving but we'll need to invest a bit to make money. I'll bring you opportunities, you decide what's worth backing.
         </NpcMessage>
       );
-
-      // ── Dani's stadium tour (steps 6–11) ──────────────────────────────────
       case 6: return (
         <NpcMessage {...NPC.dani} delay>
           Dani. I run the day-to-day. Facilities, suppliers, logistics. Come with me, I'll show you what we're working with.
         </NpcMessage>
       );
+
+      // ── Steps 7–11: Dani stadium tour ────────────────────────────────────
       case 7: return (
         <NpcMessage {...NPC.dani} delay>
-          This is the Training Ground. Keeps your players improving week on week. Without it, they're just running around the car park. Worth the investment if you want results on the pitch.
+          Let me walk you through a few of the buildings. This is what your investment decisions actually look like.
         </NpcMessage>
       );
       case 8: return (
         <NpcMessage {...NPC.dani} delay>
-          Medical Centre. Reduces injuries and speeds up recovery. Lose your best striker for six weeks and you'll wish you'd spent the money here.
+          <strong>Training Ground.</strong> Better facilities, faster improvement. Most owners let it rot. It's usually the first thing I'd fix.
         </NpcMessage>
       );
       case 9: return (
         <NpcMessage {...NPC.dani} delay>
-          Scout Network. Right now we're basically guessing how good players are. Build this up and you'll see their true potential before you sign them. Saves you buying duds.
+          <strong>Medical Centre.</strong> Keeps players on the pitch instead of the treatment table. If your squad is thin, you can't afford injuries.
         </NpcMessage>
       );
       case 10: return (
         <NpcMessage {...NPC.dani} delay>
-          And this is the Stadium itself. Bigger stands, better atmosphere, more fans through the gate. More fans means more revenue. Simple maths, really.
+          <strong>Commercial Centre.</strong> Revenue from matchday and partnerships runs through here. A decent setup pays for itself quickly.
         </NpcMessage>
       );
       case 11: return (
         <NpcMessage {...NPC.dani} delay>
-          You won't be able to afford everything. Not even close. Pick one or two to start, see what difference they make, and go from there. The others will wait.
+          <strong>The Pitch.</strong> Everything else feeds off this. Attendance, reputation, sponsorship interest. Most expensive to upgrade. Biggest multiplier.
+        </NpcMessage>
+      );
+      case 12: return (
+        <NpcMessage {...NPC.dani} delay>
+          You won't be able to afford everything. Pick one or two to start. The others can wait.
         </NpcMessage>
       );
 
-      // ── Back to Command Centre (steps 12+) ────────────────────────────────
-      case 12: return (
+      // ── Steps 13–22: back to Command Centre ──────────────────────────────
+      case 13: return (
         <NpcMessage {...NPC.kev} delay>
           Right, let me give you the honest picture. We've got {state.club.squad.length} players on the books. Most of them are... okay. League Two level, just about. We've got capacity for 24, so there's room to bring people in. But every signing costs wages, and Val's going to have something to say about that.
         </NpcMessage>
       );
-      case 13: return (
+      case 14: return (
         <NpcMessage {...NPC.val} delay>
           I always do.
         </NpcMessage>
       );
-      case 14: return (
+      case 15: return (
         <NpcMessage {...NPC.kev} delay>
           The transfer window's open for the first few weeks of the season. We've also got a free agent pool, players without a club. Some bargains, some traps. I'll flag who I think is worth looking at, but the budget calls are yours.
         </NpcMessage>
       );
-      case 15: return (
+      case 16: return (
         <NpcMessage {...NPC.marcus} delay>
           Boss, before the season starts, I've got something that needs a decision. A local company has offered to sponsor our pre-season friendlies, three warm-up matches, their branding on the programme and pitch-side boards. They're offering two options:
           <ul className="mt-2 space-y-1 text-xs text-txt-muted">
@@ -210,24 +206,24 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
           </ul>
         </NpcMessage>
       );
-      case 16: return (
+      case 17: return (
         <NpcMessage {...NPC.val} delay>
           Our pre-season friendlies typically attract between 1,200 and 1,800 fans. Last year averaged about 1,500 across the three games.
         </NpcMessage>
       );
-      case 17: return (
+      case 18: return (
         <div className="animate-fade-in">
           <MathsChallenge onResult={handleMathsResult} />
         </div>
       );
-      case 18: return mathsCorrect !== null ? (
+      case 19: return mathsCorrect !== null ? (
         <NpcMessage {...NPC.val} delay>
           {mathsCorrect
             ? `That's right. £2,700 versus the flat £2,000. Option B looks better on paper, but attendance isn't guaranteed. Your call.`
             : `I make it £2,700, 1,500 fans, times 3 matches, times 60p each. So Option B is worth more if attendance holds up. But it's a gamble.`}
         </NpcMessage>
       ) : null;
-      case 19: return choice === null ? (
+      case 20: return choice === null ? (
         <div className="animate-fade-in space-y-2">
           <p className="text-xs text-txt-muted px-1">Which deal do you want?</p>
           <div className="grid grid-cols-2 gap-3">
@@ -254,12 +250,12 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
           </div>
         </div>
       ) : null;
-      case 20: return choice !== null ? (
+      case 21: return choice !== null ? (
         <NpcMessage {...NPC.marcus} delay>
           Done. I'll let them know. {choice === 'B' ? "Fingers crossed on the attendance." : "Nice and clean."}
         </NpcMessage>
       ) : null;
-      case 21: return choice !== null ? (
+      case 22: return choice !== null ? (
         <NpcMessage {...NPC.val} delay>
           First decision made. Let's see how it plays out. Now, let's get the squad ready for the season.
         </NpcMessage>
@@ -274,9 +270,19 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-bg-deep">
 
-      {/* ── Backdrop: Command Centre OR Stadium ──────────────────────────────── */}
-      <div className="absolute inset-0 pointer-events-none">
-        {backdrop === 'command' ? (
+      {/* ── Backdrop — CommandCentre or Stadium tour ──────────────────────── */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {inStadiumTour ? (
+          <div key="stadium-backdrop" className="w-full h-full animate-fade-in">
+            <IsometricBlueprint
+              state={state}
+              dispatch={() => ({})}
+              onError={() => {}}
+              highlightedId={tourHighlightId}
+              fillParent
+            />
+          </div>
+        ) : (
           <div className="flex flex-col flex-1 h-full overflow-hidden">
             <CommandCentre
               state={state}
@@ -287,22 +293,24 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
               introSpotlight={spotlight}
             />
           </div>
-        ) : (
-          <div className="flex flex-col h-full items-center justify-center">
-            <IsometricBlueprint
-              state={state}
-              dispatch={() => ({})}
-              onError={() => {}}
-              highlightFacility={highlightFacility}
-            />
-          </div>
         )}
       </div>
 
-      {/* ── Dark gradient scrim — heavier at bottom where the panel sits ─────── */}
-      <div className="absolute inset-0 bg-gradient-to-t from-bg-deep via-bg-deep/60 to-transparent pointer-events-none" />
+      {/* ── Dark gradient scrim ───────────────────────────────────────────── */}
+      {/* During stadium tour: light centre so buildings show, dark band at very
+          bottom to contrast the message panel. During CommandCentre steps: standard. */}
+      {inStadiumTour ? (
+        <>
+          {/* Subtle vignette — darkens edges without covering centre */}
+          <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-transparent via-transparent to-bg-deep/40" />
+          {/* Bottom band — gives the message panel a readable backdrop */}
+          <div className="absolute inset-x-0 bottom-0 h-56 pointer-events-none bg-gradient-to-t from-bg-deep via-bg-deep/90 to-transparent" />
+        </>
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-t from-bg-deep via-bg-deep/60 to-transparent pointer-events-none" />
+      )}
 
-      {/* ── Beat 1, Step 0: Arrival title ───────────────────────────────────── */}
+      {/* ── Beat 1, Step 0: Arrival title ───────────────────────────────── */}
       {step === 0 && (
         <div
           className="absolute inset-0 flex flex-col items-center justify-center text-center px-8 cursor-pointer z-20"
@@ -321,10 +329,9 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
         </div>
       )}
 
-      {/* ── Steps 1+: Single-message panel anchored to the bottom ───────────── */}
+      {/* ── Steps 1+: Single-message panel anchored to the bottom ───────── */}
       {step >= 1 && (
         <div className="absolute inset-x-0 bottom-0 flex flex-col z-20">
-          {/* Message card — shows only the current step */}
           {currentMessage && (
             <div
               key={animKey}
@@ -334,21 +341,19 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
             </div>
           )}
 
-          {/* Continue / finish button */}
           {showContinue && (
             <div className="px-4 pb-6 pt-3 max-w-lg mx-auto w-full">
               <button
-                onClick={step >= 21 ? handleComplete : advance}
+                onClick={step >= 22 ? handleComplete : advance}
                 className="w-full bg-data-blue hover:bg-data-blue/90 active:scale-[0.99]
                            text-white font-semibold text-sm rounded-card py-3 px-6
                            transition-all duration-150 animate-fade-in"
               >
-                {step >= 21 ? "Let's go →" : 'Continue →'}
+                {step >= 22 ? "Let's go →" : 'Continue →'}
               </button>
             </div>
           )}
 
-          {/* Extra bottom padding when no button (e.g. maths challenge / choice) */}
           {!showContinue && <div className="pb-6" />}
         </div>
       )}
@@ -364,9 +369,9 @@ function shouldShowContinue(
   choice: 'A' | 'B' | null,
 ): boolean {
   if (step === 0) return false;           // handled by full-screen click
-  if (step === 17) return false;          // maths challenge handles its own flow
-  if (step === 18 && mathsCorrect === null) return false; // waiting for maths
-  if (step === 19 && choice === null) return false;       // waiting for choice
-  if (step === 20 && choice === null) return false;       // waiting for choice
+  if (step === 18) return false;          // maths challenge handles its own flow
+  if (step === 19 && mathsCorrect === null) return false;
+  if (step === 20 && choice === null) return false;
+  if (step === 21 && choice === null) return false;
   return true;
 }
