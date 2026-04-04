@@ -28,16 +28,22 @@ import {
   KEV_STREAK_LOSS_5,
   KEV_PROMOTION_ZONE,
   KEV_RELEGATION_ZONE,
-  MARCUS_SQUAD_STRONG,
-  MARCUS_SQUAD_OK,
-  MARCUS_SQUAD_THIN,
+  KEV_BIG_WIN,
+  MARCUS_WEEKLY_POSITIVE,
+  MARCUS_WEEKLY_NEUTRAL,
+  MARCUS_WEEKLY_TOUGH,
   MARCUS_MARKET_BUSY,
   MARCUS_MARKET_QUIET,
   MARCUS_COMMERCIAL_OBS,
+  MARCUS_POST_MATCH_WIN,
+  MARCUS_POST_MATCH_DRAW,
+  MARCUS_POST_MATCH_LOSS,
+  MARCUS_BIG_WIN,
   DANI_PRESS_POSITIVE,
   DANI_PRESS_NEUTRAL,
   DANI_PRESS_NEGATIVE,
   DANI_RESULT_WIN,
+  DANI_RESULT_DRAW,
   DANI_RESULT_LOSS,
 } from '../data/npc-templates';
 
@@ -310,13 +316,13 @@ export function generateNpcMessages(
     });
   }
 
-  // ── Marcus Webb weekly squad/market report ─────────────────────────────
+  // ── Marcus Webb weekly commercial update ──────────────────────────────
+  // Pool selected by league position (commercial appetite tracks results).
 
   let marcusPool: readonly string[];
-  const squadSize = state.club.squad.length;
-  if (squadSize >= 17) marcusPool = MARCUS_SQUAD_STRONG;
-  else if (squadSize >= 14) marcusPool = MARCUS_SQUAD_OK;
-  else marcusPool = MARCUS_SQUAD_THIN;
+  if (playerPosition > 0 && playerPosition <= 8) marcusPool = MARCUS_WEEKLY_POSITIVE;
+  else if (playerPosition <= 18)                 marcusPool = MARCUS_WEEKLY_NEUTRAL;
+  else                                           marcusPool = MARCUS_WEEKLY_TOUGH;
 
   messages.push({
     id: `MARCUS-WEEKLY_SUMMARY-w${week}-s${season}`,
@@ -349,8 +355,64 @@ export function generateNpcMessages(
     });
   }
 
-  // ── Marcus commercial observation (~every 6 weeks) ─────────────────────
-  // Marcus steps outside his scouting brief to share a commercial observation.
+  // ── Marcus post-match reaction ─────────────────────────────────────────
+  // Marcus reacts to results from the commercial/fan-energy angle.
+
+  if (thisWeekMatch) {
+    const isMHome = thisWeekMatch.homeTeamId === state.club.id;
+    const mPlayerG = isMHome ? thisWeekMatch.homeGoals : thisWeekMatch.awayGoals;
+    const mOppG    = isMHome ? thisWeekMatch.awayGoals : thisWeekMatch.homeGoals;
+    const mOppId   = isMHome ? thisWeekMatch.awayTeamId : thisWeekMatch.homeTeamId;
+    const mOppName = state.league.entries.find(e => e.clubId === mOppId)?.clubName ?? 'the opposition';
+    const mFill: Record<string, string> = {
+      ...fillVars,
+      OPPONENT: mOppName,
+      SCORE: mPlayerG > mOppG
+        ? `${mPlayerG}–${mOppG}`
+        : mPlayerG < mOppG
+          ? `${mOppG}–${mPlayerG}`
+          : `${mPlayerG}–${mOppG}`,
+    };
+
+    // Big win (3+ goal margin): special emphatic pool for both Kev and Marcus.
+    const margin = mPlayerG - mOppG;
+    if (margin >= 3) {
+      messages.push({
+        id: `KEV-BIG_WIN-w${week}-s${season}`,
+        sender: 'KEV',
+        text: fillPlaceholders(pick(KEV_BIG_WIN, rng), mFill),
+        week,
+        season,
+        category: 'POST_MATCH',
+      });
+      messages.push({
+        id: `MARCUS-BIG_WIN-w${week}-s${season}`,
+        sender: 'MARCUS',
+        text: fillPlaceholders(pick(MARCUS_BIG_WIN, rng), mFill),
+        week,
+        season,
+        category: 'POST_MATCH',
+      });
+    } else {
+      // Normal result: Marcus reacts win/draw/loss
+      let mPool: readonly string[];
+      if (mPlayerG > mOppG)       mPool = MARCUS_POST_MATCH_WIN;
+      else if (mPlayerG === mOppG) mPool = MARCUS_POST_MATCH_DRAW;
+      else                         mPool = MARCUS_POST_MATCH_LOSS;
+
+      messages.push({
+        id: `MARCUS-POST_MATCH-w${week}-s${season}`,
+        sender: 'MARCUS',
+        text: fillPlaceholders(pick(mPool, rng), mFill),
+        week,
+        season,
+        category: 'POST_MATCH',
+      });
+    }
+  }
+
+  // ── Marcus deep-dive commercial observation (~every 6 weeks) ──────────
+  // A longer-form commercial observation beyond the weekly summary.
   // Seeded to week 2, 8, 14, 20, 26, 32, 38, 44 (week % 6 === 2).
 
   if (week % 6 === 2) {
@@ -387,25 +449,19 @@ export function generateNpcMessages(
     const playerG = isHomeD ? thisWeekMatch.homeGoals : thisWeekMatch.awayGoals;
     const opponentG = isHomeD ? thisWeekMatch.awayGoals : thisWeekMatch.homeGoals;
 
-    if (playerG > opponentG) {
-      messages.push({
-        id: `DANI-POST_MATCH-w${week}-s${season}`,
-        sender: 'DANI',
-        text: pick(DANI_RESULT_WIN, rng),
-        week,
-        season,
-        category: 'POST_MATCH',
-      });
-    } else if (playerG < opponentG) {
-      messages.push({
-        id: `DANI-POST_MATCH-w${week}-s${season}`,
-        sender: 'DANI',
-        text: pick(DANI_RESULT_LOSS, rng),
-        week,
-        season,
-        category: 'POST_MATCH',
-      });
-    }
+    let daniResultPool: readonly string[];
+    if (playerG > opponentG)       daniResultPool = DANI_RESULT_WIN;
+    else if (playerG < opponentG)  daniResultPool = DANI_RESULT_LOSS;
+    else                           daniResultPool = DANI_RESULT_DRAW;
+
+    messages.push({
+      id: `DANI-POST_MATCH-w${week}-s${season}`,
+      sender: 'DANI',
+      text: pick(daniResultPool, rng),
+      week,
+      season,
+      category: 'POST_MATCH',
+    });
   }
 
   return messages;
