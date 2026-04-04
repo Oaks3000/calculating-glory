@@ -149,6 +149,8 @@ export const KEV_FORM_GOOD = [
   'Brilliant run of form. The training ground investment is paying off.',
   'The lads are believing right now. Keep giving [CLUB] reasons to.',
   'Form\'s exceptional. This is a [CLUB] squad that knows how to win.',
+  'Marcus is already talking about a new merchandise line. That\'s how you know it\'s going well.',
+  'Even Val seems less worried than usual. Three wins does that.',
 ];
 
 /** Kev: poor run of form (loss streak 3+) */
@@ -158,39 +160,90 @@ export const KEV_FORM_POOR = [
   'Poor form. Three straight defeats. Something has to change at [CLUB].',
   'We\'re in a bad run. The table doesn\'t lie. We need to respond this week.',
   'Three losses. The dressing room is quiet. We need a win — not a draw, a win.',
+  'Val\'s been looking at me differently this week. The kind of look that means "sort it out". Fair enough.',
 ];
 
-// ── Marcus Webb — Chief Scout ──────────────────────────────────────────────
+// ── Marcus Webb — Commercial Director ─────────────────────────────────────
 //
-// Placeholders:
-//   [SQUAD]   — current squad count
-//   [AGENTS]  — free agents currently available
+// Voice: warm, football-obsessed, occasionally over-enthusiastic.
+// He genuinely loves the game and sees the commercial side as an extension of it.
+// Placeholders: [POSITION], [INCOME], [BUDGET], [SQUAD], [AGENTS], [CLUB], [STADIUM]
 
-/** Squad depth: strong (≥17 players). Marcus is measured, competent. */
-export const MARCUS_SQUAD_STRONG = [
-  '[CLUB] squad at [SQUAD]. Good depth — we can handle rotation without worrying about injuries.',
-  '[SQUAD] registered. Comfortable with the numbers. [AGENTS] agents on the market if you want to upgrade anyone.',
-  'Scouting summary: [SQUAD] in the building at [CLUB], [AGENTS] free agents available. Good position to be in.',
-  '[SQUAD] players — solid. Keep an eye on the free agent list though; it moves quickly.',
-  'Squad depth looking healthy at [SQUAD]. The market has [AGENTS] options if anything comes up.',
+/** Weekly commercial update: good table position (top 8). Marcus is energised. */
+export const MARCUS_WEEKLY_POSITIVE = [
+  '[POSITION]th in the table and I\'m already getting calls. Sponsors, local businesses, a couple of regional media outlets. Winning is the best marketing [CLUB] has.',
+  'Good week commercially. When the results are coming in, people want to be associated with [CLUB]. That\'s how you turn a football club into a brand.',
+  '[CLUB] at [POSITION]th — I\'ve been saying all season that strong form drives commercial revenue. The numbers are proving it. Keep it going.',
+  'Honestly? This is my favourite part of the job. [POSITION]th, fans are buzzing, [STADIUM] has an atmosphere. That energy turns into income.',
+  'Position [POSITION]. Matchday feel at [STADIUM] is electric right now. Even Val cracked a smile at the gate receipts this week.',
+  'The lads are performing and the commercial side is riding the wave. [POSITION]th is exactly where you want to be for sponsor conversations.',
+  'I love it when football and business align. [CLUB] at [POSITION]th — every partner we\'ve got is happy. New conversations are starting too.',
+  '[POSITION]th. I\'ll take it. [STADIUM] looks brilliant when it\'s rocking and right now it is. That\'s worth more than I can put in a spreadsheet.',
 ];
 
-/** Squad depth: adequate (14–16 players). Marcus is watchful. */
-export const MARCUS_SQUAD_OK = [
-  'We\'re at [SQUAD]. Workable for now, but one bad week of injuries could stretch us. [AGENTS] agents available.',
-  '[SQUAD] registered — fine, not comfortable. Market shows [AGENTS] options if we need cover.',
-  'Squad at [SQUAD]. I\'d ideally want 17+, but it\'s manageable. [AGENTS] free agents on file.',
-  'Standard week — [SQUAD] players, [AGENTS] free agents. No urgency, but worth a scan.',
-  '[SQUAD] in the squad. It\'s enough, as long as nothing goes wrong. [AGENTS] agents available if needed.',
+/** Weekly commercial update: mid-table (9–18). Marcus is steady, looking for angles. */
+export const MARCUS_WEEKLY_NEUTRAL = [
+  'Mid-table week. Nothing to shout about commercially, but the club\'s in the conversation. [CLUB] at [POSITION]th — that\'s a workable story.',
+  'Solid if unspectacular from a commercial standpoint. [POSITION]th doesn\'t generate headlines, but it keeps the doors open.',
+  'I keep looking for the upside angle at [POSITION]th. It\'s there — consistency, reliability, a club that turns up every week. Some sponsors value that.',
+  'Nothing dramatic this week. [CLUB] at [POSITION]th, which means I\'m having normal conversations rather than exciting ones. I\'ll take it over the alternative.',
+  '[POSITION]th. We\'re fine. Commercial\'s ticking along. I want more, but I know how to build from here.',
+  'Some weeks are about maintaining. [CLUB] at [POSITION]th — we\'re in the picture, we\'re not making anyone nervous. That\'s the position to grow from.',
+  'Honestly, mid-table is where you build the commercial infrastructure. [POSITION]th now, but the relationships I\'m forming matter for when [CLUB] kicks on.',
 ];
 
-/** Squad depth: thin (<14 players). Marcus is pointed. */
-export const MARCUS_SQUAD_THIN = [
-  '[CLUB] have [SQUAD] players. That\'s the kind of squad where one hamstring pull becomes a selection problem. [AGENTS] agents are available now.',
-  'Flagging again: [SQUAD] is too thin for a full season. [AGENTS] free agents out there — some decent options.',
-  'Squad at [SQUAD]. I know Kev\'s said it too, but I\'ll add: the free agent list has [AGENTS] names on it right now.',
-  '[SQUAD]. [CLUB] are a small injury away from real trouble. [AGENTS] agents available — some of them won\'t be there next week.',
-  'I keep saying [SQUAD] isn\'t enough. [AGENTS] free agents available. Some of them are better than you\'d expect.',
+/** Weekly commercial update: lower half (19+). Marcus is concerned but finding silver linings. */
+export const MARCUS_WEEKLY_TOUGH = [
+  'Look, I\'m not going to lie — [POSITION]th makes commercial conversations harder. But I\'ve worked with clubs in worse positions. The story isn\'t over.',
+  '[POSITION]th. Sponsors get nervous around these numbers. I\'m managing expectations and reminding people that [CLUB]\'s trajectory matters as much as the current position.',
+  'Tough week commercially. [POSITION]th generates questions from partners. The answer I\'m giving them is: this squad is better than the table says.',
+  'I\'m still believing in [CLUB]. [POSITION]th isn\'t where we want to be, but the commercial infrastructure we\'re building doesn\'t disappear when results go wrong.',
+  '[POSITION]th. Harder to sell, not impossible. The fans who stay when it\'s rough are the ones who shout loudest when it turns around.',
+  'Some of my harder conversations this week. [POSITION]th puts sponsors on alert. I need results to back up what I\'m telling them about [CLUB]\'s direction.',
+];
+
+/** Marcus: post-match win reaction. Excited about atmosphere, fan energy, commercial pull. */
+export const MARCUS_POST_MATCH_WIN = [
+  'Brilliant result. I know that\'s Kev\'s territory, but a [SCORE] win at [STADIUM] — that\'s the kind of afternoon that brings people back next week.',
+  '[SCORE] against [OPPONENT]. The place was alive today. This is exactly what I mean when I say results are the best marketing [CLUB] has.',
+  'That win against [OPPONENT] — [SCORE] — I could hear it from the office. The commercial opportunity in a ground that sounds like that is real.',
+  '[SCORE]. [OPPONENT] didn\'t know what hit them. Fan mood leaving [STADIUM] today was the best I\'ve seen it. That\'s going to show in next week\'s numbers.',
+  'Three points and the energy in the stands was something else. [SCORE] vs [OPPONENT]. I\'ll be honest — I got a bit swept up in it. Good day.',
+  '[SCORE] against [OPPONENT]. Three points and a matchday atmosphere we can build on. This is what I mean when I say wins compound commercially.',
+];
+
+/** Marcus: post-match draw reaction. Finds the positive angle, slightly deflated. */
+export const MARCUS_POST_MATCH_DRAW = [
+  'A point. [SCORE] against [OPPONENT]. Not the buzz I\'d hoped for but the fans left with something. That matters commercially — they\'ll be back.',
+  '[SCORE] — draw with [OPPONENT]. Not every game ends with fireworks. The commercial side can work with consistency; it\'s easier than losing.',
+  'Neither side took it today. [SCORE]. I keep an eye on fan sentiment after draws and it\'s... flat but not angry. I\'ll take that.',
+  '[SCORE] vs [OPPONENT]. A draw\'s a draw — the fans know we didn\'t lose and that counts for something. Not ideal, but manageable.',
+  'I wanted more, honestly. [SCORE] against [OPPONENT]. But a point in the bag and the fans decent about it — worse days exist.',
+];
+
+/** Marcus: post-match loss reaction. Worried about sentiment, thinks long-term. */
+export const MARCUS_POST_MATCH_LOSS = [
+  'Tough one. [SCORE] against [OPPONENT]. I\'m monitoring fan channels — the mood\'s low but not panicked. We need a result next week to hold the narrative.',
+  '[SCORE] vs [OPPONENT]. I won\'t dress it up — losses make my job harder. But I\'ve seen clubs come back from worse runs. The fanbase at [CLUB] knows that.',
+  'Not what we needed. [SCORE] against [OPPONENT]. I\'m keeping commercial conversations warm, but I need the team to give me something to work with.',
+  '[SCORE]. [OPPONENT] were better today. The commercial angle takes a hit after a result like that — partners notice. Kev needs to sort the next one.',
+  'I hate losing. Most people think the commercial side doesn\'t care as long as the money\'s there. It\'s not true — I care about the result. [SCORE] hurts.',
+];
+
+/** Marcus and Kev: big win (3+ goal margin). Special celebratory pool. */
+export const MARCUS_BIG_WIN = [
+  'That was a statement. [SCORE] against [OPPONENT] — when [CLUB] plays like that, every commercial conversation I have this week gets easier. Incredible.',
+  '[SCORE] vs [OPPONENT]! I know I\'m supposed to stay professional but come on. That\'s the kind of result that gets [CLUB] noticed beyond this division.',
+  'I was in the stands for that. [SCORE] against [OPPONENT]. The noise at [STADIUM] was something I\'ll remember. Commercially, that\'s a goldmine — that\'s the story we sell.',
+  '[SCORE]! Against [OPPONENT]! I texted three different sponsors after the final whistle. They were already watching. This is what I\'ve been building towards at [CLUB].',
+];
+
+export const KEV_BIG_WIN = [
+  'That\'s how [CLUB] should play. [SCORE] against [OPPONENT] — complete performance. The lads were outstanding.',
+  '[SCORE]. We were dominant from the first whistle. [OPPONENT] didn\'t have an answer and we didn\'t let them find one. Brilliant day.',
+  'Don\'t change anything. [SCORE] vs [OPPONENT] — the lads were electric. This is what the squad is capable of when everything clicks.',
+  '[SCORE] against [OPPONENT]. I keep my emotions in check but I\'ll admit — that one felt good. That\'s what I wanted from this [CLUB] squad.',
+  'Statement win. [SCORE]. [OPPONENT] are a decent side and we made them look very ordinary today. I\'m proud of the lads.',
 ];
 
 /** Standalone: market busy (≥20 free agents). Marcus flags the opportunity. */
@@ -246,6 +299,16 @@ export const DANI_RESULT_WIN = [
   'That result helps the narrative. Easier conversations all round when there\'s a win to point to.',
   'Win keeps the story clean this week. Nothing for me to manage.',
   'Good result for optics too. Board picks up on these — it all feeds into the confidence number.',
+  'Marcus is already drafting something for the socials. I\'m choosing not to get involved. Win was good though.',
+  'The board noticed. They always notice wins more than they notice the steady weeks. That\'s just how it is.',
+];
+
+/** Dani: draw result reaction (post-draw). Dry, measured. */
+export const DANI_RESULT_DRAW = [
+  'A point. Not the win I wanted for the press angle, but it\'s not a loss. Easier to manage than yesterday.',
+  'Draw. Board won\'t panic. Press can work with "unbeaten". I\'ll take it.',
+  'Shared the spoils. Nothing inflammatory to manage this week. That\'s fine by me.',
+  'A draw is the most neutral outcome in football. From a comms standpoint, that\'s almost restful.',
 ];
 
 /** Dani: negative result reaction (post-loss). Fires alongside weekly report. */
@@ -253,6 +316,8 @@ export const DANI_RESULT_LOSS = [
   'I\'ll manage the press angle. But there\'s only so much spin can do — results are what moves people.',
   'More to navigate after that result. Nothing unmanageable, but I\'d rather have better news.',
   'Loss means the questions sharpen. I\'ll handle the comms side — you focus on the next result.',
+  'Marcus has already phoned three times with "angles". I\'ve told him to give it 24 hours.',
+  'Board\'s quiet for now. They won\'t stay quiet if this becomes a run. Talk to Kev.',
 ];
 
 // ── Kev: extended streaks ──────────────────────────────────────────────────
