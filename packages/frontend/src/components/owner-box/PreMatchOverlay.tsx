@@ -3,6 +3,7 @@ import {
   generateSeasonFixtures,
   getWeekFixtures,
   LeagueTable,
+  avgSquadMorale,
 } from '@calculating-glory/domain';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -39,6 +40,58 @@ function FormRow({ form, label }: { form: ('W' | 'D' | 'L')[]; label: string }) 
       </div>
     </div>
   );
+}
+
+// ── NPC pre-match teasers ─────────────────────────────────────────────────────
+
+// Seeded pick: deterministic per week+season so the same game always shows the same line.
+function seededPick<T>(arr: T[], seed: number): T {
+  return arr[Math.abs(seed) % arr.length];
+}
+
+const KEV_TEASERS = [
+  "Right. Phones on silent, eyes on me.",
+  "I've seen worse squads hold on for a point. We're fine.",
+  "I'm not saying it's easy. I'm saying we've done harder.",
+  "Big one today. No reason to panic. Some reason to panic.",
+  "They're decent. We're decent. May the best decent team win.",
+  "I've got a feeling about this one. Could be heartburn.",
+  "Whatever happens today, I'll be here. That's both a promise and a threat.",
+  "Win this and the rest of the week feels different. Trust me.",
+];
+
+const MARCUS_TEASERS = [
+  "You know, match days are great for concession revenue. Focus on the football though.",
+  "I did a quick analysis. Our expected points from this fixture are... well, let's just play.",
+  "Three points here and I can start planning that expansion proposal. No pressure.",
+  "Win or lose, the merchandise stall does better on match day. But let's win.",
+  "I ran the numbers. A win here lifts our commercial projections meaningfully. Meaningfully.",
+  "The board's watching. Not in a scary way. Well. A little scary.",
+];
+
+function getNpcTeaser(
+  week: number,
+  season: number,
+  isSixPointer: boolean,
+  myForm: ('W' | 'D' | 'L')[],
+): { name: string; colour: string; line: string } {
+  const seed = week * 31 + season * 7;
+  // Kev for big/emotional moments; Marcus otherwise
+  const recentLosses = myForm.slice(-3).filter(r => r === 'L').length;
+  const useKev = isSixPointer || recentLosses >= 2 || week % 2 === 0;
+  if (useKev) {
+    return { name: 'Kev Mulligan', colour: 'text-data-blue', line: seededPick(KEV_TEASERS, seed) };
+  }
+  return { name: 'Marcus Webb', colour: 'text-pitch-green', line: seededPick(MARCUS_TEASERS, seed) };
+}
+
+// ── Morale indicator ──────────────────────────────────────────────────────────
+
+function getMoraleLabel(morale: number): { label: string; colour: string } {
+  if (morale >= 75) return { label: 'High morale', colour: 'text-pitch-green' };
+  if (morale >= 50) return { label: 'Steady', colour: 'text-txt-muted' };
+  if (morale >= 30) return { label: 'Unsettled', colour: 'text-warn-amber' };
+  return { label: 'Low spirits', colour: 'text-alert-red' };
 }
 
 // ── Season milestone banner ────────────────────────────────────────────────────
@@ -103,6 +156,11 @@ export function PreMatchOverlay({ state, onKickOff, onCancel }: PreMatchOverlayP
     ? getSixPointerLabel(myPos, opponentPos, state.league)
     : null;
 
+  const morale = avgSquadMorale(state.club.squad);
+  const moraleLabel = getMoraleLabel(morale);
+  const formation = state.club.preferredFormation;
+  const teaser = getNpcTeaser(nextWeek, state.season, !!sixPointer, myForm);
+
   return (
     <div className="fixed inset-0 bg-bg-deep flex flex-col z-50">
 
@@ -148,6 +206,11 @@ export function PreMatchOverlay({ state, onKickOff, onCancel }: PreMatchOverlayP
             <p className="text-xs text-txt-muted">
               {isHome ? 'Home' : 'Away'}{myPos > 0 ? ` · ${myPos}${ordinal(myPos)}` : ''}
             </p>
+            {formation && (
+              <span className="inline-block mt-1 text-xs font-mono bg-bg-raised text-txt-muted px-2 py-0.5 rounded">
+                {formation}
+              </span>
+            )}
           </div>
 
           <div className="text-center shrink-0">
@@ -173,10 +236,24 @@ export function PreMatchOverlay({ state, onKickOff, onCancel }: PreMatchOverlayP
           <FormRow form={opponentForm} label={opponentName} />
         </div>
 
-        {/* Flavour */}
-        <p className="text-sm text-txt-muted text-center max-w-xs">
-          {getFlavorText(myForm, opponentForm, isHome, !!sixPointer)}
-        </p>
+        {/* Squad morale + flavour row */}
+        <div className="flex items-center justify-between w-full max-w-sm">
+          <p className="text-sm text-txt-muted max-w-[60%]">
+            {getFlavorText(myForm, opponentForm, isHome, !!sixPointer)}
+          </p>
+          <div className="text-right shrink-0">
+            <p className="text-xs text-txt-muted uppercase tracking-wider">Squad</p>
+            <p className={`text-xs font-semibold ${moraleLabel.colour}`}>{moraleLabel.label}</p>
+          </div>
+        </div>
+
+        {/* NPC teaser */}
+        <div className="w-full max-w-sm rounded-card bg-bg-raised border border-bg-raised px-4 py-3">
+          <p className={`text-xs font-bold uppercase tracking-wider mb-1 ${teaser.colour}`}>
+            {teaser.name}
+          </p>
+          <p className="text-sm text-txt-primary italic">"{teaser.line}"</p>
+        </div>
       </div>
 
       {/* ── Kick off button ────────────────────────────────────────────────── */}
