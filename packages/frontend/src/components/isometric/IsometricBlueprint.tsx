@@ -12,7 +12,7 @@
  * handled by the parent (StadiumView / App) in PR 4.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { GameState, GameCommand, FacilityType, FACILITY_CONFIG } from '@calculating-glory/domain';
 import { SVG_W, SVG_H } from './isometric-utils';
 import { STADIUM_LAYOUT_SORTED } from './stadium-layout';
@@ -62,6 +62,21 @@ export function IsometricBlueprint({
   // Ref so handleMouseMove can read the current hoveredId without stale closures.
   const hoveredIdRef = useRef<string | null>(null);
 
+  // Ref to the container div — used to bound the tooltip within the actual
+  // rendered width (which differs from SVG_W on small screens).
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerW, setContainerW] = useState(SVG_W);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(entries => {
+      setContainerW(entries[0]?.contentRect.width ?? SVG_W);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   // Fast lookups: facilityType → level / constructionWeeksRemaining
   const levelOf = Object.fromEntries(
     club.facilities.map(f => [f.type, f.level]),
@@ -103,7 +118,7 @@ export function IsometricBlueprint({
     const level = levelOf[def.facilityType] ?? 0;
     const meta  = FACILITY_CONFIG[def.facilityType];
 
-    const tipX = Math.min(tooltip.mouseX + 14, SVG_W - 190);
+    const tipX = Math.min(tooltip.mouseX + 14, containerW - 190);
     const tipY = Math.max(tooltip.mouseY - 64, 4);
 
     return (
@@ -136,16 +151,17 @@ export function IsometricBlueprint({
 
   return (
     <div
-      className="relative w-full overflow-x-auto select-none"
+      ref={containerRef}
+      className="relative w-full select-none"
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
     >
       <svg
-        width={fillParent ? '100%' : SVG_W}
-        height={fillParent ? '100%' : SVG_H}
+        width="100%"
+        height={fillParent ? '100%' : undefined}
         viewBox={`0 0 ${SVG_W} ${SVG_H}`}
-        preserveAspectRatio={fillParent ? 'xMidYMid slice' : undefined}
-        style={{ display: 'block', margin: fillParent ? undefined : '0 auto' }}
+        preserveAspectRatio={fillParent ? 'xMidYMid slice' : 'xMidYMid meet'}
+        style={{ display: 'block' }}
       >
         {/* ── Pattern library ─────────────────────────────────────────── */}
         <defs>
