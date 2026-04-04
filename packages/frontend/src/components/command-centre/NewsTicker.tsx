@@ -19,6 +19,7 @@ interface NewsTickerProps {
   freeAgents?: Player[];
   pendingEvents?: PendingClubEvent[];
   currentWeek?: number;
+  currentSeason?: number;
   clubRecords?: ClubRecords;
 }
 
@@ -207,6 +208,45 @@ function buildRumourHeadlines(freeAgents: Player[], clubName: string): string[] 
   });
 }
 
+// ── "On this day last season" ───────────────────────────────────────────────
+//
+// Surfaces a memorable result from the same week in the previous season.
+// Only fires from season 2 onwards; only on weeks where a match existed.
+
+function buildOnThisDayHeadlines(
+  events: GameEvent[],
+  clubId: string,
+  clubName: string,
+  nameMap: Map<string, string>,
+  currentWeek: number,
+  currentSeason: number,
+): string[] {
+  if (currentSeason < 2 || currentWeek < 1) return [];
+
+  const lastSeason = currentSeason - 1;
+  const matchIdPrefix = `S${lastSeason}-W${currentWeek}`;
+
+  const lastYearMatch = (events as MatchSimulatedEvent[]).find(e =>
+    (e as any).type === 'MATCH_SIMULATED' &&
+    (e.matchId ?? '').startsWith(matchIdPrefix) &&
+    (e.homeTeamId === clubId || e.awayTeamId === clubId),
+  );
+
+  if (!lastYearMatch) return [];
+
+  const isHome = lastYearMatch.homeTeamId === clubId;
+  const pGoals = isHome ? lastYearMatch.homeGoals : lastYearMatch.awayGoals;
+  const oGoals = isHome ? lastYearMatch.awayGoals : lastYearMatch.homeGoals;
+  const opponentId = isHome ? lastYearMatch.awayTeamId : lastYearMatch.homeTeamId;
+  const opponentName = nameMap.get(opponentId) ?? 'opponents';
+
+  const result: 'W' | 'D' | 'L' = pGoals > oGoals ? 'W' : pGoals < oGoals ? 'L' : 'D';
+  const resultWord = result === 'W' ? 'beat' : result === 'L' ? 'lost to' : 'drew with';
+  const emoji = result === 'W' ? '🏆' : result === 'L' ? '📉' : '🤝';
+
+  return [`${emoji} On this day last season — ${clubName} ${resultWord} ${opponentName} ${pGoals}–${oGoals}`];
+}
+
 function buildHeadlines(
   events: GameEvent[],
   clubId: string,
@@ -216,6 +256,7 @@ function buildHeadlines(
   squad: Player[],
   leagueEntries: LeagueTableEntry[],
   currentWeek?: number,
+  currentSeason?: number,
   clubRecords?: ClubRecords
 ): string[] {
   const headlines: string[] = [];
@@ -278,12 +319,15 @@ function buildHeadlines(
   }
 
   const arcHeadlines = buildSeasonArcHeadlines(events, clubId, clubName, leagueEntries, currentWeek, clubRecords as ClubRecords | undefined);
-  return [...headlines.slice(-30).reverse(), ...buildMoraleHeadlines(squad), ...milestoneHeadlines, ...arcHeadlines];
+  const onThisDayHeadlines = (currentWeek !== undefined && currentSeason !== undefined)
+    ? buildOnThisDayHeadlines(events, clubId, clubName, nameMap, currentWeek, currentSeason)
+    : [];
+  return [...headlines.slice(-30).reverse(), ...buildMoraleHeadlines(squad), ...milestoneHeadlines, ...arcHeadlines, ...onThisDayHeadlines];
 }
 
-export function NewsTicker({ events, clubId, clubName, stadiumName, leagueEntries, squad, freeAgents, pendingEvents, currentWeek, clubRecords }: NewsTickerProps) {
+export function NewsTicker({ events, clubId, clubName, stadiumName, leagueEntries, squad, freeAgents, pendingEvents, currentWeek, currentSeason, clubRecords }: NewsTickerProps) {
   const nameMap = new Map<string, string>(leagueEntries.map(e => [e.clubId, e.clubName]));
-  const eventHeadlines = buildHeadlines(events, clubId, clubName, stadiumName, nameMap, squad, leagueEntries, currentWeek, clubRecords);
+  const eventHeadlines = buildHeadlines(events, clubId, clubName, stadiumName, nameMap, squad, leagueEntries, currentWeek, currentSeason, clubRecords);
   const rumourHeadlines = freeAgents && freeAgents.length > 0 ? buildRumourHeadlines(freeAgents, clubName) : [];
   const poachHeadlines = pendingEvents ? buildPoachHeadlines(pendingEvents) : [];
   const headlines = [...poachHeadlines, ...eventHeadlines, ...rumourHeadlines];

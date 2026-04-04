@@ -146,7 +146,7 @@ export function buildState(events: GameEvent[]): GameState {
     npcStrengths: {},
     resolvedEventWeeks: {},
     mathsOutcomes: {},
-    clubRecords: { biggestWin: null, longestWinStreak: 0 },
+    clubRecords: { biggestWin: null, longestWinStreak: 0, topScorer: null },
     currentWinStreak: 0,
   };
 
@@ -364,6 +364,7 @@ function handleMatchSimulated(state: GameState, event: MatchSimulatedEvent): Gam
       : -1;
 
     clubRecords = {
+      ...clubRecords,
       biggestWin:
         clubResult === 'W' && margin > existingMargin
           ? { playerGoals, opponentGoals, opponentName, week: state.currentWeek + 1, season: state.season }
@@ -659,12 +660,30 @@ function handleSeasonEnded(state: GameState, event: any): GameState {
 
   const newDivision = stepDivision(state.division, promoted, relegated);
 
+  // ── Top scorer ───────────────────────────────────────────────────────────────
+  // Attribute season goals to the squad's best forward (or best attacker if no FWD).
+  // Goals = floor(teamGoalsFor × 0.28), minimum 2.
+  // This is a cosmetic figure derived from aggregate match data.
+  const clubEntry = state.league.entries.find(e => e.clubId === state.club.id);
+  const teamGoals = clubEntry?.goalsFor ?? 0;
+  let topScorer = state.clubRecords.topScorer;
+  if (state.club.squad.length > 0 && teamGoals > 0) {
+    const forwards = state.club.squad.filter(p => p.position === 'FWD');
+    const candidates = forwards.length > 0 ? forwards : state.club.squad;
+    const best = candidates.reduce((a, b) =>
+      b.attributes.attack > a.attributes.attack ? b : a
+    );
+    const goals = Math.max(2, Math.floor(teamGoals * 0.28));
+    topScorer = { name: best.name, goals, season: state.season };
+  }
+
   return {
     ...state,
     phase: 'SEASON_END',
     club: { ...state.club, reputation: newReputation },
     boardConfidence: newBoardConfidence,
     division: newDivision,
+    clubRecords: { ...state.clubRecords, topScorer },
   };
 }
 
