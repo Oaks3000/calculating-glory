@@ -543,8 +543,8 @@ export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode,
         <div ref={bottomRef} />
       </div>
 
-      {/* Footer */}
-      <div className="shrink-0 border-t border-bg-raised">
+      {/* Footer — pb-safe ensures the keyboard doesn't cover input on iOS notched devices */}
+      <div className="shrink-0 border-t border-bg-raised pb-safe">
         {awaitingAnswer ? (
           <NegotiationKeyboard
             value={keyboardValue}

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface SlideOverProps {
   isOpen: boolean;
@@ -15,6 +15,18 @@ export function SlideOver({ isOpen, onClose, title, children }: SlideOverProps) 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [isOpen, onClose]);
+
+  // Swipe-right-to-dismiss (touch only)
+  const touchStartX = useRef<number | null>(null);
+  function handleTouchStart(e: React.TouchEvent) {
+    touchStartX.current = e.touches[0].clientX;
+  }
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX.current === null) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (delta > 80) onClose();
+  }
 
   return (
     <>
@@ -34,13 +46,18 @@ export function SlideOver({ isOpen, onClose, title, children }: SlideOverProps) 
           'flex flex-col shadow-2xl transition-transform duration-300 ease-out',
           isOpen ? 'translate-x-0' : 'translate-x-full',
         ].join(' ')}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-bg-raised shrink-0">
           <h2 className="font-semibold text-txt-primary text-sm tracking-wide">{title}</h2>
+          {/* 44×44px tap target — padding fills the area, ✕ is centred visually */}
           <button
             onClick={onClose}
-            className="text-txt-muted hover:text-txt-primary text-lg leading-none transition-colors"
+            className="flex items-center justify-center w-11 h-11 -mr-2
+                       text-txt-muted hover:text-txt-primary text-lg transition-colors"
+            aria-label="Close"
           >
             ✕
           </button>

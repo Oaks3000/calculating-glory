@@ -143,8 +143,9 @@ export function InboxCard({
               >
                 <button
                   onClick={(e) => { e.stopPropagation(); onDismiss(item.idx); }}
-                  className="absolute top-1 right-1.5 text-txt-muted/30 hover:text-txt-muted
-                             opacity-0 group-hover:opacity-100 transition-opacity text-xs2 leading-none"
+                  className="absolute top-0 right-0 flex items-center justify-center w-10 h-10
+                             text-txt-muted/30 hover:text-txt-muted text-xs leading-none
+                             opacity-0 group-hover:opacity-100 transition-opacity"
                   aria-label="Dismiss"
                 >
                   ✕

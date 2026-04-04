@@ -25,7 +25,7 @@ function MoraleBar({ player }: { player: Player }) {
       </div>
       {unsettled && (
         <span
-          className="text-[9px] text-alert-red font-bold leading-none"
+          className="text-[11px] text-alert-red font-bold leading-none"
           title="Unsettled — performance debuffed"
         >
           !
@@ -106,8 +106,8 @@ export function SquadAuditTable({ state }: SquadAuditTableProps) {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs data-font">
+      <div className="overflow-x-auto scrollbar-thin" role="region" aria-label="Squad — scroll to see full stats">
+        <table className="w-full text-xs data-font min-w-[360px]">
           <thead>
             <tr className="text-txt-muted border-b border-bg-raised text-left">
               <th className="pb-1 pr-2">Name</th>
