@@ -276,6 +276,19 @@ export function SeasonEndScreen({ state, dispatch }: SeasonEndScreenProps) {
                   </div>
                 </div>
               )}
+              {state.clubRecords.topScorer && state.clubRecords.topScorer.season === season && (
+                <div className="flex items-center gap-3">
+                  <span className="text-warn-amber text-base shrink-0">🥅</span>
+                  <div>
+                    <p className="text-xs font-semibold text-txt-primary">
+                      Top Scorer: {state.clubRecords.topScorer.name}
+                    </p>
+                    <p className="text-[10px] text-txt-muted">
+                      {state.clubRecords.topScorer.goals} goals this season
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

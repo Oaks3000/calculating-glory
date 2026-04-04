@@ -269,11 +269,26 @@ export interface ClubBestWin {
   season: number;
 }
 
+export interface ClubTopScorer {
+  /** Player name */
+  name: string;
+  /** Goals scored */
+  goals: number;
+  /** Season it happened */
+  season: number;
+}
+
 export interface ClubRecords {
   /** Biggest ever win by goal margin (null until first win by 2+ goals). */
   biggestWin: ClubBestWin | null;
   /** Longest ever consecutive win streak. */
   longestWinStreak: number;
+  /**
+   * Top scorer of the most recently completed season.
+   * Computed from the best forward's share of team goals at SEASON_ENDED.
+   * Null until first season completes.
+   */
+  topScorer: ClubTopScorer | null;
 }
 
 /**
