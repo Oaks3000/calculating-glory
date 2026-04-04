@@ -104,6 +104,7 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
           freeAgents={state.freeAgentPool ?? []}
           pendingEvents={state.pendingEvents}
           currentWeek={state.currentWeek}
+          clubRecords={state.clubRecords}
         />
         {dim('news-ticker')}
       </div>

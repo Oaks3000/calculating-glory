@@ -4,6 +4,7 @@ import {
   getWeekFixtures,
   LeagueTable,
   avgSquadMorale,
+  MatchSimulatedEvent,
 } from '@calculating-glory/domain';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -161,6 +162,25 @@ export function PreMatchOverlay({ state, onKickOff, onCancel }: PreMatchOverlayP
   const formation = state.club.preferredFormation;
   const teaser = getNpcTeaser(nextWeek, state.season, !!sixPointer, myForm);
 
+  // Head-to-head: find the most recent previous match vs this opponent
+  const prevMatch = opponentId ? (() => {
+    const matches = (state.events as MatchSimulatedEvent[])
+      .filter(e =>
+        (e as any).type === 'MATCH_SIMULATED' &&
+        (e.homeTeamId === state.club.id || e.awayTeamId === state.club.id) &&
+        (e.homeTeamId === opponentId || e.awayTeamId === opponentId),
+      );
+    const prev = matches[matches.length - 1];
+    if (!prev) return null;
+    const isHome = prev.homeTeamId === state.club.id;
+    const pGoals = isHome ? prev.homeGoals : prev.awayGoals;
+    const oGoals = isHome ? prev.awayGoals : prev.homeGoals;
+    const result: 'W' | 'D' | 'L' = pGoals > oGoals ? 'W' : pGoals < oGoals ? 'L' : 'D';
+    const weekNum = parseInt((prev.matchId ?? '0').split('-W')[1] ?? '0');
+    const seasonNum = parseInt((prev.matchId ?? '0').replace('S', '').split('-')[0] ?? '1');
+    return { pGoals, oGoals, result, week: weekNum, season: seasonNum };
+  })() : null;
+
   return (
     <div className="fixed inset-0 bg-bg-deep flex flex-col z-50">
 
@@ -235,6 +255,22 @@ export function PreMatchOverlay({ state, onKickOff, onCancel }: PreMatchOverlayP
           <FormRow form={myForm} label={state.club.name} />
           <FormRow form={opponentForm} label={opponentName} />
         </div>
+
+        {/* Head-to-head history */}
+        {prevMatch && (
+          <div className="w-full max-w-sm text-center">
+            <p className="text-[10px] text-txt-muted uppercase tracking-wider mb-0.5">Last time you met</p>
+            <p className={`text-xs font-semibold ${
+              prevMatch.result === 'W' ? 'text-pitch-green' :
+              prevMatch.result === 'L' ? 'text-alert-red' : 'text-warn-amber'
+            }`}>
+              {prevMatch.result === 'W' ? 'You won' : prevMatch.result === 'L' ? 'You lost' : 'You drew'}{' '}
+              {prevMatch.pGoals}–{prevMatch.oGoals}
+              {prevMatch.season !== state.season && ` · S${prevMatch.season} W${prevMatch.week}`}
+              {prevMatch.season === state.season && ` · Week ${prevMatch.week}`}
+            </p>
+          </div>
+        )}
 
         {/* Squad morale + flavour row */}
         <div className="flex items-center justify-between w-full max-w-sm">

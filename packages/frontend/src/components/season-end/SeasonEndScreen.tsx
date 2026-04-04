@@ -1,4 +1,4 @@
-import { GameState, GameCommand, formatMoney, Division, computeOverallRating, MatchSimulatedEvent } from '@calculating-glory/domain';
+import { GameState, GameCommand, formatMoney, Division, computeOverallRating, MatchSimulatedEvent, ClubRecords } from '@calculating-glory/domain';
 
 // ─── Season highlights helpers ────────────────────────────────────────────────
 
@@ -207,30 +207,54 @@ export function SeasonEndScreen({ state, dispatch }: SeasonEndScreenProps) {
           <div className="bg-bg-raised rounded-card border border-white/5 p-4">
             <div className="text-xs font-bold text-txt-muted uppercase tracking-widest mb-3">Season Highlights</div>
             <div className="flex flex-col gap-3">
-              {highlights.biggestWin && (
-                <div className="flex items-center gap-3">
-                  <span className="text-pitch-green text-base shrink-0">🏆</span>
-                  <div>
-                    <p className="text-xs font-semibold text-txt-primary">
-                      Biggest win: {highlights.biggestWin.playerGoals}–{highlights.biggestWin.opponentGoals} vs {highlights.biggestWin.opponentName}
-                    </p>
-                    <p className="text-[10px] text-txt-muted">Week {highlights.biggestWin.week}</p>
+              {highlights.biggestWin && (() => {
+                const rec = state.clubRecords;
+                const isAllTimeRecord = rec.biggestWin &&
+                  highlights.biggestWin.playerGoals === rec.biggestWin.playerGoals &&
+                  highlights.biggestWin.opponentGoals === rec.biggestWin.opponentGoals &&
+                  highlights.biggestWin.opponentName === rec.biggestWin.opponentName;
+                return (
+                  <div className="flex items-center gap-3">
+                    <span className="text-pitch-green text-base shrink-0">🏆</span>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-xs font-semibold text-txt-primary">
+                          Biggest win: {highlights.biggestWin.playerGoals}–{highlights.biggestWin.opponentGoals} vs {highlights.biggestWin.opponentName}
+                        </p>
+                        {isAllTimeRecord && (
+                          <span className="text-[10px] font-bold uppercase tracking-wide text-warn-amber bg-warn-amber/10 border border-warn-amber/30 px-1.5 py-0.5 rounded">
+                            Club Record
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-txt-muted">Week {highlights.biggestWin.week}</p>
+                    </div>
                   </div>
-                </div>
-              )}
-              {highlights.longestWinStreak >= 3 && (
-                <div className="flex items-center gap-3">
-                  <span className="text-warn-amber text-base shrink-0">🔥</span>
-                  <div>
-                    <p className="text-xs font-semibold text-txt-primary">
-                      {highlights.longestWinStreak}-game winning streak
-                    </p>
-                    {highlights.longestUnbeaten > highlights.longestWinStreak && (
-                      <p className="text-[10px] text-txt-muted">{highlights.longestUnbeaten} games unbeaten at best</p>
-                    )}
+                );
+              })()}
+              {highlights.longestWinStreak >= 3 && (() => {
+                const isAllTimeStreak = highlights.longestWinStreak >= state.clubRecords.longestWinStreak;
+                return (
+                  <div className="flex items-center gap-3">
+                    <span className="text-warn-amber text-base shrink-0">🔥</span>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-xs font-semibold text-txt-primary">
+                          {highlights.longestWinStreak}-game winning streak
+                        </p>
+                        {isAllTimeStreak && highlights.longestWinStreak >= 5 && (
+                          <span className="text-[10px] font-bold uppercase tracking-wide text-warn-amber bg-warn-amber/10 border border-warn-amber/30 px-1.5 py-0.5 rounded">
+                            Club Record
+                          </span>
+                        )}
+                      </div>
+                      {highlights.longestUnbeaten > highlights.longestWinStreak && (
+                        <p className="text-[10px] text-txt-muted">{highlights.longestUnbeaten} games unbeaten at best</p>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
               {highlights.longestWinStreak < 3 && highlights.longestUnbeaten >= 4 && (
                 <div className="flex items-center gap-3">
                   <span className="text-warn-amber text-base shrink-0">🔥</span>
