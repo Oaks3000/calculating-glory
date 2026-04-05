@@ -103,13 +103,17 @@ export function FinancialHealthBar({ state }: Props) {
 
       {/* Runway bar */}
       <div className="flex items-center gap-2 flex-1 min-w-0">
+        <span className="text-txt-muted text-xs uppercase tracking-wide leading-none shrink-0">Runway</span>
         <div className="flex-1 h-1.5 bg-bg-raised rounded-full overflow-hidden min-w-[60px]">
           <div
             className={`h-full rounded-full transition-[width] duration-500 ${barClass} ${pulse ? 'animate-pulse' : ''}`}
             style={{ width: `${fillPct}%` }}
           />
         </div>
-        <span className={`font-mono font-semibold text-xs shrink-0 tabular-nums ${textClass} ${runway < 10 && !isSurplus ? 'font-bold' : ''}`}>
+        <span
+          title={isSurplus ? 'Weekly income exceeds costs' : `${runwayWeeks} weeks of financial runway at current burn rate`}
+          className={`font-mono font-semibold text-xs shrink-0 tabular-nums ${textClass} ${runway < 10 && !isSurplus ? 'font-bold' : ''}`}
+        >
           {runwayLabel}
         </span>
       </div>

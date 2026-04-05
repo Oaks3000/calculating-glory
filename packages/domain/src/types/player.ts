@@ -125,7 +125,11 @@ export interface Player {
    * 100  = retirement age
    *
    * Values < 50 → ascending; ≥ 50 → plateau or decline.
-   * publicPotential is the noisily-visible version of this value.
+   *
+   * NOTE: truePotential runs in the OPPOSITE direction to what is displayed.
+   * Use getScoutedPotential(player, scoutLevel) for display — it returns
+   * (100 − truePotential + noise), so 100 = maximum potential remaining, 0 = none left.
+   * publicPotential stores that inverted display value with level-0 scout noise applied.
    */
   truePotential: number;
 

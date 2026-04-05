@@ -125,6 +125,7 @@ export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode,
   // Progressive session difficulty: starts at D1, unlocks D2/D3 as player demonstrates mastery
   const [sessionDifficulty, setSessionDifficulty]   = useState<1 | 2 | 3>(1);
   const [correctAtDiff, setCorrectAtDiff]           = useState(0);
+  const masteryNudgeRef = useRef<CurriculumLevel | null>(null);
   const bottomRef   = useRef<HTMLDivElement>(null);
   const seededRef   = useRef(false);
 
@@ -238,7 +239,7 @@ export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode,
     });
 
     // Check mastery after every answer (append synthetic event to get up-to-date picture)
-    if (!masteryNudge) {
+    if (!masteryNudgeRef.current) {
       const syntheticAttempt = {
         type: 'MATH_ATTEMPT_RECORDED' as const,
         timestamp: now,
@@ -251,7 +252,10 @@ export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode,
       const updatedEvents = [...events, syntheticAttempt];
       const currentLevel = state.curriculum?.level ?? 'YEAR_7';
       const nudgeLevel = checkMastery(updatedEvents, currentLevel);
-      if (nudgeLevel) setMasteryNudge(nudgeLevel);
+      if (nudgeLevel) {
+        masteryNudgeRef.current = nudgeLevel;
+        setMasteryNudge(nudgeLevel);
+      }
     }
 
     if (correct) {
@@ -299,9 +303,12 @@ export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode,
           setTimeout(() => addMsg({ kind: 'npc', text: pick(NPC_CORRECT), sender: NPC_NAME }), 300);
           setTimeout(() => addMsg({ kind: 'system', text: consequenceText }), 800);
 
-          // Auto-close the negotiation slide-over after the player has seen the result
+          // Auto-close the negotiation slide-over after the player has seen the result.
+          // Skip if a mastery nudge is pending — the user needs to interact with it first.
           if (onNegotiationComplete) {
-            setTimeout(() => onNegotiationComplete(), 2500);
+            setTimeout(() => {
+              if (!masteryNudgeRef.current) onNegotiationComplete();
+            }, 2500);
           }
         }
       } else {
@@ -571,6 +578,7 @@ export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode,
                   <button
                     onClick={() => {
                       dispatch({ type: 'UPGRADE_CURRICULUM', toLevel: masteryNudge });
+                      masteryNudgeRef.current = null;
                       setMasteryNudge(null);
                       addMsg({
                         kind: 'npc',
@@ -584,7 +592,7 @@ export function SocialFeed({ state, events, dispatch, linkedEvent, practiceMode,
                     Step up to {CURRICULUM_LEVELS[masteryNudge].displayName}
                   </button>
                   <button
-                    onClick={() => setMasteryNudge(null)}
+                    onClick={() => { masteryNudgeRef.current = null; setMasteryNudge(null); }}
                     className="px-3 py-1.5 rounded-card border border-bg-raised text-txt-muted text-xs
                                hover:text-txt-primary transition-colors"
                   >
