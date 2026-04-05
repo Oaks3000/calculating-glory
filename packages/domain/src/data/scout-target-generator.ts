@@ -12,6 +12,7 @@
 import { Player, Position, PlayerAttributes } from '../types/player';
 import { createRng } from '../simulation/rng';
 import { generatePlayerCurve, computeTruePotential } from '../simulation/progression';
+import { getScoutedPotential } from '../types/facility';
 import { getTeamsForDivision } from './division-teams';
 import { Division } from '../types/game-state-updated';
 
@@ -200,8 +201,13 @@ export function generateScoutTarget(
   // truePotential: career-arc position indicator derived from the curve
   const truePotential = computeTruePotential(curve, age);
 
+  // publicPotential: display-friendly proxy (100 = max potential remaining, 0 = none left).
+  // Must match the convention used by squad-generator and free-agent-generator.
+  const playerId = `scout-target-S${season}-W${week}-${position}`;
+  attributes.publicPotential = getScoutedPotential({ id: playerId, truePotential } as Player, 0);
+
   const player: Player = {
-    id: `scout-target-S${season}-W${week}-${position}`,
+    id: playerId,
     name,
     position,
     wage,

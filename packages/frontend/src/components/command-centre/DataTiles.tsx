@@ -50,24 +50,24 @@ function DataTile({ label, value, sub, trend, color, animateClass, onClick }: Ti
 }
 
 /** Track prev value and return an animation class on change (cleared after animation ends). */
-function useRepFlash(reputation: number): string {
+function useValueFlash(value: number, duration = 700): string {
   const prevRef   = useRef<number | null>(null);
   const [cls, setCls] = useState('');
 
   useEffect(() => {
     if (prevRef.current === null) {
-      prevRef.current = reputation;
+      prevRef.current = value;
       return;
     }
-    if (reputation === prevRef.current) return;
+    if (value === prevRef.current) return;
 
-    const next = reputation > prevRef.current ? 'animate-rep-flash-up' : 'animate-rep-flash-down';
-    prevRef.current = reputation;
+    const next = value > prevRef.current ? 'animate-rep-flash-up' : 'animate-rep-flash-down';
+    prevRef.current = value;
     setCls(next);
 
-    const id = setTimeout(() => setCls(''), 700);
+    const id = setTimeout(() => setCls(''), duration);
     return () => clearTimeout(id);
-  }, [reputation]);
+  }, [value, duration]);
 
   return cls;
 }
@@ -89,7 +89,9 @@ export function DataTiles({ state, gridMode, onBackroomClick, onAcumenClick }: D
   );
 
   // Reputation change animation
-  const repFlashClass = useRepFlash(club.reputation);
+  const repFlashClass    = useValueFlash(club.reputation);
+  // Transfer budget flash — fires when a maths challenge changes the budget
+  const budgetFlashClass = useValueFlash(club.transferBudget, 1400);
 
   const tiles: Tile[] = [
     {
@@ -97,6 +99,7 @@ export function DataTiles({ state, gridMode, onBackroomClick, onAcumenClick }: D
       value: formatMoney(club.transferBudget),
       trend: club.transferBudget > 10000000 ? 'flat' : 'down',
       color: club.transferBudget < 5000000 ? 'text-alert-red' : 'text-pitch-green',
+      animateClass: budgetFlashClass,
     },
     {
       label: 'Wage Bill',
