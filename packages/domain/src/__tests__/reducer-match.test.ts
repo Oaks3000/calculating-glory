@@ -33,7 +33,9 @@ function makeState(entries: LeagueTableEntry[], playerClubId: string = 'club-1')
       id: playerClubId,
       name: 'Player FC',
       transferBudget: 0,
-      wageBudget: 0,
+      infrastructureBudget: 0,
+      wageReserve: 0,
+      budgetAllocation: { transfer: 50, infrastructure: 20, wages: 30 },
       squad: [],
       staff: [],
       facilities: [],
@@ -72,6 +74,8 @@ function makeState(entries: LeagueTableEntry[], playerClubId: string = 'club-1')
     npcStrengths: {},
     resolvedEventWeeks: {},
     mathsOutcomes: {},
+    clubRecords: { biggestWin: null, longestWinStreak: 0, topScorer: null },
+    currentWinStreak: 0,
   };
 }
 

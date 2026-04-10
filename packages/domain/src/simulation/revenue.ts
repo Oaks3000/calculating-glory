@@ -122,7 +122,7 @@ export function computeWeeklyFinancials(state: GameState): {
   const weeklyWages  = playerWages + staffWages + managerWage;
 
   const deficit = weeklyWages - weeklyIncome;
-  const runway  = deficit <= 0 ? Infinity : state.club.transferBudget / deficit;
+  const runway  = deficit <= 0 ? Infinity : state.club.wageReserve / deficit;
 
   return { weeklyIncome, weeklyWages, runway };
 }

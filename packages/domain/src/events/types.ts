@@ -47,7 +47,9 @@ export type GameEvent =
   | ParachuteOfferedEvent
   | CurriculumUpgradedEvent
   | RunwayBandChangedEvent
-  | MoraleTickerEvent;
+  | MoraleTickerEvent
+  | BoardBailoutEvent
+  | BudgetAllocationSetEvent;
 
 export interface TransferCompletedEvent {
   type: 'TRANSFER_COMPLETED';
@@ -417,4 +419,21 @@ export interface MoraleTickerEvent {
   timestamp: number;
   headline: string;
   milestoneKey: 'W3' | 'W5' | 'L3' | 'L5';
+}
+
+/** Board covers a wage shortfall but charges a 10% penalty. */
+export interface BoardBailoutEvent {
+  type: 'BOARD_BAILOUT';
+  timestamp: number;
+  shortfall: number;
+  penalty: number;
+}
+
+/** Player reallocated their budget pools during a transfer window. */
+export interface BudgetAllocationSetEvent {
+  type: 'BUDGET_ALLOCATION_SET';
+  timestamp: number;
+  transfer: number;
+  infrastructure: number;
+  wages: number;
 }

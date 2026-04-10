@@ -60,7 +60,7 @@ function makeClub(overrides: Partial<Club> = {}): Club {
     id: 'club-1',
     name: 'Test FC',
     transferBudget: 10000000, // £100,000
-    wageBudget: 500000,       // £5,000/week
+    wageReserve: 26_000_000,  // generous reserve for passing tests
     squad: [],
     staff: [],
     facilities: [makeFacility()],
@@ -110,17 +110,17 @@ describe('validateTransfer', () => {
     expect(result.errors.some(e => e.includes('transfer budget'))).toBe(true);
   });
 
-  it('fails when annual wages exceed available wage budget', () => {
-    // wageBudget = £1,000/week, existing squad uses it all
+  it('fails when wage reserve runway is too low', () => {
+    // wageReserve is tiny — signing anyone would leave less than 8 weeks runway
     const player1 = makePlayer({ id: 'p1', wage: 100000 }); // £1,000/week
     const club = makeClub({
-      wageBudget: 100000, // £1,000/week — fully consumed by p1
+      wageReserve: 100, // tiny reserve to fail validation
       squad: [player1]
     });
     const newPlayer = makePlayer({ id: 'p2', transferValue: 100000 });
     const result = validateTransfer(club, newPlayer, 100000, 100000);
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.includes('wage budget'))).toBe(true);
+    expect(result.errors.some(e => e.includes('Wage reserve too low'))).toBe(true);
   });
 
   it('fails when offered fee is below player transfer value', () => {
@@ -214,29 +214,29 @@ describe('validateFacilityUpgrade', () => {
 // ─── validateStaffHire ────────────────────────────────────────────────────────
 
 describe('validateStaffHire', () => {
-  it('passes when wage budget has room', () => {
-    const club = makeClub({ wageBudget: 1000000, squad: [], staff: [] });
+  it('passes when wage reserve has room', () => {
+    const club = makeClub({ wageReserve: 52_000_000, squad: [], staff: [] });
     const result = validateStaffHire(club, 50000); // £500/week
     expect(result.valid).toBe(true);
     expect(result.errors).toHaveLength(0);
   });
 
-  it('fails when wage budget is fully consumed by squad and staff', () => {
+  it('fails when wage reserve runway is too low for staff hire', () => {
     const player = makePlayer({ wage: 100000 }); // £1,000/week
     const staffMember = makeStaff({ salary: 100000 }); // £1,000/week
-    // wageBudget = £2,000/week, consumed by player + staff
+    // wageReserve is tiny — consumed by player + staff, no room for more
     const club = makeClub({
-      wageBudget: 200000, // £2,000/week
+      wageReserve: 200, // tiny reserve to fail validation
       squad: [player],
       staff: [staffMember]
     });
     const result = validateStaffHire(club, 50000); // trying to add £500/week
     expect(result.valid).toBe(false);
-    expect(result.errors.some(e => e.includes('wage budget'))).toBe(true);
+    expect(result.errors.some(e => e.includes('Wage reserve too low'))).toBe(true);
   });
 
   it('passes with empty squad and staff', () => {
-    const club = makeClub({ wageBudget: 500000, squad: [], staff: [] });
+    const club = makeClub({ wageReserve: 26_000_000, squad: [], staff: [] });
     const result = validateStaffHire(club, 50000);
     expect(result.valid).toBe(true);
   });

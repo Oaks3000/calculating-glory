@@ -32,7 +32,8 @@ export type GameCommand =
   | CancelScoutMissionCommand
   | AcceptTakeoverCommand
   | AcceptIntroSponsorDealCommand
-  | UpgradeCurriculumCommand;
+  | UpgradeCurriculumCommand
+  | SetBudgetAllocationCommand;
 
 export interface MakeTransferCommand {
   type: 'MAKE_TRANSFER';
@@ -164,6 +165,14 @@ export interface AcceptIntroSponsorDealCommand {
 export interface UpgradeCurriculumCommand {
   type: 'UPGRADE_CURRICULUM';
   toLevel: string;
+}
+
+export interface SetBudgetAllocationCommand {
+  type: 'SET_BUDGET_ALLOCATION';
+  /** New absolute amounts for each pool (pence). Must sum to current total. */
+  transfer: number;
+  infrastructure: number;
+  wages: number;
 }
 
 export interface CommandResult {

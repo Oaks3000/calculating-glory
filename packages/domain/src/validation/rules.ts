@@ -41,13 +41,15 @@ export function validateTransfer(
     errors.push(`Insufficient transfer budget. Need £${(offeredFee / 100).toFixed(2)}, have £${(club.transferBudget / 100).toFixed(2)}`);
   }
 
-  // Check wage budget (annual wages)
-  const annualWages = offeredWages * 52;
-  const currentWageBill = club.squad.reduce((sum, p) => sum + (p.wage * 52), 0);
-  const availableWageBudget = (club.wageBudget * 52) - currentWageBill;
+  // Check wage reserve runway (need at least 8 weeks of wages after signing)
+  const currentWeeklyWages = club.squad.reduce((sum, p) => sum + p.wage, 0) +
+                             club.staff.reduce((sum, s) => sum + s.salary, 0) +
+                             (club.manager ? club.manager.wage : 0);
+  const newWeeklyWages = currentWeeklyWages + offeredWages;
+  const runwayAfter = newWeeklyWages > 0 ? club.wageReserve / newWeeklyWages : Infinity;
 
-  if (annualWages > availableWageBudget) {
-    errors.push(`Insufficient wage budget. Annual wages: £${(annualWages / 100).toFixed(2)}, available: £${(availableWageBudget / 100).toFixed(2)}`);
+  if (runwayAfter < 8) {
+    errors.push(`Wage reserve too low. Signing would leave only ${Math.floor(runwayAfter)} weeks of wages (minimum 8 required).`);
   }
 
   // Check if offer meets player's minimum
@@ -135,13 +137,15 @@ export function validateStaffHire(
 ): ValidationResult {
   const errors: string[] = [];
 
-  const annualWages = staffWages * 52;
-  const currentWageBill = club.squad.reduce((sum, p) => sum + (p.wage * 52), 0) +
-                          club.staff.reduce((sum, s) => sum + (s.salary * 52), 0);
-  const availableWageBudget = (club.wageBudget * 52) - currentWageBill;
+  // Check wage reserve runway (need at least 8 weeks of wages after hire)
+  const currentWeeklyWages = club.squad.reduce((sum, p) => sum + p.wage, 0) +
+                             club.staff.reduce((sum, s) => sum + s.salary, 0) +
+                             (club.manager ? club.manager.wage : 0);
+  const newWeeklyWages = currentWeeklyWages + staffWages;
+  const runwayAfter = newWeeklyWages > 0 ? club.wageReserve / newWeeklyWages : Infinity;
 
-  if (annualWages > availableWageBudget) {
-    errors.push(`Insufficient wage budget for staff. Annual cost: £${(annualWages / 100).toFixed(2)}, available: £${(availableWageBudget / 100).toFixed(2)}`);
+  if (runwayAfter < 8) {
+    errors.push(`Wage reserve too low for staff hire. Would leave only ${Math.floor(runwayAfter)} weeks of wages (minimum 8 required).`);
   }
 
   return {

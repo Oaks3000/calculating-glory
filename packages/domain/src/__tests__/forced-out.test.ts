@@ -91,6 +91,8 @@ function stateWithLeaguePosition(opts: {
     club: {
       ...s.club,
       transferBudget: opts.budget,
+      infrastructureBudget: 0,
+      wageReserve: 0,
     },
     league: {
       ...s.league,
@@ -203,7 +205,7 @@ describe('OWNER_FORCED_OUT trigger', () => {
       ...s,
       phase: 'LATE_SEASON',
       currentWeek: 35,
-      club: { ...s.club, transferBudget: 0 },
+      club: { ...s.club, transferBudget: 0, infrastructureBudget: 0, wageReserve: 0 },
       league: { ...s.league, entries },
     };
 
@@ -477,10 +479,13 @@ describe('reduceEvent TAKEOVER_ACCEPTED', () => {
     expect(next.club.name).toBe('NPC Club 24');
   });
 
-  test('sets transfer budget to forcedOut.takeoverBudget', () => {
+  test('splits takeoverBudget across transfer (50%), infrastructure (20%), wages (30%)', () => {
     const state = forcedOutState();
     const next  = reduceEvent(state, makeTakeoverEvent());
-    expect(next.club.transferBudget).toBe(4_000_000);
+    // takeoverBudget = 4_000_000 → 50% transfer, 20% infrastructure, 30% wages
+    expect(next.club.transferBudget).toBe(2_000_000);
+    expect(next.club.infrastructureBudget).toBe(800_000);
+    expect(next.club.wageReserve).toBe(1_200_000);
   });
 
   test('applies reputationMalus to club reputation', () => {
@@ -613,7 +618,10 @@ describe('forced-out full round-trip via buildState', () => {
     expect(state.phase).not.toBe('PARACHUTE_OFFERED');
     expect(state.forcedOut).toBeNull();
     expect(state.club.id).toBe('npc-club-22');
-    expect(state.club.transferBudget).toBe(3_500_000);
+    // takeoverBudget 3_500_000 split 50/20/30
+    expect(state.club.transferBudget).toBe(1_750_000);
+    expect(state.club.infrastructureBudget).toBe(700_000);
+    expect(state.club.wageReserve).toBe(1_050_000);
     expect(state.boardConfidence).toBe(20);
   });
 });

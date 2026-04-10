@@ -100,6 +100,23 @@ export function reduceEvent(state: GameState, event: GameEvent): GameState {
       return { ...state, lastRunwayBand: event.band };
     case 'MORALE_TICKER_EVENT':
       return { ...state, lastFormMilestone: event.milestoneKey };
+    case 'BOARD_BAILOUT':
+      return state; // applied inside handleWeekAdvanced; event is informational
+    case 'BUDGET_ALLOCATION_SET':
+      return {
+        ...state,
+        club: {
+          ...state.club,
+          transferBudget: event.transfer,
+          infrastructureBudget: event.infrastructure,
+          wageReserve: event.wages,
+          budgetAllocation: {
+            transfer: Math.round((event.transfer / (event.transfer + event.infrastructure + event.wages)) * 100),
+            infrastructure: Math.round((event.infrastructure / (event.transfer + event.infrastructure + event.wages)) * 100),
+            wages: Math.round((event.wages / (event.transfer + event.infrastructure + event.wages)) * 100),
+          },
+        },
+      };
     default:
       return state;
   }
@@ -234,8 +251,10 @@ function handleGameStarted(state: GameState, event: GameStartedEvent): GameState
       ...state.club,
       id: event.clubId,
       name: event.clubName,
-      transferBudget: event.initialBudget,
-      wageBudget: event.initialBudget / 10,
+      transferBudget: Math.round(event.initialBudget * 0.5),
+      infrastructureBudget: Math.round(event.initialBudget * 0.2),
+      wageReserve: Math.round(event.initialBudget * 0.3),
+      budgetAllocation: { transfer: 50, infrastructure: 20, wages: 30 },
       facilities: getDefaultFacilities(),
       squad: inheritedSquad,
       squadCapacity: 24,
@@ -424,7 +443,7 @@ function handleFacilityUpgraded(state: GameState, event: any): GameState {
           ? { ...f, level: event.level, upgradeCost: getUpgradeCost(event.facilityType, event.level) }
           : f
       ),
-      transferBudget: state.club.transferBudget - event.cost
+      infrastructureBudget: state.club.infrastructureBudget - event.cost
     }
   };
 }
@@ -439,7 +458,7 @@ function handleFacilityUpgradeStarted(state: GameState, event: any): GameState {
           ? { ...f, constructionWeeksRemaining: event.weeksToComplete }
           : f
       ),
-      transferBudget: state.club.transferBudget - event.cost,
+      infrastructureBudget: state.club.infrastructureBudget - event.cost,
     }
   };
 }
@@ -606,6 +625,37 @@ function handleWeekAdvanced(state: GameState, event: any): GameState {
       : f
   );
 
+  // ── Weekly wage deduction & revenue ─────────────────────────────────────────
+  // Wages are real: deducted from the wage reserve each week.
+  // Revenue (facility + charisma) flows into the wage reserve to sustain it.
+  const playerWages  = squad.reduce((sum, p) => sum + p.wage, 0);
+  const staffWages   = state.club.staff.reduce((sum, s) => sum + s.salary, 0);
+  const managerWage  = state.club.manager?.wage ?? 0;
+  const weeklyWages  = playerWages + staffWages + managerWage;
+
+  let wageReserve = state.club.wageReserve + weeklyRevenue - weeklyWages;
+  let transferBudget = state.club.transferBudget;
+  let infrastructureBudget = state.club.infrastructureBudget;
+
+  // ── Board bailout: cover wage shortfall at 10% penalty ──────────────────────
+  // If the wage reserve goes negative, the board steps in — but charges 10%.
+  // Penalty is taken from Transfer Fund first, then Infrastructure Fund.
+  if (wageReserve < 0) {
+    const shortfall = Math.abs(wageReserve);
+    const penalty   = Math.round(shortfall * 0.1);
+    wageReserve     = 0; // board covers the shortfall
+
+    let penaltyRemaining = penalty;
+    const fromTransfer = Math.min(penaltyRemaining, transferBudget);
+    transferBudget -= fromTransfer;
+    penaltyRemaining -= fromTransfer;
+
+    if (penaltyRemaining > 0) {
+      const fromInfra = Math.min(penaltyRemaining, infrastructureBudget);
+      infrastructureBudget -= fromInfra;
+    }
+  }
+
   return {
     ...state,
     currentWeek: week,
@@ -616,7 +666,9 @@ function handleWeekAdvanced(state: GameState, event: any): GameState {
       ...state.club,
       squad,
       facilities,
-      transferBudget: state.club.transferBudget + weeklyRevenue,
+      wageReserve,
+      transferBudget,
+      infrastructureBudget,
     }
   };
 }
@@ -1076,8 +1128,10 @@ function handleTakeoverAccepted(state: GameState, event: TakeoverAcceptedEvent):
       ...state.club,
       id:             event.takeoverClubId,
       name:           event.takeoverClubName,
-      transferBudget: state.forcedOut.takeoverBudget,
-      wageBudget:     Math.round(state.forcedOut.takeoverBudget / 5),
+      transferBudget: Math.round(state.forcedOut.takeoverBudget * 0.5),
+      infrastructureBudget: Math.round(state.forcedOut.takeoverBudget * 0.2),
+      wageReserve:    Math.round(state.forcedOut.takeoverBudget * 0.3),
+      budgetAllocation: { transfer: 50, infrastructure: 20, wages: 30 },
       squad:          newSquad,
       squadCapacity:  24,
       facilities:     getDefaultFacilities(),
@@ -1095,7 +1149,9 @@ function createEmptyClub(): Club {
     id: '',
     name: '',
     transferBudget: 0,
-    wageBudget: 0,
+    infrastructureBudget: 0,
+    wageReserve: 0,
+    budgetAllocation: { transfer: 50, infrastructure: 20, wages: 30 },
     squad: [],
     staff: [],
     facilities: [],
