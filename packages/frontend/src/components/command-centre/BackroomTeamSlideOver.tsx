@@ -1,4 +1,4 @@
-import { GameState, GameCommand, Staff, StaffRole } from '@calculating-glory/domain';
+import { GameState, GameCommand, Staff, StaffRole, Manager } from '@calculating-glory/domain';
 import { formatMoney } from '@calculating-glory/domain';
 
 // ── Role display config ───────────────────────────────────────────────────────
@@ -139,11 +139,95 @@ interface BackroomTeamSlideOverProps {
   onError: (msg: string) => void;
 }
 
+// ── Manager row ──────────────────────────────────────────────────────────────
+
+function ManagerRow({ manager }: { manager: Manager | null }) {
+  if (!manager) {
+    return (
+      <div className="flex items-center gap-3 py-3 opacity-60">
+        <span className="text-2xl w-8 text-center shrink-0">🧑‍💼</span>
+        <div className="flex-1 min-w-0">
+          <span className="text-sm font-semibold text-txt-muted">Manager</span>
+          <div className="text-xs2 text-txt-muted mt-0.5">No manager appointed</div>
+        </div>
+      </div>
+    );
+  }
+
+  const { tactical, motivation, experience } = manager.attributes;
+  return (
+    <div className="flex items-center gap-3 py-3">
+      <span className="text-2xl w-8 text-center shrink-0">🧑‍💼</span>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-semibold text-txt-primary">Manager</span>
+          <span className="badge bg-pitch-green/15 text-pitch-green text-xs2">Hired</span>
+        </div>
+        <span className="text-xs2 text-txt-muted font-mono">{manager.name}</span>
+        <div className="flex items-center gap-3 mt-1 text-xs2 text-txt-muted">
+          <span>⚔️ Tactical {tactical}</span>
+          <span>📣 Motivation {motivation}</span>
+          <span>📋 Experience {experience}</span>
+        </div>
+      </div>
+      <div className="flex flex-col items-end gap-1 shrink-0">
+        <span className="text-xs2 font-mono text-txt-muted">
+          {formatMoney(manager.wage)}<span className="text-txt-muted/50">/wk</span>
+        </span>
+        <StarRating quality={experience} />
+      </div>
+    </div>
+  );
+}
+
+// ── Impact summary ───────────────────────────────────────────────────────────
+
+function ImpactSummary({ club }: { club: GameState['club'] }) {
+  // Staff avg quality → +0.00 to +0.12
+  const staffBoost = club.staff.length > 0
+    ? (club.staff.reduce((sum, s) => sum + s.quality, 0) / club.staff.length / 100) * 0.12
+    : 0;
+
+  // Manager experience → +0.00 to +0.06
+  const mgrBoost = club.manager
+    ? (club.manager.attributes.experience / 100) * 0.06
+    : 0;
+
+  const totalBoost = staffBoost + mgrBoost;
+  const maxBoost = 0.18; // 0.12 + 0.06
+
+  const pctOfMax = Math.round((totalBoost / maxBoost) * 100);
+
+  return (
+    <div className="px-4 py-2 bg-bg-raised/50 border-b border-bg-raised/50 shrink-0">
+      <span className="text-xs text-txt-muted uppercase tracking-wide">Match impact</span>
+      <div className="flex items-center gap-2 mt-1">
+        <div className="flex-1 h-1.5 bg-bg-raised rounded-full overflow-hidden">
+          <div
+            className="h-full bg-pitch-green rounded-full transition-all"
+            style={{ width: `${pctOfMax}%` }}
+          />
+        </div>
+        <span className="text-xs font-mono text-pitch-green shrink-0">
+          +{(totalBoost * 100).toFixed(1)}%
+        </span>
+      </div>
+      <div className="flex gap-3 mt-1 text-xs2 text-txt-muted">
+        <span>Staff: +{(staffBoost * 100).toFixed(1)}%</span>
+        <span>Manager: +{(mgrBoost * 100).toFixed(1)}%</span>
+      </div>
+    </div>
+  );
+}
+
+// ── Main component ───────────────────────────────────────────────────────────
+
 export function BackroomTeamSlideOver({ state, dispatch, onError }: BackroomTeamSlideOverProps) {
   const { club } = state;
 
-  // Total backroom wage cost
-  const backroomWages = club.staff.reduce((s, st) => s + st.salary, 0);
+  // Total backroom wage cost (staff + manager)
+  const backroomWages = club.staff.reduce((s, st) => s + st.salary, 0)
+    + (club.manager?.wage ?? 0);
 
   function handleHire(config: RoleConfig) {
     const result = dispatch({
@@ -175,6 +259,14 @@ export function BackroomTeamSlideOver({ state, dispatch, onError }: BackroomTeam
         </div>
       </div>
 
+      {/* Impact summary bar */}
+      <ImpactSummary club={club} />
+
+      {/* Manager */}
+      <div className="px-4 border-b border-bg-raised">
+        <ManagerRow manager={club.manager} />
+      </div>
+
       {/* Staff list */}
       <div className="flex-1 overflow-y-auto px-4">
         {ROLE_CONFIG.map(config => {
@@ -195,7 +287,7 @@ export function BackroomTeamSlideOver({ state, dispatch, onError }: BackroomTeam
       {/* Footer note */}
       <div className="px-4 py-3 border-t border-bg-raised shrink-0">
         <p className="text-xs2 text-txt-muted">
-          Staff quality improves simulation outcomes. Upgrade your backroom to improve form and reduce injuries.
+          Staff quality and manager experience boost your match modifier. Hire all five roles and appoint a strong manager to maximise the +18% ceiling.
         </p>
         <p className="text-xs2 text-txt-muted/60 mt-1">
           Budget check uses 4-week salary buffer. Wages are deducted weekly.

@@ -33,7 +33,7 @@ const PARODY_NAMES: string[] = [
   'Neymur Jr',
   'Killian Mboppe',
   'Errling Haland',
-  'Kevin De Bruyne',
+  'Kelvin De Bryne',
   'Virgil van Dijck',
   'Mohammid Salah',
 ];
