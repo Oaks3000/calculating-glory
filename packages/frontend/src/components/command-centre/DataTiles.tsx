@@ -134,10 +134,10 @@ export function DataTiles({ state, gridMode, onBackroomClick, onAcumenClick }: D
     },
     {
       label: 'Backroom Team',
-      value: `${club.squad.length}`,
-      sub: `${club.staff.length} staff · tap to manage`,
-      trend: club.squad.length < 18 ? 'down' : 'flat',
-      color: club.squad.length < 18 ? 'text-alert-red' : 'text-txt-primary',
+      value: `${club.staff.length} / ${5}`,
+      sub: club.manager ? `🧑‍💼 ${club.manager.name} · tap to manage` : 'No manager · tap to manage',
+      trend: club.staff.length >= 3 ? 'up' : club.staff.length === 0 ? 'down' : 'flat',
+      color: club.staff.length === 0 ? 'text-alert-red' : club.staff.length >= 3 ? 'text-pitch-green' : 'text-txt-primary',
       onClick: onBackroomClick,
     },
     {
