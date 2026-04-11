@@ -10,6 +10,7 @@ import { HubTile } from './HubTiles';
 import { SlideOver } from '../shared/SlideOver';
 import { SocialFeed } from '../social-feed/SocialFeed';
 import { BackroomTeamSlideOver } from './BackroomTeamSlideOver';
+import { BudgetAllocationSlideOver } from './BudgetAllocationSlideOver';
 import { LearningProgressSlideOver } from './LearningProgressSlideOver';
 import { TransferMarketSlideOver } from '../transfer-market/TransferMarketSlideOver';
 import { FinancialHealthBar } from '../shared/FinancialHealthBar';
@@ -42,6 +43,7 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
   const [backroomOpen, setBackroomOpen]       = useState(false);
   const [learningOpen, setLearningOpen]       = useState(false);
   const [transfersOpen, setTransfersOpen]     = useState(false);
+  const [budgetOpen, setBudgetOpen]           = useState(false);
   const [dismissed, setDismissed]             = useState<Set<number>>(new Set());
 
   function handleDismiss(idx: number) {
@@ -112,7 +114,7 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
 
       {/* ── Financial Health Bar ─────────────────────────────────────────── */}
       <div className="relative">
-        <FinancialHealthBar state={state} />
+        <FinancialHealthBar state={state} onClick={() => setBudgetOpen(true)} />
         {dim('financial-bar')}
       </div>
 
@@ -308,6 +310,17 @@ export function CommandCentre({ state, events, dispatch, isLoading, onNavigateTo
       >
         {learningOpen && (
           <LearningProgressSlideOver state={state} events={events} />
+        )}
+      </SlideOver>
+
+      {/* ── Budget Allocation slide-over ─────────────────────────────────── */}
+      <SlideOver
+        isOpen={budgetOpen}
+        onClose={() => setBudgetOpen(false)}
+        title="Budget Allocation"
+      >
+        {budgetOpen && (
+          <BudgetAllocationSlideOver state={state} dispatch={dispatch} onError={setError} />
         )}
       </SlideOver>
 

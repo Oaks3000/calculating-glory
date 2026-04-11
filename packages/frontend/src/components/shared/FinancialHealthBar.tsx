@@ -3,6 +3,7 @@ import { GameState, computeWeeklyFinancials, formatMoney } from '@calculating-gl
 
 interface Props {
   state: GameState;
+  onClick?: () => void;
 }
 
 interface RunwayStyle {
@@ -27,7 +28,7 @@ function getRunwayStyle(runway: number, isSurplus: boolean): RunwayStyle {
   return { barClass: 'bg-alert-red', textClass: 'text-alert-red', pulse: true };
 }
 
-export function FinancialHealthBar({ state }: Props) {
+export function FinancialHealthBar({ state, onClick }: Props) {
   const { weeklyIncome, weeklyWages, runway } = computeWeeklyFinancials(state);
   const budget = state.club.transferBudget;
   const burn = weeklyWages - weeklyIncome;
@@ -72,7 +73,13 @@ export function FinancialHealthBar({ state }: Props) {
       : 'text-txt-primary';
 
   return (
-    <div className="mx-4 mt-1 px-3 py-1.5 bg-bg-surface rounded-card flex items-center gap-3 text-sm">
+    <div
+      className={`mx-4 mt-1 px-3 py-1.5 bg-bg-surface rounded-card flex items-center gap-3 text-sm${onClick ? ' cursor-pointer hover:border hover:border-data-blue/40 transition-colors' : ''}`}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') onClick(); } : undefined}
+    >
 
       {/* Budget */}
       <div className="flex items-center gap-1.5 shrink-0">
