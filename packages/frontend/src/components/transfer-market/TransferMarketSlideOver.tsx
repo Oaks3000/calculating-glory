@@ -791,7 +791,7 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
   const [squadViewMode, setSquadViewMode] = useState<SquadViewMode>('formation');
 
   const currentTotalWages = state.club.squad.reduce((sum, p) => sum + p.wage, 0);
-  const remainingWageBudget = state.club.wageBudget - currentTotalWages;
+  const wageRunway = currentTotalWages > 0 ? state.club.wageReserve / currentTotalWages : Infinity;
   const squadCount = state.club.squad.length;
   const squadCapacity = state.club.squadCapacity;
   const scoutLevel = getScoutLevel(state.club.facilities);
@@ -863,7 +863,7 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
       {/* ── Budget / squad bar ─────────────────────────────────────────────── */}
       <div className="bg-bg-raised rounded-card border border-white/5 px-4 py-2 flex items-center gap-4 text-sm flex-wrap">
         <span className="text-txt-muted">
-          Wage budget: <span className="text-pitch-green font-semibold">{formatMoney(remainingWageBudget)}</span> remaining
+          Wage runway: <span className={wageRunway < 8 ? 'text-alert-red font-semibold' : 'text-pitch-green font-semibold'}>{wageRunway === Infinity ? '∞' : `${Math.floor(wageRunway)}w`}</span>
         </span>
         <span className="text-white/20">|</span>
         <span className="text-txt-muted">
@@ -952,7 +952,7 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
               <FreeAgentCard
                 key={player.id}
                 player={player}
-                canAfford={player.wage <= remainingWageBudget}
+                canAfford={(currentTotalWages + player.wage) > 0 ? state.club.wageReserve / (currentTotalWages + player.wage) >= 8 : true}
                 hasSquadRoom={squadCount < squadCapacity}
                 scoutLevel={scoutLevel}
                 willingness={computeWillingness(player, player.wage, tablePosition)}

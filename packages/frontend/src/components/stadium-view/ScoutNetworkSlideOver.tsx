@@ -319,7 +319,9 @@ export function ScoutNetworkSlideOver({
     const askingPrice  = scoutMission.askingPrice!;
     const canAfford    = askingPrice <= club.transferBudget;
     const currentTotalWages = club.squad.reduce((s, p) => s + p.wage, 0);
-    const wageRoomLeft = club.wageBudget - currentTotalWages;
+    const wageRunway = (currentTotalWages + offeredWage) > 0
+      ? club.wageReserve / (currentTotalWages + offeredWage)
+      : Infinity;
     const wageOfferedPounds = Math.round(offeredWage / 100);
 
     return (
@@ -427,7 +429,7 @@ export function ScoutNetworkSlideOver({
                   className="w-full bg-bg-raised border border-bg-raised/50 rounded-card px-3 py-2 text-sm text-txt-primary data-font focus:outline-none focus:border-data-blue/60"
                 />
                 <p className="text-xs2 text-txt-muted mt-1">
-                  Wage room: {formatMoney(wageRoomLeft)}/wk remaining
+                  Wage runway: {wageRunway === Infinity ? '∞' : `${Math.floor(wageRunway)}w`} after signing
                 </p>
               </div>
             )}
@@ -489,7 +491,7 @@ export function ScoutNetworkSlideOver({
               <div className="flex flex-col gap-2">
                 <button
                   onClick={handleNegotiateClick}
-                  disabled={!canAfford || offeredWage > wageRoomLeft}
+                  disabled={!canAfford || wageRunway < 8}
                   className="btn-primary w-full disabled:opacity-40"
                 >
                   {scoutMission.status === 'BID_REJECTED' ? 'Try Again' : 'Negotiate Transfer'}
@@ -499,9 +501,9 @@ export function ScoutNetworkSlideOver({
                     Budget too low for asking price
                   </p>
                 )}
-                {offeredWage > wageRoomLeft && canAfford && (
+                {wageRunway < 8 && canAfford && (
                   <p className="text-xs2 text-warn-red text-center">
-                    Wage offer exceeds remaining wage room
+                    Wage runway would drop below 8 weeks
                   </p>
                 )}
                 <button onClick={handleCancel} className="btn-secondary w-full text-xs">

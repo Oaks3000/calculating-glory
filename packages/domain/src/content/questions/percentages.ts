@@ -96,20 +96,20 @@ export const percentagesBank: QuestionBank = [
     minCurriculumLevel: 'YEAR_8',
     difficulty: 2,
     valueScale: 'division',
-    template: 'Your weekly wage bill is £{{wageBillWeeklyPounds}} and your weekly wage budget is £{{wageBudgetWeeklyPounds}}.\n\nWhat percentage of your wage budget is being spent?\n\nGive your answer to 1 decimal place.',
+    template: 'Your weekly wage bill is £{{wageBillWeeklyPounds}} and your total wage reserve is £{{wageReservePounds}}.\n\nWhat percentage of your wage reserve is being spent each week?\n\nGive your answer to 1 decimal place.',
     answerFn: v => {
-      if (v.wageBudgetWeeklyPounds === 0) return 0;
-      return Math.round((v.wageBillWeeklyPounds / v.wageBudgetWeeklyPounds) * 1000) / 10;
+      if (v.wageReservePounds === 0) return 0;
+      return Math.round((v.wageBillWeeklyPounds / v.wageReservePounds) * 1000) / 10;
     },
-    answerFormula: 'round((wageBillWeeklyPounds / wageBudgetWeeklyPounds) × 100, 1dp)',
+    answerFormula: 'round((wageBillWeeklyPounds / wageReservePounds) × 100, 1dp)',
     unit: '%',
     hints: [
-      'Percentage = (part ÷ whole) × 100. Here the "part" is the wage bill and the "whole" is the wage budget.',
-      'Divide the wage bill by the wage budget: £{{wageBillWeeklyPounds}} ÷ £{{wageBudgetWeeklyPounds}}.',
-      '£{{wageBillWeeklyPounds}} ÷ £{{wageBudgetWeeklyPounds}} × 100. Round your answer to 1 decimal place.',
+      'Percentage = (part ÷ whole) × 100. Here the "part" is the weekly wage bill and the "whole" is the wage reserve.',
+      'Divide the wage bill by the wage reserve: £{{wageBillWeeklyPounds}} ÷ £{{wageReservePounds}}.',
+      '£{{wageBillWeeklyPounds}} ÷ £{{wageReservePounds}} × 100. Round your answer to 1 decimal place.',
     ],
-    explanation: 'Step 1: Divide wage bill by wage budget:\n£{{wageBillWeeklyPounds}} ÷ £{{wageBudgetWeeklyPounds}}\nStep 2: Multiply by 100.\nStep 3: Round to 1 decimal place.\nAnswer: expressed as a percentage to 1dp.',
-    context: 'Val Hartley (CFO): "Clubs in financial difficulty almost always overspend on wages first. I need to know exactly where we stand as a percentage of budget."',
+    explanation: 'Step 1: Divide wage bill by wage reserve:\n£{{wageBillWeeklyPounds}} ÷ £{{wageReservePounds}}\nStep 2: Multiply by 100.\nStep 3: Round to 1 decimal place.\nAnswer: expressed as a percentage to 1dp.',
+    context: 'Val Hartley (CFO): "Clubs in financial difficulty almost always overspend on wages first. I need to know exactly where we stand as a percentage of our reserve."',
   },
 
   {

@@ -83,6 +83,9 @@ export function DataTiles({ state, gridMode, onBackroomClick, onAcumenClick }: D
   const wageBill = club.squad.reduce((s, p) => s + p.wage, 0)
     + club.staff.reduce((s, st) => s + st.salary, 0);
 
+  // Wage runway: how many weeks the reserve can sustain the current wage bill
+  const weeklyRunway = wageBill > 0 ? club.wageReserve / wageBill : Infinity;
+
   // Acumen average
   const acumenAvg = Math.round(
     (businessAcumen.financial + businessAcumen.statistical + businessAcumen.strategic) / 3
@@ -104,9 +107,9 @@ export function DataTiles({ state, gridMode, onBackroomClick, onAcumenClick }: D
     {
       label: 'Wage Bill',
       value: formatMoney(wageBill),
-      sub: `/ wk  ·  budget ${formatMoney(club.wageBudget)}`,
-      trend: wageBill > club.wageBudget * 0.9 ? 'down' : 'flat',
-      color: wageBill > club.wageBudget ? 'text-alert-red' : 'text-txt-primary',
+      sub: `/ wk  ·  reserve ${formatMoney(club.wageReserve)}`,
+      trend: weeklyRunway < 10 ? 'down' : 'flat',
+      color: weeklyRunway < 8 ? 'text-alert-red' : 'text-txt-primary',
     },
     {
       label: 'League Position',

@@ -27,16 +27,16 @@ export function extractVariables(state: GameState): GameStateVariables {
     (club.squad.reduce((s, p) => s + p.wage, 0) +
      club.staff.reduce((s, st) => s + st.salary, 0)) / 100
   );
-  const wageBudgetWeeklyPounds = Math.round(club.wageBudget / 100);
+  const wageReservePounds = Math.round(club.wageReserve / 100);
 
   return {
     transferBudgetPounds: Math.round(club.transferBudget / 100),
     transferBudgetK:      Math.round(club.transferBudget / 100_000),
     transferBudgetM:      dp1(club.transferBudget / 100_000_000),
 
-    wageBudgetWeeklyPounds,
+    wageReservePounds,
     wageBillWeeklyPounds,
-    wageHeadroomPounds: wageBudgetWeeklyPounds - wageBillWeeklyPounds,
+    wageHeadroomPounds: wageReservePounds - wageBillWeeklyPounds,
 
     played, won, drawn, lost, points, goalsFor, goalsAgainst,
     leaguePosition,

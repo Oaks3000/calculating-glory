@@ -66,7 +66,9 @@ function makeMinimalClub(overrides: Partial<Club> = {}): Club {
     id: 'club-1',
     name: 'Test FC',
     transferBudget: 10_000_000,
-    wageBudget: 2_000_000,
+    infrastructureBudget: 0,
+    wageReserve: 100_000_000,
+    budgetAllocation: { transfer: 50, infrastructure: 20, wages: 30 },
     squad: [makePlayer()],
     staff: [],
     facilities: [],
@@ -178,7 +180,7 @@ describe('HIRE_MANAGER command', () => {
     // Set a tiny wage budget
     const tightState: GameState = {
       ...state,
-      club: { ...state.club, wageBudget: 1 },
+      club: { ...state.club, wageReserve: 1 },
     };
     const expensiveManager = state.managerPool.find(m => m.wage > 0);
     if (!expensiveManager) return;

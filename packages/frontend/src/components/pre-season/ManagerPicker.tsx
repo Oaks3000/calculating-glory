@@ -4,7 +4,8 @@ interface ManagerPickerProps {
   managers: Manager[];
   selected: Manager | null;
   onSelect: (manager: Manager) => void;
-  wageBudgetRemaining: number;
+  wageReserve: number;
+  currentTotalWages: number;
 }
 
 /**
@@ -78,7 +79,7 @@ function ManagerCard({
             <span className="mx-1.5 text-white/20">·</span>
             {manager.contractLengthWeeks / 52} season contract
             {!affordable && (
-              <span className="ml-2 text-alert-red">over budget</span>
+              <span className="ml-2 text-alert-red">runway too low</span>
             )}
           </div>
         </div>
@@ -108,7 +109,8 @@ export function ManagerPicker({
   managers,
   selected,
   onSelect,
-  wageBudgetRemaining,
+  wageReserve,
+  currentTotalWages,
 }: ManagerPickerProps) {
   // Sort: elite first (highest avg), then mid, then budget
   const sorted = [...managers].sort((a, b) => {
@@ -140,7 +142,11 @@ export function ManagerPicker({
             key={manager.id}
             manager={manager}
             selected={selected?.id === manager.id}
-            affordable={manager.wage <= wageBudgetRemaining}
+            affordable={
+              (currentTotalWages + manager.wage) > 0
+                ? wageReserve / (currentTotalWages + manager.wage) >= 8
+                : true
+            }
             onSelect={() => onSelect(manager)}
           />
         ))}

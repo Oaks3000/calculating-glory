@@ -147,11 +147,11 @@ describe('reducer — BUDGET_UPDATED', () => {
 // ─── FACILITY_UPGRADED ────────────────────────────────────────────────────────
 
 describe('reducer — FACILITY_UPGRADED', () => {
-  it('upgrades facility level and deducts cost from budget', () => {
+  it('upgrades facility level and deducts cost from infrastructure budget', () => {
     const facility = makeFacility('TRAINING_GROUND', 1);
     const state: GameState = {
       ...base(),
-      club: { ...base().club, facilities: [facility], transferBudget: 10000000 }
+      club: { ...base().club, facilities: [facility], infrastructureBudget: 10000000 }
     };
 
     const event: GameEvent = {
@@ -166,7 +166,7 @@ describe('reducer — FACILITY_UPGRADED', () => {
     const next = reduceEvent(state, event);
     const upgraded = next.club.facilities.find(f => f.type === 'TRAINING_GROUND');
     expect(upgraded?.level).toBe(2);
-    expect(next.club.transferBudget).toBe(5000000);
+    expect(next.club.infrastructureBudget).toBe(5000000);
   });
 
   it('does not modify other facilities', () => {
@@ -174,7 +174,7 @@ describe('reducer — FACILITY_UPGRADED', () => {
     const f2 = makeFacility('MEDICAL_CENTER', 2);
     const state: GameState = {
       ...base(),
-      club: { ...base().club, facilities: [f1, f2], transferBudget: 10000000 }
+      club: { ...base().club, facilities: [f1, f2], infrastructureBudget: 10000000 }
     };
 
     const event: GameEvent = {

@@ -19,7 +19,8 @@ import { Player, computeOverallRating } from '../types/player';
 import { shouldRetire, getRetirementFlavour } from '../simulation/progression';
 import { getScoutLevel, isTransferWindowOpen, constructionDuration } from '../types/facility';
 import { generateScoutTarget, getScoutFee } from '../data/scout-target-generator';
-import { ScoutTargetFoundEvent, ScoutTransferCompletedEvent, TakeoverAcceptedEvent, CurriculumUpgradedEvent } from '../events/types';
+import { ScoutTargetFoundEvent, ScoutTransferCompletedEvent, TakeoverAcceptedEvent, CurriculumUpgradedEvent, BudgetAllocationSetEvent } from '../events/types';
+import { SetBudgetAllocationCommand } from './types';
 import { CURRICULUM_LEVEL_ORDER, CURRICULUM_LEVELS } from '../curriculum/curriculum-config';
 
 /**
@@ -77,6 +78,8 @@ export function handleCommand(command: GameCommand, state: GameState): CommandRe
       };
     case 'UPGRADE_CURRICULUM':
       return handleUpgradeCurriculum(command, state);
+    case 'SET_BUDGET_ALLOCATION':
+      return handleSetBudgetAllocation(command, state);
     default:
       return {
         error: {
@@ -574,7 +577,8 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
     const playerEntry   = state.league.entries.find(e => e.clubId === state.club.id);
     const position      = playerEntry?.position ?? 1;
     const inBottom3     = position > 21;              // positions 22, 23, 24 out of 24
-    const broke         = state.club.transferBudget < 1_000_000; // < £10,000
+    const totalBudget   = state.club.transferBudget + (state.club.infrastructureBudget ?? 0) + (state.club.wageReserve ?? 0);
+    const broke         = totalBudget < 1_000_000; // < £10,000
 
     if (inBottom3 && broke) {
       // Find the lowest-ranked NPC club (highest position number that isn't the player's)
@@ -856,13 +860,15 @@ function handleSignFreeAgent(command: any, state: GameState): CommandResult {
     };
   }
 
-  // Check wage budget
+  // Check wage reserve runway
   const currentTotalWages = state.club.squad.reduce((sum, p) => sum + p.wage, 0);
-  if (command.offeredWage > state.club.wageBudget - currentTotalWages) {
+  const newTotalWages = currentTotalWages + command.offeredWage;
+  const runwayAfter = newTotalWages > 0 ? state.club.wageReserve / newTotalWages : Infinity;
+  if (runwayAfter < 8) {
     return {
       error: {
         code: 'INSUFFICIENT_BUDGET',
-        message: `Offered wage exceeds remaining wage budget`
+        message: 'Wage reserve too low — would leave only ' + Math.floor(runwayAfter) + ' weeks of wages.'
       }
     };
   }
@@ -948,11 +954,13 @@ function handleHireManager(command: any, state: GameState): CommandResult {
     state.club.staff.reduce((sum, s) => sum + s.salary, 0) +
     (state.club.manager ? state.club.manager.wage : 0);
 
-  if (manager.wage > state.club.wageBudget - currentTotalWages) {
+  const newTotalWages = currentTotalWages + manager.wage;
+  const runwayAfter = newTotalWages > 0 ? state.club.wageReserve / newTotalWages : Infinity;
+  if (runwayAfter < 8) {
     return {
       error: {
         code: 'INSUFFICIENT_BUDGET',
-        message: `Manager wage exceeds remaining weekly wage budget`,
+        message: 'Wage reserve too low — would leave only ' + Math.floor(runwayAfter) + ' weeks of wages.',
       },
     };
   }
@@ -1177,11 +1185,13 @@ function handlePlaceScoutBid(command: any, state: GameState): CommandResult {
   }
 
   const currentTotalWages = state.club.squad.reduce((sum, p) => sum + p.wage, 0);
-  if (command.offeredWage > state.club.wageBudget - currentTotalWages) {
+  const newTotalWages = currentTotalWages + command.offeredWage;
+  const runwayAfter = newTotalWages > 0 ? state.club.wageReserve / newTotalWages : Infinity;
+  if (runwayAfter < 8) {
     return {
       error: {
         code: 'INSUFFICIENT_BUDGET',
-        message: 'Offered wage exceeds remaining weekly wage budget',
+        message: 'Wage reserve too low — would leave only ' + Math.floor(runwayAfter) + ' weeks of wages.',
       },
     };
   }
@@ -1293,6 +1303,41 @@ function handleUpgradeCurriculum(command: any, state: GameState): CommandResult 
     timestamp: Date.now(),
     fromLevel: currentLevel,
     toLevel,
+  };
+
+  return { events: [event] };
+}
+
+// ── SET_BUDGET_ALLOCATION ─────────────────────────────────────────────────────
+
+function handleSetBudgetAllocation(command: SetBudgetAllocationCommand, state: GameState): CommandResult {
+  if (!isTransferWindowOpen(state.currentWeek, state.phase)) {
+    return {
+      error: { code: 'VALIDATION_FAILED', message: 'Budget allocation can only be changed during transfer windows' },
+    };
+  }
+
+  const currentTotal = state.club.transferBudget + state.club.infrastructureBudget + state.club.wageReserve;
+  const newTotal = command.transfer + command.infrastructure + command.wages;
+
+  if (Math.abs(newTotal - currentTotal) > 1) {
+    return {
+      error: { code: 'VALIDATION_FAILED', message: `Allocation must sum to current total (${currentTotal}). Got ${newTotal}.` },
+    };
+  }
+
+  if (command.transfer < 0 || command.infrastructure < 0 || command.wages < 0) {
+    return {
+      error: { code: 'VALIDATION_FAILED', message: 'Budget pools cannot be negative' },
+    };
+  }
+
+  const event: BudgetAllocationSetEvent = {
+    type: 'BUDGET_ALLOCATION_SET',
+    timestamp: Date.now(),
+    transfer: command.transfer,
+    infrastructure: command.infrastructure,
+    wages: command.wages,
   };
 
   return { events: [event] };

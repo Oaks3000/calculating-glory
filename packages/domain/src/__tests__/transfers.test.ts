@@ -195,7 +195,7 @@ describe('handleCommand — SIGN_FREE_AGENT', () => {
     // Set wage budget to 0
     const skintState: GameState = {
       ...state,
-      club: { ...state.club, wageBudget: 0 },
+      club: { ...state.club, wageReserve: 0 },
     };
 
     const result = handleCommand(

@@ -37,9 +37,9 @@ export interface GameStateVariables {
   transferBudgetM: number;        // 1dp millions, e.g. 0.5
 
   // Weekly wages (scales with division)
-  wageBudgetWeeklyPounds: number;
+  wageReservePounds: number;
   wageBillWeeklyPounds: number;
-  wageHeadroomPounds: number;     // wageBudget - wageBill
+  wageHeadroomPounds: number;     // wageReserve - wageBill
 
   // Match stats (current season)
   played: number;

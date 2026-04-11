@@ -94,7 +94,7 @@ describe('getTotalContractCost', () => {
 describe('calculateClubStrength', () => {
   it('returns 0 for an empty club with no staff or facilities', () => {
     const club: Club = {
-      id: 'club-1', name: 'Test', transferBudget: 0, wageBudget: 0,
+      id: 'club-1', name: 'Test', transferBudget: 0, infrastructureBudget: 0, wageReserve: 0, budgetAllocation: { transfer: 50, infrastructure: 20, wages: 30 },
       squad: [], staff: [], facilities: [], reputation: 0,
       stadium: { name: '', capacity: 0, averageAttendance: 0, ticketPrice: 0 },
       form: [],
@@ -121,7 +121,7 @@ describe('calculateClubStrength', () => {
     // OVR = (70+70+70)/3 = 70
     const p = makePlayer({ attributes: { attack: 70, defence: 70, teamwork: 70, charisma: 45, publicPotential: 60 } });
     const club: Club = {
-      id: 'c1', name: 'Test', transferBudget: 0, wageBudget: 0,
+      id: 'c1', name: 'Test', transferBudget: 0, infrastructureBudget: 0, wageReserve: 0, budgetAllocation: { transfer: 50, infrastructure: 20, wages: 30 },
       squad: [p],
       staff: [{ id: 's1', name: 'Coach', role: 'ATTACKING_COACH', quality: 80, salary: 50000, bonus: { type: 'goals', improvement: 10 } }],
       facilities: [], reputation: 0,
@@ -148,7 +148,7 @@ describe('calculateClubStrength', () => {
       benefit: { type: 'performance', improvement: 10 }
     };
     const club: Club = {
-      id: 'c1', name: 'Test', transferBudget: 0, wageBudget: 0,
+      id: 'c1', name: 'Test', transferBudget: 0, infrastructureBudget: 0, wageReserve: 0, budgetAllocation: { transfer: 50, infrastructure: 20, wages: 30 },
       squad: [p], staff: [], facilities: [facility], reputation: 0,
       stadium: { name: '', capacity: 0, averageAttendance: 0, ticketPrice: 0 },
       form: [],

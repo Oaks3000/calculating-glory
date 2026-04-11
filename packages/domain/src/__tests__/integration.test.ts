@@ -47,8 +47,11 @@ describe('Game Integration Test', () => {
     // Verify player's club state is set up
     expect(state.club.id).toBe('player-club');
     expect(state.club.name).toBe('Test FC');
-    expect(state.club.transferBudget).toBe(500000000);
-    expect(state.club.wageBudget).toBe(50000000); // 10% of transfer budget
+    // initialBudget 500000000 split 50/20/30
+    expect(state.club.transferBudget).toBe(250000000);
+    expect(state.club.infrastructureBudget).toBe(100000000);
+    expect(state.club.wageReserve).toBe(150000000);
+    // wageReserve checked above (30% split)
   });
 
   it('should simulate week 1 and update league table', () => {

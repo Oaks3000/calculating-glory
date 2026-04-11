@@ -16,9 +16,15 @@ export interface Club {
   
   /** Transfer budget in pence */
   transferBudget: number;
-  
-  /** Weekly wage budget in pence */
-  wageBudget: number;
+
+  /** Infrastructure budget in pence — funds facility upgrades */
+  infrastructureBudget: number;
+
+  /** Wage reserve in pence — funds ongoing salary commitments */
+  wageReserve: number;
+
+  /** How the overall budget is split across pools (percentages summing to 100) */
+  budgetAllocation: { transfer: number; infrastructure: number; wages: number };
   
   /** Current squad */
   squad: Player[];

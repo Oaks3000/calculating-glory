@@ -183,7 +183,7 @@ describe('handleCommand — UPGRADE_FACILITY', () => {
 describe('handleCommand — HIRE_STAFF', () => {
   it('produces a STAFF_HIRED event on success', () => {
     const s = baseState();
-    const state: GameState = { ...s, club: { ...s.club, wageBudget: 10000000 } };
+    const state: GameState = { ...s, club: { ...s.club, wageReserve: 500_000_000 } };
     const result = handleCommand({
       type: 'HIRE_STAFF',
       staffId: 'coach-1',
@@ -196,10 +196,9 @@ describe('handleCommand — HIRE_STAFF', () => {
 
   it('returns an error when wage budget is insufficient', () => {
     const s = baseState();
-    // wageBudget is 10% of initialBudget = 10,000,000 pence = £100,000/week
-    // Mock staff wages = 50,000 pence = £500/week, so this should pass by default
-    // Override with tiny wageBudget
-    const state: GameState = { ...s, club: { ...s.club, wageBudget: 100 } };
+    // wageReserve is tiny — hiring staff would leave less than 8 weeks runway
+    // Override with tiny wageReserve
+    const state: GameState = { ...s, club: { ...s.club, wageReserve: 100 } };
     const result = handleCommand({
       type: 'HIRE_STAFF',
       staffId: 'coach-1',

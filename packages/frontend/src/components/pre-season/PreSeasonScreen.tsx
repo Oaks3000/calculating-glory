@@ -33,7 +33,7 @@ export function PreSeasonScreen({ state, dispatch }: PreSeasonScreenProps) {
   const totalWages = club.squad.reduce((s, p) => s + p.wage, 0)
     + club.staff.reduce((s, st) => s + st.salary, 0)
     + (club.manager ? club.manager.wage : 0);
-  const wageBudgetRemaining = club.wageBudget - totalWages;
+  const wageRunway = totalWages > 0 ? Math.floor(club.wageReserve / totalWages) : Infinity;
 
   function confirmFormation() {
     if (!pendingFormation) return;
@@ -182,9 +182,9 @@ export function PreSeasonScreen({ state, dispatch }: PreSeasonScreenProps) {
                       a long season.
                     </p>
                     <p className="text-sm text-txt-muted leading-relaxed mt-2">
-                      Wage budget remaining:{' '}
-                      <span className={wageBudgetRemaining > 0 ? 'text-txt-primary font-medium' : 'text-alert-red font-medium'}>
-                        {formatMoney(wageBudgetRemaining)}/wk
+                      Wage runway:{' '}
+                      <span className={wageRunway >= 8 ? 'text-txt-primary font-medium' : 'text-alert-red font-medium'}>
+                        {wageRunway === Infinity ? '∞' : `${wageRunway}w runway`}
                       </span>
                     </p>
                   </div>
@@ -195,7 +195,8 @@ export function PreSeasonScreen({ state, dispatch }: PreSeasonScreenProps) {
                 managers={state.managerPool}
                 selected={pendingManager}
                 onSelect={setPendingManager}
-                wageBudgetRemaining={wageBudgetRemaining}
+                wageReserve={club.wageReserve}
+                currentTotalWages={totalWages}
               />
 
               {error && (
