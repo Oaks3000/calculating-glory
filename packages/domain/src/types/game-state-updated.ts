@@ -91,6 +91,8 @@ export interface PendingClubEvent {
     playerPosition?: string;
     playerOverall?: number;
     playerWage?: number;
+    /** Teamwork attribute (1–100). Low teamwork = player more susceptible to poaching. */
+    playerTeamwork?: number;
   };
 }
 
@@ -259,6 +261,32 @@ export interface GameState {
    * Used to update clubRecords.longestWinStreak in real time.
    */
   currentWinStreak: number;
+
+  /**
+   * Number of consecutive seasons the player has been relegated.
+   * Incremented at season end when relegated; reset to 0 otherwise.
+   * Used to trigger the relegation-spiral forced-out condition.
+   */
+  relegationsInARow: number;
+
+  /**
+   * Set when the board issues a formal ultimatum (boardConfidence < 30, week ≥ 20).
+   * Cleared on forced-out or season reset. If the player fails to meet the
+   * minimumPosition by deadlineWeek, they are forced out.
+   */
+  boardUltimatum: BoardUltimatum | null;
+}
+
+/**
+ * A board ultimatum issued when confidence drops critically low.
+ */
+export interface BoardUltimatum {
+  /** Week the ultimatum was issued */
+  issuedWeek: number;
+  /** Player must reach this position (or better) by deadlineWeek */
+  minimumPosition: number;
+  /** Week by which minimumPosition must be met */
+  deadlineWeek: number;
 }
 
 // ── Club Records ──────────────────────────────────────────────────────────────

@@ -302,6 +302,12 @@ export function PendingEventCard({ event, dispatch, onError, onMathChallenge }: 
             <span className="text-[10px] text-txt-muted">
               {event.metadata.playerPosition} · {event.metadata.playerWage ? formatMoney(event.metadata.playerWage) + '/wk' : ''}
             </span>
+            {event.metadata.playerTeamwork !== undefined && (
+              <span className={`text-[10px] font-medium mt-0.5 ${event.metadata.playerTeamwork < 50 ? 'text-warn-amber' : 'text-txt-muted'}`}>
+                Teamwork {event.metadata.playerTeamwork}
+                {event.metadata.playerTeamwork < 50 ? ' · low loyalty' : ''}
+              </span>
+            )}
           </div>
           {event.metadata.playerOverall !== undefined && (
             <div className="text-right shrink-0">

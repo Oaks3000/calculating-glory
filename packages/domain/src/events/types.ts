@@ -51,7 +51,8 @@ export type GameEvent =
   | BoardBailoutEvent
   | BudgetAllocationSetEvent
   | PlayerListedEvent
-  | PlayerUnlistedEvent;
+  | PlayerUnlistedEvent
+  | BoardUltimatumIssuedEvent;
 
 export interface TransferCompletedEvent {
   type: 'TRANSFER_COMPLETED';
@@ -351,10 +352,12 @@ export interface ScoutMissionCancelledEvent {
   clubId: string;
 }
 
-/** Emitted when the owner-forced-out trigger fires (bottom 3 + broke at week 30+) */
+/** Emitted when the owner-forced-out trigger fires */
 export interface OwnerForcedOutEvent {
   type: 'OWNER_FORCED_OUT';
   timestamp: number;
+  /** What triggered the forced-out */
+  reason: 'financial' | 'reputation' | 'relegation_spiral' | 'ultimatum';
   /** The club the player was running */
   previousClubId:   string;
   previousClubName: string;
@@ -370,6 +373,19 @@ export interface OwnerForcedOutEvent {
   takeoverBudget: number;
   /** Reputation malus applied on acceptance (negative value) */
   reputationMalus: number;
+}
+
+/**
+ * Emitted when board confidence drops critically low (< 30) at week ≥ 20
+ * and no ultimatum has been issued yet this season.
+ * Sets a deadline: reach minimumPosition by deadlineWeek or be forced out.
+ */
+export interface BoardUltimatumIssuedEvent {
+  type: 'BOARD_ULTIMATUM_ISSUED';
+  timestamp: number;
+  issuedWeek: number;
+  minimumPosition: number;
+  deadlineWeek: number;
 }
 
 /**

@@ -4,7 +4,7 @@
  * Pure functions that apply events to state.
  */
 
-import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent, ManagerHiredEvent, ManagerSackedEvent, PreSeasonStartedEvent, ScoutMissionStartedEvent, ScoutTargetFoundEvent, ScoutBidPlacedEvent, ScoutTransferCompletedEvent, OwnerForcedOutEvent, TakeoverAcceptedEvent, ParachuteOfferedEvent, CurriculumUpgradedEvent } from '../events/types';
+import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent, ManagerHiredEvent, ManagerSackedEvent, PreSeasonStartedEvent, ScoutMissionStartedEvent, ScoutTargetFoundEvent, ScoutBidPlacedEvent, ScoutTransferCompletedEvent, OwnerForcedOutEvent, TakeoverAcceptedEvent, ParachuteOfferedEvent, CurriculumUpgradedEvent, BoardUltimatumIssuedEvent } from '../events/types';
 import { GameState, Division } from '../types/game-state-updated';
 import { Club } from '../types/club';
 import { LeagueTable, LeagueTableEntry, sortLeagueTable } from '../types/league';
@@ -133,6 +133,8 @@ export function reduceEvent(state: GameState, event: GameEvent): GameState {
           listedPlayerIds: (state.club.listedPlayerIds ?? []).filter(id => id !== event.playerId),
         },
       };
+    case 'BOARD_ULTIMATUM_ISSUED':
+      return handleBoardUltimatumIssued(state, event);
     default:
       return state;
   }
@@ -174,13 +176,15 @@ export function buildState(events: GameEvent[]): GameState {
     lowMoraleWeeks: 0,
     moraleEventCooldowns: {},
     scoutMission: null,
-    forcedOut:    null,
-    division:     'LEAGUE_TWO',
-    npcStrengths: {},
+    forcedOut:         null,
+    division:          'LEAGUE_TWO',
+    npcStrengths:      {},
     resolvedEventWeeks: {},
-    mathsOutcomes: {},
-    clubRecords: { biggestWin: null, longestWinStreak: 0, topScorer: null },
-    currentWinStreak: 0,
+    mathsOutcomes:     {},
+    clubRecords:       { biggestWin: null, longestWinStreak: 0, topScorer: null },
+    currentWinStreak:  0,
+    relegationsInARow: 0,
+    boardUltimatum:    null,
   };
 
   return events.reduce(reduceEvent, initialState);
@@ -276,6 +280,7 @@ function handleGameStarted(state: GameState, event: GameStartedEvent): GameState
       squadCapacity: 24,
       manager: null,
       listedPlayerIds: [],
+      reputation: 50,
       stadium: {
         ...state.club.stadium,
         name: event.stadiumName ?? deriveStadiumName(event.clubName),
@@ -754,6 +759,19 @@ function handleSeasonEnded(state: GameState, event: any): GameState {
     boardConfidence: newBoardConfidence,
     division: newDivision,
     clubRecords: { ...state.clubRecords, topScorer },
+    relegationsInARow: relegated ? state.relegationsInARow + 1 : 0,
+    boardUltimatum: null, // reset each season
+  };
+}
+
+function handleBoardUltimatumIssued(state: GameState, event: BoardUltimatumIssuedEvent): GameState {
+  return {
+    ...state,
+    boardUltimatum: {
+      issuedWeek:      event.issuedWeek,
+      minimumPosition: event.minimumPosition,
+      deadlineWeek:    event.deadlineWeek,
+    },
   };
 }
 
@@ -1144,6 +1162,8 @@ function handleTakeoverAccepted(state: GameState, event: TakeoverAcceptedEvent):
     forcedOut: null,
     scoutMission: null,
     boardConfidence: 20,      // rock-bottom board confidence
+    relegationsInARow: 0,     // fresh start at new club
+    boardUltimatum: null,
     club: {
       ...state.club,
       id:             event.takeoverClubId,

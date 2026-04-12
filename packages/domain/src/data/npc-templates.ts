@@ -375,6 +375,62 @@ export const KEV_RELEGATION_ZONE = [
 // attendance, income trends. Warm, football-obsessed, slightly over-enthusiastic.
 // Placeholders: [POSITION], [INCOME], [BUDGET], [SQUAD]
 
+// ── Kev: all-time club record win ─────────────────────────────────────────
+//
+// Fires when a big win (3+ goal margin) beats the existing all-time record.
+// Replaces KEV_BIG_WIN on those occasions. Kev is historically aware.
+// Placeholders: [SCORE], [OPPONENT], [CLUB], [STADIUM]
+
+export const KEV_CLUB_RECORD_WIN = [
+  "That's [CLUB] history right there. [SCORE] against [OPPONENT] — I've seen a lot of games at [STADIUM] and that goes straight to the top.",
+  "[SCORE] vs [OPPONENT]. New club record. I don't say this lightly — that performance will be talked about here for a long time.",
+  "Best result in [CLUB]'s history. [SCORE]. [OPPONENT] never got near us. Write it down.",
+  "Record win. [SCORE] against [OPPONENT]. If the lads didn't believe before, they should now. [CLUB] can do anything this season.",
+  "[SCORE] vs [OPPONENT] — that's the new benchmark for this club. Everything we do from here should be measured against that.",
+];
+
+// ── Kev: previous season top scorer recall ────────────────────────────────
+//
+// Fires early in a new season (or every 8 weeks) when clubRecords.topScorer
+// exists from a prior season. Kev sets expectations based on what came before.
+// Placeholders: [TOP_SCORER], [TOP_SCORER_GOALS], [CLUB]
+
+export const KEV_TOP_SCORER_RECALL = [
+  "[TOP_SCORER] with [TOP_SCORER_GOALS] last season. That's the standard now. I want someone at [CLUB] chasing that down.",
+  "Don't forget what [TOP_SCORER] gave us — [TOP_SCORER_GOALS] goals. That kind of output doesn't just happen. We need to build on it.",
+  "I think about [TOP_SCORER] and [TOP_SCORER_GOALS] goals. That's what a proper [CLUB] front line looks like. Let's get back there.",
+  "[TOP_SCORER_GOALS] goals from [TOP_SCORER] last season. Whoever steps up this year has a real target to aim at.",
+  "The bar's been set. [TOP_SCORER] — [TOP_SCORER_GOALS] goals. I tell every forward we bring in: that's what [CLUB] expects.",
+];
+
+// ── Marcus: attendance buzz from good form ────────────────────────────────
+//
+// Fires when form is strong (4+ wins in last 5). Marcus links fan energy
+// to commercial opportunity. Enthusiastic but grounded.
+// Placeholders: [CLUB], [STADIUM], [STREAK]
+
+export const MARCUS_ATTENDANCE_BUZZ = [
+  "The crowds are responding. [STREAK] wins and [STADIUM] is generating real energy. Sponsors notice that — I've already had three conversations this week.",
+  "When [CLUB] are on a run like this, the commercial side looks after itself. Attendance up, noise up, revenue up. This is when we push.",
+  "[STADIUM] has been loud lately. [STREAK]-game run — the fans can feel something building. That atmosphere is worth money and I intend to use it.",
+  "Good form means full houses. Full houses mean I can have proper commercial conversations. [CLUB] on a [STREAK]-game run is the story I want to tell.",
+  "I track the matchday atmosphere as much as the results. Right now at [STADIUM] it's excellent. [STREAK] wins does that. Let's keep it going.",
+];
+
+// ── Marcus: attendance concerns from poor form ────────────────────────────
+//
+// Fires when form is poor (4+ losses in last 5). Marcus is direct but
+// not alarmist — he's problem-solving, not panicking.
+// Placeholders: [CLUB], [STADIUM], [STREAK]
+
+export const MARCUS_ATTENDANCE_QUIET = [
+  "I'll be straight with you — [STREAK] defeats and the atmosphere at [STADIUM] is subdued. The commercial conversations get harder when that happens.",
+  "Matchday revenues are softer. [CLUB] on a [STREAK]-game losing run — it shows in the stands. Results are the only thing that fixes it.",
+  "The fan zone was quieter than usual. [STREAK] losses will do that. I'm not panicking but I am paying attention.",
+  "Hard to sell positivity after [STREAK] defeats. [STADIUM] feels it. I'll keep working the commercial side but I need something to point to.",
+  "[STREAK] losses. The energy's gone flat at [STADIUM]. Come on — give me something to work with.",
+];
+
 export const MARCUS_COMMERCIAL_OBS = [
   'Not really my area, but I walked past the fan zone at [STADIUM] yesterday and it was buzzing. That atmosphere carries into the ground — I genuinely believe it helps the lads.',
   'Had a look at the matchday attendance numbers. When [CLUB] are playing well, the ground fills up. The connection between results and revenue is real. Win more, earn more — simple.',

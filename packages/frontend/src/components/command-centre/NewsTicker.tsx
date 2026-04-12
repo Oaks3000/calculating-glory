@@ -36,6 +36,7 @@ function buildSeasonArcHeadlines(
   leagueEntries: LeagueTableEntry[],
   currentWeek?: number,
   clubRecords?: ClubRecords,
+  stadiumName?: string,
 ): string[] {
   if (!currentWeek || currentWeek < 3) return [];
 
@@ -140,6 +141,37 @@ function buildSeasonArcHeadlines(
     } else if (pos >= dropZone) {
       headlines.push(`⚠ ${clubName} in the drop zone — ${ordinal(pos)} — every point is crucial`);
     }
+  }
+
+  // ── All-time win streak record ────────────────────────────────────────────
+  // Fires when the current win streak exceeds the stored all-time record.
+  if (latest === 'W' && clubRecords && streak > clubRecords.longestWinStreak && streak >= 5) {
+    headlines.push(`🏆 CLUB RECORD — ${streak}-game winning run — ${clubName} are making history`);
+  }
+
+  // ── Attendance/crowd narrative from extended form runs ───────────────────
+  // Fires when streak hits 5+ (wins or losses). One headline per threshold.
+  const venue = stadiumName ?? `${clubName}'s ground`;
+  if (latest === 'W' && streak === 5) {
+    headlines.push(`📣 Crowd building at ${venue} — five straight wins has the fans dreaming`);
+  } else if (latest === 'W' && streak === 8) {
+    headlines.push(`🔊 ${venue} is rocking — the best home atmosphere in weeks`);
+  } else if (latest === 'L' && streak === 5) {
+    headlines.push(`📉 Atmosphere flat at ${venue} — five defeats has the crowd restless`);
+  } else if (latest === 'L' && streak >= 7) {
+    headlines.push(`⚠ Boos heard at ${venue} — fans losing patience after ${streak} straight defeats`);
+  }
+
+  // ── Previous season best win nostalgia (fires once mid-season) ───────────
+  // Reminds the player of the club's all-time best result when there's a
+  // quiet week (no big result this week, around the halfway point).
+  if (
+    currentWeek &&
+    currentWeek % 23 === 0 &&
+    clubRecords?.biggestWin
+  ) {
+    const bw = clubRecords.biggestWin;
+    headlines.push(`📖 Club history: ${clubName}'s all-time record win — ${bw.playerGoals}–${bw.opponentGoals} vs ${bw.opponentName}`);
   }
 
   return headlines;
@@ -318,7 +350,7 @@ function buildHeadlines(
     }
   }
 
-  const arcHeadlines = buildSeasonArcHeadlines(events, clubId, clubName, leagueEntries, currentWeek, clubRecords as ClubRecords | undefined);
+  const arcHeadlines = buildSeasonArcHeadlines(events, clubId, clubName, leagueEntries, currentWeek, clubRecords as ClubRecords | undefined, stadiumName);
   const onThisDayHeadlines = (currentWeek !== undefined && currentSeason !== undefined)
     ? buildOnThisDayHeadlines(events, clubId, clubName, nameMap, currentWeek, currentSeason)
     : [];

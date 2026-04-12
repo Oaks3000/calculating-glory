@@ -54,43 +54,58 @@ An educational football club management game for Year 7 maths, built on event-so
 - Backroom staff visibility: manager display, match impact bar
 - Name audit: all fictional names reviewed and approved
 
+### Phase 10: Transfer Loop + Consequence Layer ✅ (PRs #125, this session)
+- Formation pitch grid in transfer market (#57)
+- Sell-with-jeopardy flow — list + offer + negotiation (#58)
+- Squad selection screen rethink (#56)
+- Player attributes fully wired into match sim, revenue, and morale (#30) — closed
+- Three new forced-out triggers: reputation collapse, relegation spiral, board ultimatum (#34)
+- Board ultimatum blocking modal with deadline enforcement
+
 ---
 
 ## Current Work
 
-### Remaining Polish
-- **#91** Season-end experience — final table, awards, promotion/relegation moment
-- **#92** Inbox overflow — multiple events stacking on same week
-- **#87** Stadium view — isometric facility panels with upgrade action
-- **#86** Math challenge difficulty scaling
-- **#80** Sponsor negotiation — Val presents deals, maths challenge
+### Command Centre & Navigation
+- **#124** Command Centre UX/UI overhaul — navigation, discoverability, and playability
+- **#111** Command Centre information density — progressive disclosure pattern
 
-### Phase 7 Visual Upgrade (SC2K)
-- **#66** Construction animations — hazard dashes, jostle, dust particles
-- **#65** Match pitch done ✅; remaining: seeded blip movement, crowd-flash on Stands, isometric migration
-- 3-tone SC2K tile shading, per-facility micro-animations
-- See BACKLOG.md Phase 7 section for full spec
+### NPC & Conversation Layer
+- **#119** Chat area rethink — negotiate panel becomes NPC hub, inbox reverts to static updates
+- **#113** Freeform NPC chat — LLM-backed conversations with Val/Marcus/Kev/Dani
+- **#112** Kev squad review chat — guided squad analysis at season start
+- **#109** NPC manager shell personas — distinct personalities managers can inhabit
+
+### Gameplay Systems
+- **#29** Manager creation, hiring, and impact on club performance
+- **#32** Scout facility — `truePotential` reveal accuracy beyond `publicPotential` baseline
+- **#36** NPC poaching — NPC clubs approach players in your squad (depends on #29)
+- **#28** Construction lag time + staged build visuals for facility upgrades
+
+### Visual & Match Immersion
+- **#65** Phase 7 match immersion — stadium atmosphere, animated play, CM-style goal moments
+- **#86** Mobile/touch feel — game must work on phones and tablets
+
+### Polish
+- **#84** Club identity — it should feel like YOUR club
 
 ---
 
 ## Future Phases
 
 ### Gameplay Depth
-- #70 Formation tactics — player chooses formation and style
-- #71 Transfer windows — summer/January with deadline-day drama
-- #72 Dynamic sponsors — scale with league position and reputation
-- #73 Local derbies — special atmosphere and crowd boost
-- #74 Rival managers — named AI personalities
-- #75 Board objectives — start-of-season targets
-- #76 Morale system expansion
-- #77 Youth academy — promote youth players
-- #78 Player development — training affects individual growth
-- #79 Scout report deep-dive — profile cards with strengths/weaknesses
+- Transfer windows — summer/January with deadline-day drama
+- Dynamic sponsors — scale with league position and reputation
+- Local derbies — special atmosphere and crowd boost
+- Board objectives — start-of-season targets set at pre-season
+- Youth academy — promote youth players
+- Player development — individual training affects growth
+- Scout report deep-dive — profile cards with strengths/weaknesses
 
 ### Technical & Accessibility
-- #67 Chromebook performance audit (target 60fps, <500KB bundle)
-- #68 Accessibility audit — keyboard nav, screen reader, reduced-motion
-- #69 Save/load system — multiple save slots
+- Chromebook performance audit (target 60fps, <500KB bundle)
+- Accessibility audit — keyboard nav, screen reader, reduced-motion
+- Save/load system — multiple save slots
 
 ### Educational
 - Adaptive difficulty wired to live evidence (not just curriculum level)

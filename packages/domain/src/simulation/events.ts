@@ -254,6 +254,8 @@ export function generateWeekEvents(
  */
 const POACH_BASE_RATE = 0.06; // 6% base per player per week for a 50-OVR player
 const POACH_RATING_SCALE = 0.004; // +0.4% per rating point above 50
+const POACH_UNSETTLED_MULT = 3;  // unsettled players (morale < 20) 3× more likely to be approached
+const POACH_LOW_TEAMWORK_MULT = 1.5; // low-teamwork players (< 50) 1.5× more susceptible
 
 function poachChance(overallRating: number): number {
   return POACH_BASE_RATE + Math.max(0, overallRating - 50) * POACH_RATING_SCALE;
@@ -298,11 +300,13 @@ export function generatePoachAttempts(
   );
   if (poachPending) return [];
 
-  // Pick a random target, weighted by overallRating × unsettled multiplier.
+  // Pick a random target, weighted by overallRating × teamwork × unsettled multipliers.
+  // Low-teamwork players (< 50) are 1.5× more susceptible — less loyal, more ambitious.
   // Unsettled players (morale < 20) are 3× more likely to be approached.
-  const UNSETTLED_POACH_MULT = 3;
   const weightOf = (p: typeof targets[0]) =>
-    computeOverallRating(p) * (isUnsettled(p) ? UNSETTLED_POACH_MULT : 1);
+    computeOverallRating(p) *
+    (isUnsettled(p) ? POACH_UNSETTLED_MULT : 1) *
+    (p.attributes.teamwork < 50 ? POACH_LOW_TEAMWORK_MULT : 1);
   const totalWeight = targets.reduce((sum, p) => sum + weightOf(p), 0);
   let pick = rng.next() * totalWeight;
   const target = targets.find(p => {
@@ -313,22 +317,27 @@ export function generatePoachAttempts(
   // Roll per-player chance
   if (rng.next() > poachChance(computeOverallRating(target))) return [];
 
-  // Pick a random NPC club (not the player's own club)
-  const npcClubs = getTeamsForDivision(state.division).filter(t => t.id !== state.club.id);
-  const npcClub = npcClubs[rng.nextInt(0, npcClubs.length - 1)];
+  // Pick an NPC club that is stronger than the player's club when possible
+  // (a bigger club circling is more threatening and narratively coherent).
+  const allNpcs = getTeamsForDivision(state.division).filter(t => t.id !== state.club.id);
+  const biggerNpcs = allNpcs.filter(t => (state.npcStrengths[t.id] ?? 50) > state.club.reputation);
+  const npcPool = biggerNpcs.length > 0 ? biggerNpcs : allNpcs;
+  const npcClub = npcPool[rng.nextInt(0, npcPool.length - 1)];
 
-  const fee = offeredFee(target.wage, computeOverallRating(target));
-  const feeStr = (fee / 100).toLocaleString('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-    maximumFractionDigits: 0,
+  const ovr = computeOverallRating(target);
+  const fee = offeredFee(target.wage, ovr);
+  const fmt = (p: number) => (p / 100).toLocaleString('en-GB', {
+    style: 'currency', currency: 'GBP', maximumFractionDigits: 0,
   });
-  const counterFee = Math.round(fee * 1.5);
-  const counterFeeStr = (counterFee / 100).toLocaleString('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-    maximumFractionDigits: 0,
-  });
+  const feeStr = fmt(fee);
+
+  // Negotiate fee: correct maths answer = +25% on top; wrong = same as accept
+  const negotiateCorrectFee = Math.round(fee * 1.25);
+  const negotiateCorrectFeeStr = fmt(negotiateCorrectFee);
+
+  // Retention bonus: 8 weeks' wages, paid upfront as a contract incentive
+  const retentionFee = Math.round(target.wage * 8);
+  const retentionFeeStr = fmt(retentionFee);
 
   const poachEvent: PendingClubEvent = {
     id: `evt-S${season}-W${week}-poach`,
@@ -337,16 +346,18 @@ export function generatePoachAttempts(
     title: `${npcClub.name} want ${target.name}`,
     description: `${npcClub.name} have submitted a formal bid of ${feeStr} for ${target.name}. How do you respond?`,
     severity: 'major',
+    bankTopic: 'PERCENTAGES',
     metadata: {
-      eventKind: 'poach',
+      eventKind:          'poach',
       poachTargetPlayerId: target.id,
-      npcClubId: npcClub.id,
-      npcClubName: npcClub.name,
-      offeredFee: fee,
-      playerName: target.name,
-      playerPosition: target.position,
-      playerOverall: computeOverallRating(target),
-      playerWage: target.wage,
+      npcClubId:          npcClub.id,
+      npcClubName:        npcClub.name,
+      offeredFee:         fee,
+      playerName:         target.name,
+      playerPosition:     target.position,
+      playerOverall:      ovr,
+      playerWage:         target.wage,
+      playerTeamwork:     target.attributes.teamwork,
     },
     choices: [
       {
@@ -358,25 +369,27 @@ export function generatePoachAttempts(
         playerLeaves: true,
       },
       {
-        id: 'reject',
-        label: 'Reject the bid',
-        description: `Turn down the offer. ${target.name} stays, but may be unsettled.`,
-        moraleEffect: -15,
-      },
-      {
-        id: 'counter',
-        label: `Counter at ${counterFeeStr}`,
-        description: `Demand 50% more. ${npcClub.name} agrees. ${target.name} moves on for a premium fee.`,
-        budgetEffect: counterFee,
-        reputationEffect: 5,
+        id: 'negotiate',
+        label: 'Negotiate the fee',
+        description: `Push back on the price. Solve a % question correctly to unlock ${negotiateCorrectFeeStr} — get it wrong and the deal goes at ${feeStr}.`,
+        budgetEffect:              fee,                // fallback if maths not shown
+        mathsCorrectBudgetEffect:  negotiateCorrectFee,
+        mathsWrongBudgetEffect:    fee,
+        reputationEffect: 2,
         playerLeaves: true,
       },
       {
-        id: 'ignore',
-        label: 'Say nothing',
-        description: `Don't respond at all. The bid lapses, but ${target.name} is left in the dark and is very unhappy.`,
-        moraleEffect: -25,
-        reputationEffect: -5,
+        id: 'offer-contract',
+        label: 'Offer a new contract',
+        description: `Show ${target.name} their future is here. Pay a ${retentionFeeStr} retention bonus — ${target.name} commits and the bid is off the table.`,
+        budgetEffect: -retentionFee,
+        moraleEffect: 15,
+      },
+      {
+        id: 'reject',
+        label: 'Reject the bid',
+        description: `Turn down the offer outright. ${target.name} stays, but may be unsettled knowing they had interest elsewhere.`,
+        moraleEffect: -15,
       },
     ],
     resolved: false,
