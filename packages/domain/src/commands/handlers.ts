@@ -584,66 +584,129 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
     season
   });
 
-  // ── Owner-forced-out check ──────────────────────────────────────────────────
-  // Trigger: position bottom 3 of 24 + budget < £10,000 + week >= 30
-  // Fires once — if already in FORCED_OUT phase, skip.
-  if (
+  // ── Consequence checks (skip if already in a forced-out phase or at season end) ──
+  const canForcedOut = (
     state.phase !== 'FORCED_OUT' &&
+    state.phase !== 'PARACHUTE_OFFERED' &&
     state.phase !== 'SEASON_END' &&
-    !state.forcedOut &&
-    week >= 30
-  ) {
+    !state.forcedOut
+  );
+
+  if (canForcedOut) {
     const playerEntry   = state.league.entries.find(e => e.clubId === state.club.id);
     const position      = playerEntry?.position ?? 1;
-    const inBottom3     = position > 21;              // positions 22, 23, 24 out of 24
     const totalBudget   = state.club.transferBudget + (state.club.infrastructureBudget ?? 0) + (state.club.wageReserve ?? 0);
-    const broke         = totalBudget < 1_000_000; // < £10,000
 
-    if (inBottom3 && broke) {
-      // Find the lowest-ranked NPC club (highest position number that isn't the player's)
+    // Helper: build and return a forced-out event, halting further processing.
+    function emitForcedOut(reason: 'financial' | 'reputation' | 'ultimatum') {
+      const sorted    = [...state.league.entries].sort((a, b) => b.position - a.position);
+      const bottomNPC = sorted.find(e => e.clubId !== state.club.id);
+      if (!bottomNPC) return false;
+      const gameStartEvent = state.events.find(e => e.type === 'GAME_STARTED') as
+        { type: 'GAME_STARTED'; seed: string } | undefined;
+      const seedStr        = gameStartEvent?.seed ?? 'default-seed';
+      const npcStrength    = state.npcStrengths[bottomNPC.clubId] ?? 40;
+      const takeoverBudget = Math.round((npcStrength / 100) * 10_000_000);
+      events.push({
+        type:             'OWNER_FORCED_OUT',
+        timestamp:        now,
+        reason,
+        previousClubId:   state.club.id,
+        previousClubName: state.club.name,
+        previousPosition: position,
+        takeoverClubId:   bottomNPC.clubId,
+        takeoverClubName: bottomNPC.clubName,
+        seed:             seedStr,
+        week,
+        takeoverBudget,
+        reputationMalus:  -10,
+      });
+      return true;
+    }
+
+    // ── Trigger 1: Financial ruin — bottom 3 + broke at week 30+ ───────────────
+    if (week >= 30 && position > 21 && totalBudget < 1_000_000) {
+      if (emitForcedOut('financial')) return { events };
+    }
+
+    // ── Trigger 2: Reputation collapse — rep < 20 at week 20+ ─────────────────
+    if (week >= 20 && state.club.reputation < 20) {
+      if (emitForcedOut('reputation')) return { events };
+    }
+
+    // ── Trigger 3: Board ultimatum deadline missed ──────────────────────────────
+    if (
+      state.boardUltimatum &&
+      week === state.boardUltimatum.deadlineWeek &&
+      position > state.boardUltimatum.minimumPosition
+    ) {
+      if (emitForcedOut('ultimatum')) return { events };
+    }
+
+    // ── Board ultimatum issuance — confidence < 30, week 20+, not already set ──
+    if (
+      week >= 20 &&
+      state.boardConfidence < 30 &&
+      !state.boardUltimatum
+    ) {
+      // Deadline: 8 weeks from now (capped at week 44 to allow enforcement at 46)
+      const deadlineWeek     = Math.min(week + 8, 44);
+      // Require top half or better (position ≤ 12)
+      const minimumPosition  = 12;
+      events.push({
+        type:            'BOARD_ULTIMATUM_ISSUED',
+        timestamp:       now,
+        issuedWeek:      week,
+        minimumPosition,
+        deadlineWeek,
+      });
+      // Continue processing — don't return early; forced-out may also fire above on a later week
+    }
+  }
+
+  // ── Season end: relegation-spiral check then SeasonEndedEvent ──────────────
+  if (week === 46) {
+    const playerEntry       = state.league.entries.find(e => e.clubId === state.club.id);
+    const finalPosition     = playerEntry?.position ?? state.league.entries.length;
+    const promotionPositions = state.league.automaticPromotion;
+    const relegationPositions = state.league.relegation;
+    const relegated          = relegationPositions.includes(finalPosition);
+
+    // Trigger 4: Relegation spiral — relegated for the 2nd+ consecutive season
+    if (relegated && state.relegationsInARow >= 1 && !state.forcedOut) {
       const sorted    = [...state.league.entries].sort((a, b) => b.position - a.position);
       const bottomNPC = sorted.find(e => e.clubId !== state.club.id);
       if (bottomNPC) {
         const gameStartEvent = state.events.find(e => e.type === 'GAME_STARTED') as
           { type: 'GAME_STARTED'; seed: string } | undefined;
-        const seedStr = gameStartEvent?.seed ?? 'default-seed';
-        // Infer NPC club budget from their evolved strength (pence)
-        // Weakest (strength 30) → ~£30k; median (50) → ~£50k
-        const npcStrength = state.npcStrengths[bottomNPC.clubId] ?? 40;
+        const seedStr        = gameStartEvent?.seed ?? 'default-seed';
+        const npcStrength    = state.npcStrengths[bottomNPC.clubId] ?? 40;
         const takeoverBudget = Math.round((npcStrength / 100) * 10_000_000);
         events.push({
           type:             'OWNER_FORCED_OUT',
           timestamp:        now,
+          reason:           'relegation_spiral',
           previousClubId:   state.club.id,
           previousClubName: state.club.name,
-          previousPosition: position,
+          previousPosition: finalPosition,
           takeoverClubId:   bottomNPC.clubId,
           takeoverClubName: bottomNPC.clubName,
           seed:             seedStr,
           week,
           takeoverBudget,
-          reputationMalus:  -10,
+          reputationMalus:  -15,
         });
-        return { events }; // Skip SEASON_ENDED — game transitions to FORCED_OUT phase
+        return { events }; // Skip SEASON_ENDED
       }
     }
-  }
 
-  // If this is the last week of the season, emit SeasonEndedEvent
-  if (week === 46) {
-    // Calculate final position from current league table
-    // The WEEK_ADVANCED event hasn't been applied yet, so we work from current state
-    const playerEntry = state.league.entries.find(e => e.clubId === state.club.id);
-    const finalPosition = playerEntry?.position ?? state.league.entries.length;
-    const promotionPositions = state.league.automaticPromotion;
-    const relegationPositions = state.league.relegation;
     events.push({
       type: 'SEASON_ENDED',
       timestamp: now,
       season,
       finalPosition,
-      promoted: finalPosition <= promotionPositions,
-      relegated: relegationPositions.includes(finalPosition)
+      promoted:  finalPosition <= promotionPositions,
+      relegated,
     });
   }
 

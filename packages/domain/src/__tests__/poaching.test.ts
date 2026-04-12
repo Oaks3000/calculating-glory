@@ -1,12 +1,12 @@
 /**
- * NPC Poaching Tests — Phase 5.4
+ * NPC Poaching Tests — Phase 5.4 (updated for #36)
  *
  * Tests for:
  *   - generatePoachAttempts: correct generation, rate gating, cooldown
- *   - Resolve 'accept':  player removed from squad, budget increases, rep +3
- *   - Resolve 'reject':  player stays, morale drops -15
- *   - Resolve 'counter': player removed, budget increases by 1.5× fee, rep +5
- *   - Resolve 'ignore':  player stays, morale drops -25, rep -5
+ *   - Resolve 'accept':        player removed from squad, budget increases, rep +3
+ *   - Resolve 'reject':        player stays, morale drops -15
+ *   - Resolve 'negotiate':     player removed, budget increases by fee (base; maths routes separate), rep +2
+ *   - Resolve 'offer-contract':player stays, morale +15, budget reduced by retention fee
  */
 
 import { buildState, reduceEvent } from '../reducers';
@@ -93,25 +93,27 @@ function withPoachEvent(
         playerLeaves: true,
       },
       {
+        id: 'negotiate',
+        label: 'Negotiate the fee',
+        description: 'Push back on the price.',
+        budgetEffect: offeredFee,
+        mathsCorrectBudgetEffect: Math.round(offeredFee * 1.25),
+        mathsWrongBudgetEffect: offeredFee,
+        reputationEffect: 2,
+        playerLeaves: true,
+      },
+      {
+        id: 'offer-contract',
+        label: 'Offer a new contract',
+        description: 'Pay retention bonus.',
+        budgetEffect: -Math.round(target.wage * 8),
+        moraleEffect: 15,
+      },
+      {
         id: 'reject',
         label: 'Reject the bid',
         description: 'Keep player.',
         moraleEffect: -15,
-      },
-      {
-        id: 'counter',
-        label: 'Counter at 1.5×',
-        description: 'Sell for more.',
-        budgetEffect: Math.round(offeredFee * 1.5),
-        reputationEffect: 5,
-        playerLeaves: true,
-      },
-      {
-        id: 'ignore',
-        label: 'Say nothing',
-        description: 'Ghost the bid.',
-        moraleEffect: -25,
-        reputationEffect: -5,
       },
     ],
     resolved: false,
@@ -192,10 +194,10 @@ describe('generatePoachAttempts', () => {
     expect(event.metadata?.poachTargetPlayerId).toBe('star');
     expect(event.metadata?.offeredFee).toBeGreaterThan(0);
     expect(event.choices).toHaveLength(4);
-    expect(event.choices.map(c => c.id)).toEqual(['accept', 'reject', 'counter', 'ignore']);
+    expect(event.choices.map(c => c.id)).toEqual(['accept', 'negotiate', 'offer-contract', 'reject']);
   });
 
-  it('counter choice budget is 1.5× the accept choice budget', () => {
+  it('negotiate choice mathsCorrectBudgetEffect is 1.25× the accept fee', () => {
     const base = makeStartedState();
     const target = makePlayer({ id: 'star', wage: 200_000, attributes: { attack: 80, defence: 80, teamwork: 80, charisma: 50, publicPotential: 65 } });
     const state = withSquad(base, [target]);
@@ -204,8 +206,9 @@ describe('generatePoachAttempts', () => {
 
     const [event] = generatePoachAttempts(state, 3, 1, firingSeed);
     const accept = event.choices.find(c => c.id === 'accept')!;
-    const counter = event.choices.find(c => c.id === 'counter')!;
-    expect(counter.budgetEffect).toBe(Math.round(accept.budgetEffect! * 1.5));
+    const negotiate = event.choices.find(c => c.id === 'negotiate')!;
+    expect(negotiate.mathsCorrectBudgetEffect).toBe(Math.round(accept.budgetEffect! * 1.25));
+    expect(negotiate.mathsWrongBudgetEffect).toBe(accept.budgetEffect);
   });
 });
 
@@ -267,40 +270,42 @@ describe('resolve poach — reject', () => {
   });
 });
 
-// ── Resolution: counter ──────────────────────────────────────────────────────
+// ── Resolution: negotiate ────────────────────────────────────────────────────
 
-describe('resolve poach — counter', () => {
-  it('removes player and awards 1.5× fee', () => {
+describe('resolve poach — negotiate', () => {
+  it('removes player and awards base fee (no maths context)', () => {
     const target = makePlayer({ id: 'p1' });
     const fee = 800_000;
-    const counterFee = Math.round(fee * 1.5);
     let state = withSquad(makeStartedState(), [target]);
     state = withPoachEvent(state, target, fee);
     const budgetBefore = state.club.transferBudget;
 
     const result = handleCommand(
-      { type: 'RESOLVE_CLUB_EVENT', eventId: 'evt-S1-W3-poach', choiceId: 'counter' },
+      { type: 'RESOLVE_CLUB_EVENT', eventId: 'evt-S1-W3-poach', choiceId: 'negotiate' },
       state
     );
     expect(result.error).toBeUndefined();
     const newState = result.events!.reduce(reduceEvent, state);
 
     expect(newState.club.squad.find(p => p.id === 'p1')).toBeUndefined();
-    expect(newState.club.transferBudget).toBe(budgetBefore + counterFee);
-    expect(newState.club.reputation).toBe(state.club.reputation + 5);
+    expect(newState.club.transferBudget).toBe(budgetBefore + fee);
+    expect(newState.club.reputation).toBe(state.club.reputation + 2);
   });
 });
 
-// ── Resolution: ignore ───────────────────────────────────────────────────────
+// ── Resolution: offer-contract ───────────────────────────────────────────────
 
-describe('resolve poach — ignore', () => {
-  it('keeps player but drops morale by 25 and rep by 5', () => {
-    const target = makePlayer({ id: 'p1', morale: 75 });
+describe('resolve poach — offer-contract', () => {
+  it('keeps player, raises morale by 15, deducts retention fee from budget', () => {
+    const wage = 100_000;
+    const target = makePlayer({ id: 'p1', morale: 60, wage });
+    const retentionFee = Math.round(wage * 8);
     let state = withSquad(makeStartedState(), [target]);
     state = withPoachEvent(state, target, 800_000);
+    const budgetBefore = state.club.transferBudget;
 
     const result = handleCommand(
-      { type: 'RESOLVE_CLUB_EVENT', eventId: 'evt-S1-W3-poach', choiceId: 'ignore' },
+      { type: 'RESOLVE_CLUB_EVENT', eventId: 'evt-S1-W3-poach', choiceId: 'offer-contract' },
       state
     );
     expect(result.error).toBeUndefined();
@@ -308,26 +313,26 @@ describe('resolve poach — ignore', () => {
 
     const player = newState.club.squad.find(p => p.id === 'p1')!;
     expect(player).toBeDefined();
-    expect(player.morale).toBe(50); // 75 - 25
-    expect(newState.club.reputation).toBe(Math.max(0, state.club.reputation - 5));
+    expect(player.morale).toBe(75); // 60 + 15
+    expect(newState.club.transferBudget).toBe(budgetBefore - retentionFee);
   });
 });
 
 // ── Morale clamping ──────────────────────────────────────────────────────────
 
 describe('morale clamping', () => {
-  it('morale cannot drop below 0', () => {
+  it('morale cannot drop below 0 on reject', () => {
     const target = makePlayer({ id: 'p1', morale: 10 });
     let state = withSquad(makeStartedState(), [target]);
     state = withPoachEvent(state, target, 800_000);
 
     const result = handleCommand(
-      { type: 'RESOLVE_CLUB_EVENT', eventId: 'evt-S1-W3-poach', choiceId: 'ignore' },
+      { type: 'RESOLVE_CLUB_EVENT', eventId: 'evt-S1-W3-poach', choiceId: 'reject' },
       state
     );
     const newState = result.events!.reduce(reduceEvent, state);
     const player = newState.club.squad.find(p => p.id === 'p1')!;
-    expect(player.morale).toBe(0);
+    expect(player.morale).toBe(0); // 10 - 15 clamped to 0
   });
 });
 

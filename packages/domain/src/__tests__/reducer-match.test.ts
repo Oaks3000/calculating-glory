@@ -77,6 +77,8 @@ function makeState(entries: LeagueTableEntry[], playerClubId: string = 'club-1')
     mathsOutcomes: {},
     clubRecords: { biggestWin: null, longestWinStreak: 0, topScorer: null },
     currentWinStreak: 0,
+    relegationsInARow: 0,
+    boardUltimatum: null,
   };
 }
 

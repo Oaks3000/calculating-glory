@@ -12,6 +12,7 @@ import { ViewToggle, ActiveView } from './components/shared/ViewToggle';
 import { PreSeasonScreen } from './components/pre-season/PreSeasonScreen';
 import { SeasonEndScreen } from './components/season-end/SeasonEndScreen';
 import { ForcedOutScreen } from './components/forced-out/ForcedOutScreen';
+import { BoardUltimatumModal } from './components/forced-out/BoardUltimatumModal';
 import { MenuScreen } from './components/menu/MenuScreen';
 import { IntroScreen } from './components/intro/IntroScreen';
 import { OwnerBox } from './components/owner-box/OwnerBox';
@@ -35,6 +36,8 @@ export default function App() {
   const [ownerBoxData, setOwnerBoxData] = useState<OwnerBoxData | null>(null);
   const [showPostMatch, setShowPostMatch] = useState(false);
   const [showPreMatch, setShowPreMatch] = useState(false);
+  // Track which week's ultimatum the player has dismissed (so it doesn't re-appear)
+  const [ultimatumDismissedWeek, setUltimatumDismissedWeek] = useState<number | null>(null);
   const processedEventCount = useRef<number | null>(null);
 
   // Detect new MATCH_SIMULATED events after simulation completes
@@ -225,6 +228,13 @@ export default function App() {
           state={state}
           events={events}
           onContinue={() => { setOwnerBoxData(null); setShowPostMatch(false); }}
+        />
+      )}
+
+      {state.boardUltimatum && ultimatumDismissedWeek !== state.boardUltimatum.issuedWeek && (
+        <BoardUltimatumModal
+          state={state}
+          onDismiss={() => setUltimatumDismissedWeek(state.boardUltimatum!.issuedWeek)}
         />
       )}
     </div>

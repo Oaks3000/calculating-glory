@@ -45,6 +45,10 @@ import {
   DANI_RESULT_WIN,
   DANI_RESULT_DRAW,
   DANI_RESULT_LOSS,
+  KEV_CLUB_RECORD_WIN,
+  KEV_TOP_SCORER_RECALL,
+  MARCUS_ATTENDANCE_BUZZ,
+  MARCUS_ATTENDANCE_QUIET,
 } from '../data/npc-templates';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -122,19 +126,27 @@ export function generateNpcMessages(
   const playerPosition = state.league.entries.findIndex(e => e.clubId === state.club.id) + 1;
   const agentCount = state.freeAgentPool?.length ?? 0;
 
+  const records = state.clubRecords;
+  const topScorer = records?.topScorer;
+  const biggestWin = records?.biggestWin;
+
   const fillVars: Record<string, string> = {
-    WAGES:    formatMoney(weeklyWages),
-    INCOME:   formatMoney(weeklyIncome),
-    NET:      signedMoney(netPerWeek),
-    RUNWAY:   runway === Infinity ? '99+' : String(Math.floor(runway)),
-    BUDGET:   formatMoney(state.club.transferBudget),
-    SQUAD:    String(state.club.squad.length),
-    AGENTS:   String(agentCount),
-    POSITION: playerPosition > 0 ? String(playerPosition) : '?',
-    TOTAL:    String(state.league.entries.length),
-    BOARD:    String(state.boardConfidence),
-    CLUB:     state.club.name,
-    STADIUM:  state.club.stadium.name,
+    WAGES:             formatMoney(weeklyWages),
+    INCOME:            formatMoney(weeklyIncome),
+    NET:               signedMoney(netPerWeek),
+    RUNWAY:            runway === Infinity ? '99+' : String(Math.floor(runway)),
+    BUDGET:            formatMoney(state.club.transferBudget),
+    SQUAD:             String(state.club.squad.length),
+    AGENTS:            String(agentCount),
+    POSITION:          playerPosition > 0 ? String(playerPosition) : '?',
+    TOTAL:             String(state.league.entries.length),
+    BOARD:             String(state.boardConfidence),
+    CLUB:              state.club.name,
+    STADIUM:           state.club.stadium.name,
+    TOP_SCORER:        topScorer?.name ?? '',
+    TOP_SCORER_GOALS:  topScorer ? String(topScorer.goals) : '',
+    BIGGEST_WIN_SCORE: biggestWin ? `${biggestWin.playerGoals}–${biggestWin.opponentGoals}` : '',
+    BIGGEST_WIN_OPP:   biggestWin?.opponentName ?? '',
   };
 
   // ── Val weekly summary ─────────────────────────────────────────────────
@@ -375,12 +387,17 @@ export function generateNpcMessages(
     };
 
     // Big win (3+ goal margin): special emphatic pool for both Kev and Marcus.
+    // If it breaks the all-time record, Kev uses the historic pool instead.
     const margin = mPlayerG - mOppG;
     if (margin >= 3) {
+      const allTimeMargin = biggestWin
+        ? biggestWin.playerGoals - biggestWin.opponentGoals
+        : 0;
+      const isClubRecord = margin > allTimeMargin;
       messages.push({
         id: `KEV-BIG_WIN-w${week}-s${season}`,
         sender: 'KEV',
-        text: fillPlaceholders(pick(KEV_BIG_WIN, rng), mFill),
+        text: fillPlaceholders(pick(isClubRecord ? KEV_CLUB_RECORD_WIN : KEV_BIG_WIN, rng), mFill),
         week,
         season,
         category: 'POST_MATCH',
@@ -424,6 +441,52 @@ export function generateNpcMessages(
       season,
       category: 'COMMERCIAL_UPDATE',
     });
+  }
+
+  // ── Kev: previous season top scorer recall (every 8 weeks) ───────────────
+  // Only fires if a top scorer record exists from a prior season.
+  // Gives Kev a reason to reference club history and set expectations.
+
+  if (topScorer && week % 8 === 4) {
+    messages.push({
+      id: `KEV-TOP_SCORER_RECALL-w${week}-s${season}`,
+      sender: 'KEV',
+      text: fillPlaceholders(pick(KEV_TOP_SCORER_RECALL, rng), fillVars),
+      week,
+      season,
+      category: 'FORM_UPDATE',
+    });
+  }
+
+  // ── Marcus: attendance reaction to extended form runs ────────────────────
+  // Fires when form is very good (4+ wins in last 5) or very poor (4+ losses).
+  // Throttled to week % 4 === 3 to avoid weekly repetition.
+
+  if (week % 4 === 3 && state.club.form.length >= 5) {
+    const last5 = state.club.form.slice(-5);
+    const wins  = last5.filter(r => r === 'W').length;
+    const losses = last5.filter(r => r === 'L').length;
+    const streakCount = String(wins >= 4 ? wins : losses);
+    const attendanceFill = { ...fillVars, STREAK: streakCount };
+    if (wins >= 4) {
+      messages.push({
+        id: `MARCUS-ATTENDANCE_BUZZ-w${week}-s${season}`,
+        sender: 'MARCUS',
+        text: fillPlaceholders(pick(MARCUS_ATTENDANCE_BUZZ, rng), attendanceFill),
+        week,
+        season,
+        category: 'COMMERCIAL_UPDATE',
+      });
+    } else if (losses >= 4) {
+      messages.push({
+        id: `MARCUS-ATTENDANCE_QUIET-w${week}-s${season}`,
+        sender: 'MARCUS',
+        text: fillPlaceholders(pick(MARCUS_ATTENDANCE_QUIET, rng), attendanceFill),
+        week,
+        season,
+        category: 'COMMERCIAL_UPDATE',
+      });
+    }
   }
 
   // ── Dani Osei weekly press update ──────────────────────────────────────

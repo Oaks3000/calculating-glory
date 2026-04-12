@@ -93,6 +93,7 @@ function stateWithLeaguePosition(opts: {
       transferBudget: opts.budget,
       infrastructureBudget: 0,
       wageReserve: 0,
+      reputation: 50, // safe default — tests target financial trigger only unless overriding
     },
     league: {
       ...s.league,
@@ -233,6 +234,7 @@ describe('reduceEvent OWNER_FORCED_OUT', () => {
       week:             30,
       takeoverBudget:   4_000_000,
       reputationMalus:  -10,
+      reason:           'financial' as const,
       ...overrides,
     };
   }
@@ -590,6 +592,7 @@ describe('forced-out full round-trip via buildState', () => {
       week:             33,
       takeoverBudget:   3_500_000,
       reputationMalus:  -10,
+      reason:           'financial' as const,
     };
 
     const po: ParachuteOfferedEvent = {

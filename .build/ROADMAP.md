@@ -65,31 +65,52 @@ An educational football club management game for Year 7 maths, built on event-so
 - NPC league persistence — previous season table with pill toggle from season 2+
 - Frontend test suite — 23 tests across FacilityCard and InboxCard
 
+### Phase 12: Consequence Layer + Club Identity + Poaching ✅ (PR #128)
+- Four forced-out triggers: financial ruin, reputation collapse, relegation spiral, board ultimatum (#34)
+- Board ultimatum blocking modal with deadline enforcement
+- NPC poaching overhaul: teamwork-weighted targeting, strength-based club selection, maths-gated negotiate choice, offer-contract retention (#36)
+- Club identity (NPC dialogue layer): Kev references records, crowd atmosphere reactions, ticker history headlines (#84)
+
 ---
 
 ## Current Work
 
-### Phase 12: Command Centre UX Overhaul
+### Phase 13: Command Centre UX Overhaul
 - **#124** Full nav/layout overhaul — persistent left-rail (desktop) / bottom bar (mobile), section pages replacing slide-overs, budget allocation preview-first flow
 - **#111** Progressive disclosure — priority ordering, collapsible sections, new-player ramp
 - **#119** Chat area rethink — negotiate panel becomes NPC conversation hub; inbox reverts to read-only updates
 - **#86** Mobile/touch feel — game must work well on phones and tablets
+
+### Gameplay Systems
+- **#29** Manager creation, hiring, and impact on club performance
+- **#32** Scout facility — `truePotential` reveal accuracy beyond `publicPotential` baseline
+- **#28** Construction lag time + staged build visuals for facility upgrades
+
+### NPC & Conversation Layer
+- **#113** Freeform NPC chat — LLM-backed conversations with Val/Marcus/Kev/Dani
+- **#112** Kev squad review chat — guided squad analysis at season start
+- **#109** NPC manager shell personas — distinct personalities managers can inhabit
+
+### Visual & Match Immersion
+- **#65** Phase 7 match immersion — stadium atmosphere, animated play, CM-style goal moments
+- **#127** Visual club identity — badge and colour customisation
 
 ---
 
 ## Backlog
 
 ### Squad & Transfer Depth
-- **#30** Player attributes wired into match sim — weighted attack/defence/teamwork/charisma by position
-- **#32** Scout facility — `revealedPotential` accuracy scales with scout level (55% → 95%)
-- **#36** NPC poaching — triggered by player quality + reputation gap; counter/negotiate/accept flow
-- **#34** Owner forced-out full design — game-over conditions, re-entry mechanics, multiplayer implications
+- Transfer windows — summer/January with deadline-day drama
+- Dynamic sponsors — scale with league position and reputation
+- Local derbies — special atmosphere and crowd boost
+- Board objectives — start-of-season targets set at pre-season
+- Youth academy — promote youth players
+- Player development — individual training affects growth
 
 ### Manager & NPC Depth
 - **#109** NPC manager shells — 5–8 named archetypes (The Philosopher, The Sergeant, etc.) with distinct inbox voices
 - **#112** Kev squad review chat — scripted week-1 walkthrough of squad gaps and recruitment priorities
 - **#29** Manager creation and impact — formation affinity, man-management, fan approval, sacking costs
-- **#84** Club identity — club name in commentary/ticker/NPCs, record tracking, badge/colour customisation
 
 ### Freeform NPC Chat
 - **#113** LLM-backed NPC conversations — Claude Haiku with game-state context per NPC; Kev as first rollout; scripted fallback for school networks
