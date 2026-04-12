@@ -290,6 +290,8 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
               dispatch={() => ({})}
               isLoading={false}
               onNavigateToStadium={() => {}}
+              activeSection="overview"
+              onSectionChange={() => {}}
               introSpotlight={spotlight}
             />
           </div>

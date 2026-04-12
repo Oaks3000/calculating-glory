@@ -9,6 +9,8 @@ import { useGameState } from './hooks/useGameState';
 import { CommandCentre } from './components/command-centre/CommandCentre';
 import { StadiumView } from './components/stadium-view/StadiumView';
 import { ViewToggle, ActiveView } from './components/shared/ViewToggle';
+import { AppNav } from './components/nav/AppNav';
+import { AppNavMobile } from './components/nav/AppNavMobile';
 import { PreSeasonScreen } from './components/pre-season/PreSeasonScreen';
 import { SeasonEndScreen } from './components/season-end/SeasonEndScreen';
 import { ForcedOutScreen } from './components/forced-out/ForcedOutScreen';
@@ -18,9 +20,10 @@ import { IntroScreen } from './components/intro/IntroScreen';
 import { OwnerBox } from './components/owner-box/OwnerBox';
 import { PostMatchScreen } from './components/owner-box/PostMatchScreen';
 import { PreMatchOverlay } from './components/owner-box/PreMatchOverlay';
-import { isIntroCompleted, clearIntroCompleted } from './lib/introState';
+import { clearIntroCompleted } from './lib/introState';
 
 type Screen = 'menu' | 'intro' | 'game';
+export type ActiveSection = 'overview' | 'inbox' | 'squad' | 'transfers' | 'finances' | 'backroom';
 
 interface OwnerBoxData {
   timeline: MatchTimeline;
@@ -32,13 +35,19 @@ export default function App() {
   const { state, events, dispatch, isLoading, resetGame } = useGameState();
   const [screen, setScreen] = useState<Screen>('menu');
   const [activeView, setActiveView] = useState<ActiveView>('command');
+  const [activeSection, setActiveSection] = useState<ActiveSection>('overview');
   const [error, setError] = useState<string | null>(null);
   const [ownerBoxData, setOwnerBoxData] = useState<OwnerBoxData | null>(null);
   const [showPostMatch, setShowPostMatch] = useState(false);
   const [showPreMatch, setShowPreMatch] = useState(false);
-  // Track which week's ultimatum the player has dismissed (so it doesn't re-appear)
   const [ultimatumDismissedWeek, setUltimatumDismissedWeek] = useState<number | null>(null);
   const processedEventCount = useRef<number | null>(null);
+
+  // Reset to overview when switching to stadium view
+  function handleViewChange(view: ActiveView) {
+    setActiveView(view);
+    if (view === 'stadium') setActiveSection('overview');
+  }
 
   // Detect new MATCH_SIMULATED events after simulation completes
   useEffect(() => {
@@ -54,7 +63,6 @@ export default function App() {
     const newEvents = events.slice(processedEventCount.current);
     processedEventCount.current = events.length;
 
-    // Find the most recent MATCH_SIMULATED in the new batch
     const matchEvent = [...newEvents]
       .reverse()
       .find(e => e.type === 'MATCH_SIMULATED');
@@ -89,6 +97,7 @@ export default function App() {
   }, [events, isLoading]);
 
   const hasSave = events.length > 1;
+  const unresolvedCount = state.pendingEvents.filter(e => !e.resolved).length;
 
   function handleContinue() {
     setScreen('game');
@@ -154,7 +163,7 @@ export default function App() {
     <div className="min-h-screen bg-bg-deep text-txt-primary flex flex-col">
       <ViewToggle
         activeView={activeView}
-        onViewChange={setActiveView}
+        onViewChange={handleViewChange}
         state={state}
         isLoading={isLoading}
         dispatch={dispatch}
@@ -178,19 +187,42 @@ export default function App() {
         </div>
       )}
 
-      {activeView === 'command' ? (
-        <CommandCentre
-          state={state}
-          events={events}
-          dispatch={dispatch}
-          isLoading={isLoading}
-          onNavigateToStadium={() => setActiveView('stadium')}
+      <div className="flex flex-1 overflow-hidden">
+        <AppNav
+          activeSection={activeSection}
+          onSectionChange={s => { setActiveView('command'); setActiveSection(s); }}
+          activeView={activeView}
+          onViewChange={handleViewChange}
+          unresolvedCount={unresolvedCount}
         />
-      ) : (
-        <StadiumView
-          state={state}
-          dispatch={dispatch}
-          onError={setError}
+
+        <main className="flex-1 overflow-hidden flex flex-col pb-16 lg:pb-0">
+          {activeView === 'command' ? (
+            <CommandCentre
+              state={state}
+              events={events}
+              dispatch={dispatch}
+              isLoading={isLoading}
+              onNavigateToStadium={() => handleViewChange('stadium')}
+              activeSection={activeSection}
+              onSectionChange={s => { setActiveView('command'); setActiveSection(s); }}
+            />
+          ) : (
+            <StadiumView
+              state={state}
+              dispatch={dispatch}
+              onError={setError}
+            />
+          )}
+        </main>
+      </div>
+
+      {/* Mobile bottom nav — only visible during game, command view */}
+      {activeView === 'command' && (
+        <AppNavMobile
+          activeSection={activeSection}
+          onSectionChange={setActiveSection}
+          unresolvedCount={unresolvedCount}
         />
       )}
 
