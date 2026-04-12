@@ -10,20 +10,18 @@ lastUpdated: "2026-04-12"
 
 ---
 
-## Recently Completed (PR #129, in review 2026-04-12)
+## Recently Completed (PR #131, in review 2026-04-12)
 
-### ✅ Command Centre UX/UI Overhaul
+### ✅ Owner's Office — Three-Zone Fixed Layout
 - **Issue:** #124
-- **Status:** IN REVIEW (PR #129)
-- Persistent sidebar (lg+) with Overview / Inbox / Squad / Transfers / Finances / Backroom / Stadium
-- Fixed bottom tab bar (mobile) — 6 sections with unresolved-events badge on Inbox
-- HeadlineStats: 3-stat strip (Position / Confidence / Budget) always above fold on overview
-- OverviewSection: inbox-first stack, HeadlineStats → DataTiles → HubTiles → League Table + Squad
-- Full-page sections: Inbox, Transfers (with pitch grid), Finances, Backroom, Squad
-- FinancesSection: live ≈Nw wage runway counter that updates as wage reserve slider moves
-- CommandCentre: reduced from 7 slide-over booleans to 3 (Negotiations, Practice, Learning Progress)
-- Clicking FinancialHealthBar now navigates to Finances section (not budget slide-over)
-- Backroom/Acumen DataTile clicks navigate to their sections (not slide-overs)
+- **Status:** IN REVIEW (PR #131)
+- Replaces PR #129 sidebar-nav/section architecture with three-zone fixed layout per design brief
+- Left zone — Decisions & News: InboxFeed with priority pips, NewsTicker strip
+- Centre zone — Pitch & League: CompactLeague (top 3 + you ±1, gap separator), full table modal, Next Week button anchored at bottom
+- Right zone — People & Time: Staff panel (Val/Kev/Marcus/Dani with live status dots + chat/practice shortcuts), Agenda panel
+- App.tsx: strips AppNav/AppNavMobile/activeSection; renders OwnerOffice directly
+- IntroScreen.tsx: spotlight IDs remapped to new zone IDs
+- Issue #130 raised: mobile layout brief
 
 ---
 
@@ -143,20 +141,26 @@ lastUpdated: "2026-04-12"
 
 ## Current Priority Queue
 
-### 1. 🔜 Sponsor Negotiation
+### 1. 🔜 Owner's Office — Mobile Layout
+- **Issue:** #130
+- **Priority:** HIGH — game must work on phones and tablets
+- Three candidate approaches: tabbed zones, stacked vertical, priority-first fold
+- See issue #130 for full brief and AC
+
+### 2. 🔜 Sponsor Negotiation
 - **Issue:** #80
 - **Priority:** HIGH — decision density
 - Val presents weekly sponsorship deals
 - Negotiate terms via maths challenge (percentage/ratio question gates a better deal)
 - Accept/reject with visible financial impact
 
-### 2. 🔜 Inbox Overflow — Full Fix
+### 3. 🔜 Inbox Overflow — Full Fix
 - **Issue:** #92
 - **Priority:** MEDIUM
 - Remaining stacking edge cases: NPC messages + pending events + news within PREVIEW_LIMIT
 - Check for double-notification on poach + construction events
 
-### 3. 🔜 Stadium View — Remaining Facility Panels
+### 4. 🔜 Stadium View — Remaining Facility Panels
 - **Issue:** #87 (remaining)
 - **Priority:** MEDIUM
 - Training Ground, Medical Centre, Scout Network, Youth Academy panels

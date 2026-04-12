@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { GameState, GameCommand, formatMoney, toPence } from '@calculating-glory/domain';
-import { CommandCentre } from '../command-centre/CommandCentre';
+import { OwnerOffice } from '../owner-office/OwnerOffice';
 import { IsometricBlueprint } from '../isometric/IsometricBlueprint';
 import { NpcMessage } from './NpcMessage';
 import { MathsChallenge } from './MathsChallenge';
@@ -17,24 +17,26 @@ interface Props {
 
 // ── Step → backdrop mode ────────────────────────────────────────────────────
 //
-// Steps 7–11 use the stadium backdrop (no CommandCentre spotlight needed).
-// Steps 0–6 and 12+ use CommandCentre with a section spotlight.
+// Steps 7–11 use the stadium backdrop (no OwnerOffice spotlight needed).
+// Steps 0–6 and 12+ use OwnerOffice with a zone spotlight.
+//
+// Zone IDs: 'header-stats' | 'decisions-zone' | 'pitch-zone' | 'people-zone'
 
 const STEP_SPOTLIGHT: Record<number, string | null> = {
-  0:  null,             // title screen
-  1:  null,             // Val intro
-  2:  'financial-bar',  // Val: financial overview
-  3:  'financial-bar',  // Val: keep green
-  4:  'squad',          // Kev: squad reality check
-  5:  'data-tiles',     // Marcus: revenue
-  6:  'hub-tiles',      // Dani: stadium needs work
-  // 7–11: stadium tour (CommandCentre hidden)
-  12: 'hub-tiles',      // Dani: closing — pick one or two
-  13: 'squad',          // Kev: squad numbers
-  14: null,             // Val: I always do
-  15: 'hub-tiles',      // Kev: transfer window
-  16: 'inbox',          // Marcus: sponsor deal
-  17: 'financial-bar',  // Val: attendance context
+  0:  null,              // title screen
+  1:  null,              // Val intro
+  2:  'header-stats',    // Val: financial overview → header stats strip
+  3:  'header-stats',    // Val: keep green → header stats
+  4:  'decisions-zone',  // Kev: squad reality check → inbox decisions
+  5:  'pitch-zone',      // Marcus: revenue → pitch & league context
+  6:  'people-zone',     // Dani: stadium needs work → people & time
+  // 7–11: stadium tour (OwnerOffice hidden)
+  12: 'people-zone',     // Dani: closing — staff panel
+  13: 'decisions-zone',  // Kev: squad numbers → decisions
+  14: null,              // Val: I always do
+  15: 'decisions-zone',  // Kev: transfer window → inbox area
+  16: 'decisions-zone',  // Marcus: sponsor deal → inbox/decisions
+  17: 'header-stats',    // Val: attendance context → header stats
 };
 
 // ── Stadium tour: which building to highlight per step ───────────────────────
@@ -270,7 +272,7 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
   return (
     <div className="fixed inset-0 flex flex-col overflow-hidden bg-bg-deep">
 
-      {/* ── Backdrop — CommandCentre or Stadium tour ──────────────────────── */}
+      {/* ── Backdrop — Owner's Office or Stadium tour ────────────────────── */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {inStadiumTour ? (
           <div key="stadium-backdrop" className="w-full h-full animate-fade-in">
@@ -284,14 +286,13 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
           </div>
         ) : (
           <div className="flex flex-col flex-1 h-full overflow-hidden">
-            <CommandCentre
+            <OwnerOffice
               state={state}
               events={events}
               dispatch={() => ({})}
               isLoading={false}
               onNavigateToStadium={() => {}}
-              activeSection="overview"
-              onSectionChange={() => {}}
+              onError={() => {}}
               introSpotlight={spotlight}
             />
           </div>
@@ -300,7 +301,7 @@ export function IntroScreen({ state, events, dispatch, onComplete }: Props) {
 
       {/* ── Dark gradient scrim ───────────────────────────────────────────── */}
       {/* During stadium tour: light centre so buildings show, dark band at very
-          bottom to contrast the message panel. During CommandCentre steps: standard. */}
+          bottom to contrast the message panel. During Owner's Office steps: standard. */}
       {inStadiumTour ? (
         <>
           {/* Subtle vignette — darkens edges without covering centre */}

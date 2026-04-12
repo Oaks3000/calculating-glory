@@ -71,20 +71,22 @@ An educational football club management game for Year 7 maths, built on event-so
 - NPC poaching overhaul: teamwork-weighted targeting, strength-based club selection, maths-gated negotiate choice, offer-contract retention (#36)
 - Club identity (NPC dialogue layer): Kev references records, crowd atmosphere reactions, ticker history headlines (#84)
 
-### Phase 13: Command Centre UX Overhaul (PR #129, in review)
-- **#124** ✅ Full nav/layout overhaul — persistent sidebar (lg+) / bottom tab bar (mobile), section pages replacing slide-overs, HeadlineStats strip, live runway counter in Finances
-- **#111** Progressive disclosure — priority ordering, collapsible sections, new-player ramp
-- **#119** Chat area rethink — negotiate panel becomes NPC conversation hub; inbox reverts to read-only updates
-- **#86** Mobile/touch feel — game must work well on phones and tablets
+### Phase 13: Owner's Office — Three-Zone Layout ✅ (PR #131)
+- **#124** ✅ Owner's Office — three-zone fixed layout (Decisions & News / Pitch & League / People & Time) replacing sidebar-nav architecture
+- CompactLeague: top 3 + player club ±1 with gap separator, full table modal
+- Staff panel: Val / Kev / Marcus / Dani with live status dots and chat/practice shortcuts
+- Agenda panel: next fixture, transfer window, board ultimatum, construction, contract expiries
+- Intro spotlight system remapped to new zone IDs
+- **#130** Mobile layout brief raised — candidate approaches defined (tabbed zones, stacked, priority-first fold)
 
 ---
 
 ## Current Work
 
-### Command Centre Depth
+### Owner's Office Depth
+- **#130** Mobile layout — implement mobile-first layout for Owner's Office (tabbed zones or priority-first fold)
 - **#111** Progressive disclosure — priority ordering, collapsible sections, new-player ramp
 - **#119** Chat area rethink — negotiate panel becomes NPC conversation hub; inbox reverts to read-only updates
-- **#86** Mobile/touch feel — game must work well on phones and tablets
 
 ### Gameplay Systems
 - **#29** Manager creation, hiring, and impact on club performance

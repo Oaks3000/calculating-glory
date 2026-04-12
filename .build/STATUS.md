@@ -2,8 +2,8 @@
 project: "Calculating Glory"
 type: "build"
 priority: 2
-phase: "Phase 13 — Command Centre UX Overhaul"
-progress: 30
+phase: "Phase 13 — Owner's Office"
+progress: 70
 lastUpdated: "2026-04-12"
 lastTouched: "2026-04-12"
 status: "in-progress"
@@ -11,7 +11,7 @@ status: "in-progress"
 
 # Calculating Glory - Current Status
 
-**Phase:** Phase 13 — Command Centre UX Overhaul (30% complete)
+**Phase:** Phase 13 — Owner's Office (70% complete)
 **Last Updated:** 2026-04-12
 
 ## What's Done
@@ -99,21 +99,20 @@ status: "in-progress"
   - Budget allocation slider UI: three linked sliders in slide-over, opened from Financial Health Bar
   - Facility upgrades deduct from Infrastructure Fund, not Transfer Fund
 
-**PR #124 — Command Centre UX Overhaul (merged 2026-04-12, PR #129):**
-- Persistent sidebar (lg+): Overview / Inbox / Squad / Transfers / Finances / Backroom + Stadium
-- Fixed bottom tab bar (mobile) with unresolved-events badge on Inbox
-- HeadlineStats strip: Position / Board Confidence / Transfer Budget always above fold
-- OverviewSection: inbox-first stack order on mobile, then HeadlineStats → DataTiles → HubTiles → tables
-- InboxSection, TransferSection, BackroomSection, SquadSection: full-page wrappers
-- FinancesSection: FinancialHealthBar + budget allocation sliders with live ≈Nw runway counter
-- CommandCentre refactored: 7 slide-over booleans → 3 (Negotiations, Practice, Learning Progress)
-- App.tsx: activeSection state, flex sidebar layout, pb-16 lg:pb-0 for mobile safe area
+**PR #131 — Owner's Office — Three-Zone Fixed Layout (in review 2026-04-12):**
+- Replaces PR #129 sidebar-nav/section architecture with three-zone fixed layout per design brief
+- Left zone — Decisions & News: InboxFeed with priority pips, NewsTicker strip
+- Centre zone — Pitch & League: CompactLeague (top 3 + you ±1, gap separator), full table modal, Next Week button anchored at bottom
+- Right zone — People & Time: Staff panel (Val/Kev/Marcus/Dani with live status dots + chat/practice shortcuts), Agenda panel (next fixture, transfer window, board ultimatum, construction, contract expiries)
+- App.tsx: strips AppNav/AppNavMobile/activeSection; renders OwnerOffice directly
+- IntroScreen.tsx: spotlight IDs remapped to zone IDs (header-stats, decisions-zone, pitch-zone, people-zone)
+- Issue #130 raised: mobile layout brief with three candidate approaches
 
 ## What's In Progress
 
+- #130 Mobile layout — Owner's Office mobile reimagining
 - #111 Progressive disclosure — priority ordering, collapsible sections, new-player ramp
 - #119 Chat area rethink — negotiate panel as NPC conversation hub
-- #86 Mobile/touch feel
 
 ## What's Next
 
