@@ -294,7 +294,7 @@ export function PendingEventCard({ event, dispatch, onError, onMathChallenge }: 
 
       <p className="text-xs text-txt-muted mb-3 leading-relaxed">{event.description}</p>
 
-      {/* Poach: player snapshot strip */}
+      {/* Poach: player snapshot strip (inbound — NPC approaching to buy your player) */}
       {event.templateId === 'npc-poach' && event.metadata?.playerName && (
         <div className="mb-3 flex items-center gap-3 bg-bg-raised rounded-card border border-white/5 px-3 py-2">
           <div className="flex flex-col gap-0.5 flex-1 min-w-0">
@@ -307,6 +307,42 @@ export function PendingEventCard({ event, dispatch, onError, onMathChallenge }: 
             <div className="text-right shrink-0">
               <span className="text-data-blue font-bold text-sm">{event.metadata.playerOverall}</span>
               <div className="text-[10px] text-txt-muted">OVR</div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Bid: player snapshot strip (outbound — NPC responding to your transfer listing) */}
+      {event.templateId === 'npc-bid' && event.metadata?.playerName && (
+        <div className="mb-3 rounded-card border border-white/5 bg-bg-raised overflow-hidden">
+          {/* Player row */}
+          <div className="flex items-center gap-3 px-3 py-2">
+            <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-txt-primary truncate">{event.metadata.playerName}</span>
+                <span className="text-[10px] text-txt-muted bg-bg-elevated px-1.5 py-0.5 rounded-tag border border-white/5">
+                  Listed for sale
+                </span>
+              </div>
+              <span className="text-[10px] text-txt-muted">
+                {event.metadata.playerPosition}
+                {event.metadata.playerWage ? ` · ${formatMoney(event.metadata.playerWage)}/wk` : ''}
+              </span>
+            </div>
+            {event.metadata.playerOverall !== undefined && (
+              <div className="text-right shrink-0">
+                <span className="text-data-blue font-bold text-sm">{event.metadata.playerOverall}</span>
+                <div className="text-[10px] text-txt-muted">OVR</div>
+              </div>
+            )}
+          </div>
+          {/* Bid offer row */}
+          {event.metadata.offeredFee !== undefined && (
+            <div className="flex items-center justify-between px-3 py-1.5 border-t border-white/5 bg-pitch-green/5">
+              <span className="text-[10px] text-txt-muted">Offer from {event.metadata.npcClubName ?? 'unknown club'}</span>
+              <span className="text-xs font-bold text-pitch-green">
+                {formatMoney(event.metadata.offeredFee)}
+              </span>
             </div>
           )}
         </div>

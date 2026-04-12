@@ -57,6 +57,25 @@ export function createRng(seed: string): Rng {
 }
 
 /**
+ * Deterministic integer noise in the range [−range, +range].
+ *
+ * Uses a fast inline hash so it's cheap to call per-player per-week.
+ * If range === 0 (e.g. a perfect manager) always returns 0.
+ *
+ * Used by selectManagerXI to add per-player, per-week variation to
+ * apparent OVR, simulating a manager's imperfect player assessment.
+ */
+export function seededIntNoise(seed: string, range: number): number {
+  if (range === 0) return 0;
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = (Math.imul(31, h) + seed.charCodeAt(i)) | 0;
+  }
+  const span = range * 2 + 1;
+  return (Math.abs(h) % span) - range;
+}
+
+/**
  * Fisher-Yates shuffle with seeded RNG. Returns a new array.
  */
 export function seededShuffle<T>(arr: readonly T[], seed: string): T[] {

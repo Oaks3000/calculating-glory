@@ -13,6 +13,7 @@ import {
   getScoutLevel,
   computeOverallRating,
   isTransferWindowOpen,
+  selectManagerXI,
 } from '@calculating-glory/domain';
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -26,7 +27,8 @@ interface TransferMarketSlideOverProps {
 type Tab = 'free-agents' | 'my-squad';
 type SortKey = 'rating' | 'attack' | 'defence' | 'wage';
 type PlayerWillingness = 'eager' | 'neutral' | 'reluctant';
-type SquadViewMode = 'formation' | 'list';
+/** formation = manage mode (list + sell/release); list = flat list; lineup = manager's selected XI */
+type SquadViewMode = 'formation' | 'list' | 'lineup';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -126,69 +128,16 @@ function getRivalClubName(playerId: string, clubNames: string[]): string {
 
 // ─── Formation gap panel ───────────────────────────────────────────────────────
 
-interface FormationGapPanelProps {
-  state: GameState;
-}
+// ─── Pitch Grid ────────────────────────────────────────────────────────────────
+// Replaces SquadFormationView. Renders players in spatial formation rows
+// (FWD at top → GK at bottom), with circle slots, vacant gaps, and a depth rail.
 
-const POSITION_ORDER: Position[] = ['GK', 'DEF', 'MID', 'FWD'];
-
-function FormationGapPanel({ state }: FormationGapPanelProps) {
-  const formation = state.club.preferredFormation;
-  if (!formation) return null;
-
-  const config = FORMATION_CONFIG[formation];
-  const squadByPosition = POSITION_ORDER.reduce<Record<Position, number>>((acc, pos) => {
-    acc[pos] = state.club.squad.filter(p => p.position === pos).length;
-    return acc;
-  }, { GK: 0, DEF: 0, MID: 0, FWD: 0 });
-
-  return (
-    <div className="bg-bg-raised rounded-card border border-white/5 px-4 py-2.5 flex flex-col gap-1.5">
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-txt-muted">Formation target</span>
-        <span className="text-xs font-semibold text-txt-primary">{config.label}</span>
-      </div>
-      <div className="flex gap-3">
-        {POSITION_ORDER.map(pos => {
-          const target = config.slots[pos];
-          const have = squadByPosition[pos];
-          const gap = have - target;
-          const isShort = gap < 0;
-          const isSurplus = gap > 0;
-          return (
-            <div key={pos} className="flex flex-col items-center gap-0.5 flex-1">
-              <span className="text-[10px] text-txt-muted">{pos}</span>
-              <span className={`text-sm font-bold ${isShort ? 'text-alert-red' : isSurplus ? 'text-warn-amber' : 'text-pitch-green'}`}>
-                {have}/{target}
-              </span>
-              <span className={`text-[10px] font-semibold ${isShort ? 'text-alert-red' : isSurplus ? 'text-warn-amber' : 'text-pitch-green'}`}>
-                {isShort ? `−${Math.abs(gap)}` : isSurplus ? `+${gap}` : '✓'}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// ─── Squad formation view ──────────────────────────────────────────────────────
-
-interface SquadFormationViewProps {
-  squad: Player[];
-  formation: Formation;
-  currentWeek: number;
-  clubId: string;
-  scoutLevel: number;
-  onFillPosition: (pos: Position) => void;
-  onRelease: (playerId: string) => void;
-  onSellToNpc: (playerId: string, npcClubId: string) => void;
-}
+const PITCH_ROW_ORDER: Position[] = ['FWD', 'MID', 'DEF', 'GK'];
 
 function ovrBorderClass(ovr: number): string {
-  if (ovr >= 70) return 'border-pitch-green/40';
-  if (ovr >= 55) return 'border-warn-amber/40';
-  return 'border-alert-red/30';
+  if (ovr >= 70) return 'border-pitch-green/50';
+  if (ovr >= 55) return 'border-warn-amber/50';
+  return 'border-alert-red/40';
 }
 
 function ovrTextClass(ovr: number): string {
@@ -197,88 +146,189 @@ function ovrTextClass(ovr: number): string {
   return 'text-alert-red';
 }
 
-function SquadFormationView({
-  squad, formation, currentWeek, clubId, scoutLevel, onFillPosition, onRelease, onSellToNpc,
-}: SquadFormationViewProps) {
+interface PitchGridProps {
+  squad: Player[];
+  formation: Formation;
+  currentWeek: number;
+  clubId: string;
+  scoutLevel: number;
+  listedPlayerIds: string[];
+  isWindowOpen: boolean;
+  /** 'manage': players expand to full card with list/release actions */
+  mode: 'manage' | 'lineup';
+  /** Players the manager has selected for the XI (lineup mode only) */
+  managerXI?: Player[];
+  onFillPosition: (pos: Position) => void;
+  onRelease: (playerId: string) => void;
+  onList: (playerId: string) => void;
+  onUnlist: (playerId: string) => void;
+}
+
+function PitchGrid({
+  squad, formation, currentWeek, clubId, scoutLevel, listedPlayerIds, isWindowOpen,
+  mode, managerXI, onFillPosition, onRelease, onList, onUnlist,
+}: PitchGridProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const config = FORMATION_CONFIG[formation];
   if (!config) return null;
 
+  // In lineup mode, use the manager's XI to determine which players fill slots
+  const xiSet = new Set((managerXI ?? []).map(p => p.id));
+  const xi = mode === 'lineup' ? (managerXI ?? []) : squad;
+
+  // Surplus = players in squad not placed in any formation slot
+  const formationPlayers = PITCH_ROW_ORDER.flatMap(pos => {
+    const inPos = (mode === 'lineup' ? xi : squad)
+      .filter(p => p.position === pos)
+      .sort((a, b) => computeOverallRating(b) - computeOverallRating(a));
+    return inPos.slice(0, config.slots[pos]);
+  });
+  const formationPlayerIds = new Set(formationPlayers.map(p => p.id));
+  const depth = squad.filter(p => !formationPlayerIds.has(p.id));
+
   return (
-    <div className="flex flex-col gap-4">
-      {POSITION_ORDER.map(pos => {
-        const target = config.slots[pos];
-        const players = squad
-          .filter(p => p.position === pos)
-          .sort((a, b) => computeOverallRating(b) - computeOverallRating(a));
-        const have = players.length;
-        const gap = have - target;
-        const isShort = gap < 0;
-        const isSurplus = gap > 0;
-        const vacantCount = Math.max(0, -gap);
+    <div className="flex flex-col gap-3">
+      {/* ── Pitch ── */}
+      <div className="bg-pitch-green/5 rounded-xl border border-white/5 p-3 flex flex-col gap-3">
+        {PITCH_ROW_ORDER.map(pos => {
+          const target = config.slots[pos];
+          const available = (mode === 'lineup' ? xi : squad)
+            .filter(p => p.position === pos)
+            .sort((a, b) => computeOverallRating(b) - computeOverallRating(a));
+          const placed = available.slice(0, target);
+          const vacantCount = Math.max(0, target - placed.length);
+          const have = squad.filter(p => p.position === pos).length;
+          const gap = have - target;
+          const isShort = gap < 0;
+          const isSurplus = gap > 0;
 
-        return (
-          <div key={pos}>
-            {/* Position section header */}
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-bg-raised text-txt-muted border-white/10">
-                {pos}
-              </span>
-              <span className="text-xs text-txt-muted">{have}/{target}</span>
-              <span className={`text-xs font-semibold ${isShort ? 'text-alert-red' : isSurplus ? 'text-warn-amber' : 'text-pitch-green'}`}>
-                {isShort ? `−${Math.abs(gap)} needed` : isSurplus ? `+${gap} surplus` : '✓'}
-              </span>
+          return (
+            <div key={pos} className="flex flex-col gap-1.5">
+              {/* Row label + gap indicator */}
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border bg-bg-raised text-txt-muted border-white/10 w-8 text-center">{pos}</span>
+                <span className={`text-[10px] font-semibold ${isShort ? 'text-alert-red' : isSurplus ? 'text-warn-amber' : 'text-pitch-green'}`}>
+                  {isShort ? `−${Math.abs(gap)} needed` : isSurplus ? `+${gap} surplus` : '✓'}
+                </span>
+              </div>
+
+              {/* Slot row */}
+              <div className="flex flex-wrap gap-2 justify-start">
+                {placed.map(player => {
+                  const ovr = computeOverallRating(player);
+                  const isExpanded = expandedId === player.id;
+                  const isListed = listedPlayerIds.includes(player.id);
+                  const isInXI = mode === 'lineup' ? xiSet.has(player.id) : true;
+
+                  return (
+                    <div key={player.id} className="flex flex-col gap-1">
+                      {/* Circle chip */}
+                      <button
+                        onClick={() => mode === 'manage' ? setExpandedId(isExpanded ? null : player.id) : undefined}
+                        className={`relative w-16 h-16 rounded-full border-2 flex flex-col items-center justify-center transition-colors ${ovrBorderClass(ovr)} ${
+                          mode === 'manage' ? 'hover:bg-white/5 cursor-pointer' : 'cursor-default'
+                        } ${isExpanded ? 'bg-white/5' : 'bg-bg-raised'} ${
+                          mode === 'lineup' && !isInXI ? 'opacity-50' : ''
+                        }`}
+                      >
+                        <span className={`text-sm font-bold leading-none ${ovrTextClass(ovr)}`}>{ovr}</span>
+                        <span className="text-[8px] text-txt-muted leading-tight w-14 truncate text-center px-1">
+                          {player.name.split(' ').pop()}
+                        </span>
+                        {isListed && (
+                          <span className="absolute -top-1 -right-1 text-[9px] bg-warn-amber/20 text-warn-amber border border-warn-amber/40 rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                            £
+                          </span>
+                        )}
+                      </button>
+
+                      {/* Expanded card */}
+                      {isExpanded && mode === 'manage' && (
+                        <div className="w-48">
+                          <SquadPlayerCard
+                            player={player}
+                            currentWeek={currentWeek}
+                            clubId={clubId}
+                            scoutLevel={scoutLevel}
+                            isListed={isListed}
+                            isWindowOpen={isWindowOpen}
+                            onRelease={() => { onRelease(player.id); setExpandedId(null); }}
+                            onList={() => { onList(player.id); setExpandedId(null); }}
+                            onUnlist={() => { onUnlist(player.id); setExpandedId(null); }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {/* Vacant slots */}
+                {Array.from({ length: vacantCount }).map((_, i) => (
+                  <button
+                    key={`vacant-${pos}-${i}`}
+                    onClick={() => onFillPosition(pos)}
+                    className="w-16 h-16 rounded-full border-2 border-dashed border-white/20 flex flex-col items-center justify-center hover:border-white/40 transition-colors bg-bg-raised"
+                  >
+                    <span className="text-[10px] text-txt-muted font-semibold">+</span>
+                    <span className="text-[8px] text-data-blue">{pos}</span>
+                  </button>
+                ))}
+              </div>
             </div>
+          );
+        })}
+      </div>
 
-            {/* Player chips + vacant slots */}
-            <div className="flex flex-wrap gap-2">
-              {players.map(player => {
-                const ovr = computeOverallRating(player);
-                const isExpanded = expandedId === player.id;
-                return (
-                  <div key={player.id} className="flex flex-col gap-1 min-w-[140px] max-w-[200px]">
-                    <button
-                      onClick={() => setExpandedId(isExpanded ? null : player.id)}
-                      className={`bg-bg-raised border rounded-card px-3 py-2 text-left w-full transition-colors hover:border-white/20 ${ovrBorderClass(ovr)} ${isExpanded ? 'border-opacity-80' : ''}`}
-                    >
-                      <div className="flex items-center justify-between gap-1">
-                        <span className="text-xs font-semibold text-txt-primary truncate">{player.name}</span>
-                        <span className={`text-sm font-bold shrink-0 ${ovrTextClass(ovr)}`}>{ovr}</span>
-                      </div>
-                      <div className="text-[10px] text-txt-muted mt-0.5">
-                        Age {player.age} · {formatMoney(player.wage)}/wk
-                      </div>
-                    </button>
-
-                    {isExpanded && (
+      {/* ── Depth rail ── */}
+      {depth.length > 0 && (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10px] text-txt-muted font-semibold uppercase tracking-wide">
+            {mode === 'lineup' ? 'Bench' : 'Squad Depth'}
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {depth.map(player => {
+              const ovr = computeOverallRating(player);
+              const isListed = listedPlayerIds.includes(player.id);
+              const isExpanded = expandedId === player.id;
+              return (
+                <div key={player.id} className="flex flex-col gap-1">
+                  <button
+                    onClick={() => mode === 'manage' ? setExpandedId(isExpanded ? null : player.id) : undefined}
+                    className={`relative w-14 h-14 rounded-full border-2 flex flex-col items-center justify-center opacity-60 transition-colors ${ovrBorderClass(ovr)} ${
+                      mode === 'manage' ? 'hover:opacity-80 cursor-pointer' : 'cursor-default'
+                    } bg-bg-raised`}
+                  >
+                    <span className={`text-xs font-bold leading-none ${ovrTextClass(ovr)}`}>{ovr}</span>
+                    <span className="text-[8px] text-txt-muted leading-tight w-12 truncate text-center px-1">
+                      {player.name.split(' ').pop()}
+                    </span>
+                    {isListed && (
+                      <span className="absolute -top-1 -right-1 text-[9px] bg-warn-amber/20 text-warn-amber border border-warn-amber/40 rounded-full w-4 h-4 flex items-center justify-center leading-none">
+                        £
+                      </span>
+                    )}
+                  </button>
+                  {isExpanded && mode === 'manage' && (
+                    <div className="w-48">
                       <SquadPlayerCard
                         player={player}
                         currentWeek={currentWeek}
                         clubId={clubId}
                         scoutLevel={scoutLevel}
+                        isListed={isListed}
+                        isWindowOpen={isWindowOpen}
                         onRelease={() => { onRelease(player.id); setExpandedId(null); }}
-                        onSellToNpc={npcClubId => { onSellToNpc(player.id, npcClubId); setExpandedId(null); }}
+                        onList={() => { onList(player.id); setExpandedId(null); }}
+                        onUnlist={() => { onUnlist(player.id); setExpandedId(null); }}
                       />
-                    )}
-                  </div>
-                );
-              })}
-
-              {/* Vacant slots */}
-              {Array.from({ length: vacantCount }).map((_, i) => (
-                <button
-                  key={`vacant-${i}`}
-                  onClick={() => onFillPosition(pos)}
-                  className="bg-bg-raised border border-dashed border-white/20 rounded-card px-3 py-2 text-left hover:border-white/40 transition-colors min-w-[140px]"
-                >
-                  <div className="text-xs text-txt-muted font-semibold">+ VACANT</div>
-                  <div className="text-[10px] text-data-blue mt-0.5">Find a {pos} →</div>
-                </button>
-              ))}
-            </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        );
-      })}
+        </div>
+      )}
     </div>
   );
 }
@@ -573,22 +623,26 @@ interface SquadPlayerCardProps {
   currentWeek: number;
   clubId: string;
   scoutLevel: number;
+  isListed: boolean;
+  /** Whether the transfer window is currently open — gates listing. */
+  isWindowOpen: boolean;
   onRelease: () => void;
-  onSellToNpc: (npcClubId: string) => void;
+  onList: () => void;
+  onUnlist: () => void;
 }
 
-type SquadAction = 'idle' | 'confirm-release' | 'pick-club' | 'confirm-sell';
+type SquadAction = 'idle' | 'confirm-release';
 
 /** Players with OVR >= 65 and morale >= 70 are considered fan favourites. */
 function isFanFavourite(player: Player): boolean {
   return computeOverallRating(player) >= 65 && (player.morale ?? 0) >= 70;
 }
 
-function SquadPlayerCard({ player, currentWeek, clubId, scoutLevel, onRelease, onSellToNpc }: SquadPlayerCardProps) {
+function SquadPlayerCard({
+  player, currentWeek, scoutLevel, isListed, isWindowOpen, onRelease, onList, onUnlist,
+}: SquadPlayerCardProps) {
   const [action, setAction] = useState<SquadAction>('idle');
-  const [selectedClubId, setSelectedClubId] = useState('');
-  const [done, setDone] = useState<'released' | 'sold' | null>(null);
-  const [soldToClubName, setSoldToClubName] = useState<string | null>(null);
+  const [done, setDone] = useState<'released' | 'listed' | 'unlisted' | null>(null);
 
   const isFreeAgent = player.contractExpiresWeek === 0;
   const isExpired = !isFreeAgent && currentWeek >= player.contractExpiresWeek;
@@ -596,61 +650,25 @@ function SquadPlayerCard({ player, currentWeek, clubId, scoutLevel, onRelease, o
     ? Math.round((player.contractExpiresWeek - currentWeek) * player.wage * 0.5)
     : 0;
 
-  const playerOvr = computeOverallRating(player);
-  const sellFee = player.transferValue > 0
-    ? player.transferValue
-    : Math.max(10_000, playerOvr * playerOvr * 500);
-
   const fanFav = isFanFavourite(player);
 
-  // All 23 NPC clubs (excluding player's own club)
-  const npcClubs = LEAGUE_TWO_TEAMS.filter(t => t.id !== clubId);
-  const selectedClub = npcClubs.find(t => t.id === selectedClubId);
-
   function contractBadge() {
-    if (isFreeAgent) {
-      return <span className="text-[10px] bg-pitch-green/20 text-pitch-green border border-pitch-green/40 px-1.5 py-0.5 rounded">Free agent</span>;
-    }
-    if (isExpired) {
-      return <span className="text-[10px] bg-pitch-green/20 text-pitch-green border border-pitch-green/40 px-1.5 py-0.5 rounded">Out of contract</span>;
-    }
+    if (isFreeAgent) return <span className="text-[10px] bg-pitch-green/20 text-pitch-green border border-pitch-green/40 px-1.5 py-0.5 rounded">Free agent</span>;
+    if (isExpired) return <span className="text-[10px] bg-pitch-green/20 text-pitch-green border border-pitch-green/40 px-1.5 py-0.5 rounded">Out of contract</span>;
     const weeksLeft = player.contractExpiresWeek - currentWeek;
     return <span className="text-[10px] text-txt-muted" title={`Contract expires week ${player.contractExpiresWeek}`}>Contract: {weeksLeft}w left</span>;
   }
 
-  function handleConfirmRelease() {
-    onRelease();
-    setDone('released');
-    setAction('idle');
-  }
-
-  function handleConfirmSell() {
-    onSellToNpc(selectedClubId);
-    setSoldToClubName(selectedClub?.name ?? null);
-    setDone('sold');
-    setAction('idle');
-  }
-
-  function cancel() {
-    setAction('idle');
-    setSelectedClubId('');
-  }
-
   return (
-    <div className={`bg-bg-raised rounded-card border p-3 flex flex-col gap-2 ${
-      fanFav ? 'border-purple-500/30' : 'border-white/5'
-    }`}>
+    <div className={`bg-bg-raised rounded-card border p-3 flex flex-col gap-2 ${fanFav ? 'border-purple-500/30' : 'border-white/5'}`}>
       {/* Header row */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col gap-0.5 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-semibold text-txt-primary text-sm truncate">{player.name}</span>
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${POSITION_COLOUR[player.position]}`}>
-              {player.position}
-            </span>
-            {fanFav && (
-              <span className="text-[10px] text-purple-400 font-semibold">♥ Fan favourite</span>
-            )}
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${POSITION_COLOUR[player.position]}`}>{player.position}</span>
+            {fanFav && <span className="text-[10px] text-purple-400 font-semibold">♥ Fan favourite</span>}
+            {isListed && <span className="text-[10px] text-warn-amber font-semibold bg-warn-amber/10 border border-warn-amber/30 px-1.5 py-0.5 rounded">£ Listed</span>}
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-txt-muted">Age {player.age} · {formatMoney(player.wage)}/wk</span>
@@ -675,11 +693,10 @@ function SquadPlayerCard({ player, currentWeek, clubId, scoutLevel, onRelease, o
       {/* Actions */}
       {done === 'released' ? (
         <div className="text-xs text-warn-amber font-semibold">Released{fanFav ? ' — the fans won\'t forget.' : ''}</div>
-      ) : done === 'sold' ? (
-        <div className="text-xs text-pitch-green font-semibold">
-          {soldToClubName ? `${soldToClubName} sign ${player.name} for ${formatMoney(sellFee)}.` : `Sold for ${formatMoney(sellFee)}.`}
-          {fanFav ? <span className="text-warn-amber"> The fans won't forget that easily.</span> : null}
-        </div>
+      ) : done === 'listed' ? (
+        <div className="text-xs text-warn-amber font-semibold">{player.name} is on the transfer list. Bids will arrive when the window opens.</div>
+      ) : done === 'unlisted' ? (
+        <div className="text-xs text-txt-muted">Listing withdrawn. {player.name} is no longer for sale.</div>
       ) : action === 'confirm-release' ? (
         <div className="flex flex-col gap-1.5 text-xs">
           {fanFav && (
@@ -691,49 +708,38 @@ function SquadPlayerCard({ player, currentWeek, clubId, scoutLevel, onRelease, o
             <span className="text-txt-muted">
               Release {player.name}{releaseFee > 0 ? ` (${formatMoney(releaseFee)} fee)` : ' for free'}?
             </span>
-            <button onClick={handleConfirmRelease} className="px-2 py-0.5 bg-alert-red/20 text-alert-red border border-alert-red/40 rounded hover:bg-alert-red/30 transition-colors">Yes</button>
-            <button onClick={cancel} className="px-2 py-0.5 bg-white/5 text-txt-muted border border-white/10 rounded hover:bg-white/10 transition-colors">Cancel</button>
+            <button onClick={() => { onRelease(); setDone('released'); setAction('idle'); }} className="px-2 py-0.5 bg-alert-red/20 text-alert-red border border-alert-red/40 rounded hover:bg-alert-red/30 transition-colors">Yes</button>
+            <button onClick={() => setAction('idle')} className="px-2 py-0.5 bg-white/5 text-txt-muted border border-white/10 rounded hover:bg-white/10 transition-colors">Cancel</button>
           </div>
         </div>
-      ) : action === 'pick-club' ? (
-        <div className="flex flex-col gap-1.5 text-xs">
-          {fanFav && (
-            <div className="text-[10px] text-purple-400 bg-purple-500/5 border border-purple-500/20 rounded px-2 py-1">
-              ♥ Are you sure? {player.name} is a fan favourite.
-            </div>
-          )}
-          <span className="text-txt-muted">Sell to club for <span className="text-pitch-green font-semibold">{formatMoney(sellFee)}</span>:</span>
-          <select
-            value={selectedClubId}
-            onChange={e => { setSelectedClubId(e.target.value); setAction('confirm-sell'); }}
-            className="bg-bg-raised text-txt-primary text-xs border border-white/10 rounded px-2 py-1 focus:outline-none"
-          >
-            <option value="">— pick a club —</option>
-            {npcClubs.map(t => (
-              <option key={t.id} value={t.id}>{t.name}</option>
-            ))}
-          </select>
-          <button onClick={cancel} className="text-txt-muted hover:text-txt-primary transition-colors text-left">Cancel</button>
-        </div>
-      ) : action === 'confirm-sell' ? (
-        <div className="flex items-center gap-2 flex-wrap text-xs">
-          <span className="text-txt-muted">
-            Sell {player.name} to {selectedClub?.name} for <span className="text-pitch-green font-semibold">{formatMoney(sellFee)}</span>?
-          </span>
-          <button onClick={handleConfirmSell} className="px-2 py-0.5 bg-pitch-green/20 text-pitch-green border border-pitch-green/40 rounded hover:bg-pitch-green/30 transition-colors">Confirm</button>
-          <button onClick={() => setAction('pick-club')} className="px-2 py-0.5 bg-white/5 text-txt-muted border border-white/10 rounded hover:bg-white/10 transition-colors">Back</button>
-        </div>
       ) : (
-        <div className="flex gap-2">
-          <button
-            onClick={() => setAction('pick-club')}
-            className="flex-1 text-xs py-1.5 rounded bg-pitch-green/10 text-pitch-green border border-pitch-green/30 hover:bg-pitch-green/20 transition-colors"
-          >
-            Sell ({formatMoney(sellFee)})
-          </button>
+        <div className="flex flex-col gap-1.5">
+          {/* Transfer listing row */}
+          {isListed ? (
+            <button
+              onClick={() => { onUnlist(); setDone('unlisted'); }}
+              className="w-full text-xs py-1.5 rounded bg-warn-amber/10 text-warn-amber border border-warn-amber/30 hover:bg-warn-amber/20 transition-colors"
+            >
+              Withdraw listing
+            </button>
+          ) : (
+            <button
+              onClick={isWindowOpen ? () => { onList(); setDone('listed'); } : undefined}
+              disabled={!isWindowOpen}
+              title={isWindowOpen ? undefined : 'Transfer window is closed'}
+              className={`w-full text-xs py-1.5 rounded border transition-colors ${
+                isWindowOpen
+                  ? 'bg-pitch-green/10 text-pitch-green border-pitch-green/30 hover:bg-pitch-green/20'
+                  : 'bg-white/5 text-txt-muted border-white/10 opacity-50 cursor-not-allowed'
+              }`}
+            >
+              {isWindowOpen ? 'List for sale' : 'List for sale (window closed)'}
+            </button>
+          )}
+          {/* Release row */}
           <button
             onClick={() => setAction('confirm-release')}
-            className="flex-1 text-xs py-1.5 rounded bg-alert-red/10 text-alert-red border border-alert-red/30 hover:bg-alert-red/20 transition-colors"
+            className="w-full text-xs py-1.5 rounded bg-alert-red/10 text-alert-red border border-alert-red/30 hover:bg-alert-red/20 transition-colors"
           >
             {releaseFee > 0 ? `Release (${formatMoney(releaseFee)} fee)` : 'Release (free)'}
           </button>
@@ -791,7 +797,9 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
   const [squadViewMode, setSquadViewMode] = useState<SquadViewMode>('formation');
 
   const currentTotalWages = state.club.squad.reduce((sum, p) => sum + p.wage, 0);
-  const wageRunway = currentTotalWages > 0 ? state.club.wageReserve / currentTotalWages : Infinity;
+  // wageReserve fallback: some saves use `wageReserve`, others expose it directly on club
+  const wageReserve = (state.club as any).wageReserve ?? 0;
+  const wageRunway = currentTotalWages > 0 ? wageReserve / currentTotalWages : Infinity;
   const squadCount = state.club.squad.length;
   const squadCapacity = state.club.squadCapacity;
   const scoutLevel = getScoutLevel(state.club.facilities);
@@ -836,10 +844,24 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
     if (result.error) onError(result.error);
   }
 
-  function handleSellToNpc(playerId: string, npcClubId: string) {
-    const result = dispatch({ type: 'SELL_PLAYER_TO_NPC', playerId, npcClubId });
+  function handleListPlayer(playerId: string) {
+    const result = dispatch({ type: 'LIST_PLAYER_FOR_SALE', playerId });
     if (result.error) onError(result.error);
   }
+
+  function handleUnlistPlayer(playerId: string) {
+    const result = dispatch({ type: 'UNLIST_PLAYER', playerId });
+    if (result.error) onError(result.error);
+  }
+
+  const isWindowOpen = isTransferWindowOpen(state.currentWeek, state.phase);
+  const listedPlayerIds = state.club.listedPlayerIds ?? [];
+
+  // Manager's XI — used for the lineup view
+  const managerTactical = state.club.manager?.attributes.tactical ?? 20;
+  const managerXI = state.club.preferredFormation
+    ? selectManagerXI(state.club.squad, state.club.preferredFormation, managerTactical, String(state.currentWeek))
+    : state.club.squad;
 
   function handleFillPosition(pos: Position) {
     setPositionFilter(pos);
@@ -863,7 +885,7 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
       {/* ── Budget / squad bar ─────────────────────────────────────────────── */}
       <div className="bg-bg-raised rounded-card border border-white/5 px-4 py-2 flex items-center gap-4 text-sm flex-wrap">
         <span className="text-txt-muted">
-          Wage runway: <span className={wageRunway < 8 ? 'text-alert-red font-semibold' : 'text-pitch-green font-semibold'}>{wageRunway === Infinity ? '∞' : `${Math.floor(wageRunway)}w`}</span>
+          Wage runway: <span className={wageRunway < 8 ? 'text-alert-red font-semibold' : 'text-pitch-green font-semibold'}>{wageRunway === Infinity || !isFinite(wageRunway) ? '∞' : `${Math.floor(wageRunway)}w`}</span>
         </span>
         <span className="text-white/20">|</span>
         <span className="text-txt-muted">
@@ -872,9 +894,6 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
           </span>
         </span>
       </div>
-
-      {/* ── Formation gap panel ───────────────────────────────────────────── */}
-      <FormationGapPanel state={state} />
 
       {/* ── Tabs ──────────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-1">
@@ -894,17 +913,21 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
         {/* View mode toggle — only visible on My Squad tab */}
         {activeTab === 'my-squad' && (
           <div className="ml-auto flex gap-1">
-            {(['formation', 'list'] as SquadViewMode[]).map(mode => (
+            {([
+              { id: 'formation', label: '⊞ Manage' },
+              { id: 'lineup',    label: '▶ Lineup' },
+              { id: 'list',      label: '≡ List'   },
+            ] as { id: SquadViewMode; label: string }[]).map(({ id, label }) => (
               <button
-                key={mode}
-                onClick={() => setSquadViewMode(mode)}
+                key={id}
+                onClick={() => setSquadViewMode(id)}
                 className={`px-2 py-1 text-xs rounded transition-colors ${
-                  squadViewMode === mode
+                  squadViewMode === id
                     ? 'bg-white/10 text-txt-primary border border-white/20'
                     : 'text-txt-muted border border-white/5 hover:border-white/10'
                 }`}
               >
-                {mode === 'formation' ? '⊞ Formation' : '≡ List'}
+                {label}
               </button>
             ))}
           </div>
@@ -952,7 +975,7 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
               <FreeAgentCard
                 key={player.id}
                 player={player}
-                canAfford={(currentTotalWages + player.wage) > 0 ? state.club.wageReserve / (currentTotalWages + player.wage) >= 8 : true}
+                canAfford={(currentTotalWages + player.wage) > 0 ? wageReserve / (currentTotalWages + player.wage) >= 8 : true}
                 hasSquadRoom={squadCount < squadCapacity}
                 scoutLevel={scoutLevel}
                 willingness={computeWillingness(player, player.wage, tablePosition)}
@@ -963,17 +986,34 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
               />
             ))
           )
-        ) : squadViewMode === 'formation' && state.club.preferredFormation ? (
-          <SquadFormationView
-            squad={state.club.squad}
-            formation={state.club.preferredFormation}
-            currentWeek={state.currentWeek}
-            clubId={state.club.id}
-            scoutLevel={scoutLevel}
-            onFillPosition={handleFillPosition}
-            onRelease={handleRelease}
-            onSellToNpc={handleSellToNpc}
-          />
+        ) : (squadViewMode === 'formation' || squadViewMode === 'lineup') && state.club.preferredFormation ? (
+          <>
+            {squadViewMode === 'lineup' && (
+              <div className="bg-bg-raised rounded-card border border-white/5 px-3 py-2 text-xs text-txt-muted">
+                <span className="font-semibold text-txt-primary">Manager's XI</span>
+                {state.club.manager ? (
+                  <span className="ml-2">{state.club.manager.name} · Tactical {state.club.manager.attributes.tactical}/100</span>
+                ) : (
+                  <span className="ml-2 text-warn-amber">No manager hired — selection quality is poor</span>
+                )}
+              </div>
+            )}
+            <PitchGrid
+              squad={state.club.squad}
+              formation={state.club.preferredFormation}
+              currentWeek={state.currentWeek}
+              clubId={state.club.id}
+              scoutLevel={scoutLevel}
+              listedPlayerIds={listedPlayerIds}
+              isWindowOpen={isWindowOpen}
+              mode={squadViewMode === 'lineup' ? 'lineup' : 'manage'}
+              managerXI={squadViewMode === 'lineup' ? managerXI : undefined}
+              onFillPosition={handleFillPosition}
+              onRelease={handleRelease}
+              onList={handleListPlayer}
+              onUnlist={handleUnlistPlayer}
+            />
+          </>
         ) : (
           filteredSquad.length === 0 ? (
             <div className="text-txt-muted text-sm text-center py-8">No players match your filters.</div>
@@ -985,8 +1025,11 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
                 currentWeek={state.currentWeek}
                 clubId={state.club.id}
                 scoutLevel={scoutLevel}
+                isListed={listedPlayerIds.includes(player.id)}
+                isWindowOpen={isWindowOpen}
                 onRelease={() => handleRelease(player.id)}
-                onSellToNpc={npcClubId => handleSellToNpc(player.id, npcClubId)}
+                onList={() => handleListPlayer(player.id)}
+                onUnlist={() => handleUnlistPlayer(player.id)}
               />
             ))
           )

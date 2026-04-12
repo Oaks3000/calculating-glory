@@ -49,7 +49,9 @@ export type GameEvent =
   | RunwayBandChangedEvent
   | MoraleTickerEvent
   | BoardBailoutEvent
-  | BudgetAllocationSetEvent;
+  | BudgetAllocationSetEvent
+  | PlayerListedEvent
+  | PlayerUnlistedEvent;
 
 export interface TransferCompletedEvent {
   type: 'TRANSFER_COMPLETED';
@@ -427,6 +429,24 @@ export interface BoardBailoutEvent {
   timestamp: number;
   shortfall: number;
   penalty: number;
+}
+
+/** Owner listed a player as available for sale. NPC bids can now arrive. */
+export interface PlayerListedEvent {
+  type: 'PLAYER_LISTED';
+  timestamp: number;
+  playerId: string;
+  clubId: string;
+  /** Stored for use in news ticker / inbox copy */
+  playerName: string;
+}
+
+/** Owner withdrew a player from the transfer list (no sale agreed). */
+export interface PlayerUnlistedEvent {
+  type: 'PLAYER_UNLISTED';
+  timestamp: number;
+  playerId: string;
+  clubId: string;
 }
 
 /** Player reallocated their budget pools during a transfer window. */

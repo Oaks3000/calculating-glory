@@ -151,6 +151,7 @@ describe('clubToTeam', () => {
       preferredFormation: null,
       squadCapacity: 24,
       manager: null,
+      listedPlayerIds: [],
     };
 
     const team = clubToTeam(club);
@@ -185,6 +186,7 @@ describe('clubToTeam', () => {
       preferredFormation: null,
       squadCapacity: 24,
       manager: null,
+      listedPlayerIds: [],
     };
 
     const team = clubToTeam(club);
@@ -212,6 +214,7 @@ describe('clubToTeam', () => {
       preferredFormation: null,
       squadCapacity: 24,
       manager: null,
+      listedPlayerIds: [],
     };
 
     const winningClub: Club = { ...baseClub, form: ['W', 'W', 'W', 'W', 'W'] };

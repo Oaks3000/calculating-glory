@@ -102,6 +102,7 @@ describe('calculateClubStrength', () => {
       preferredFormation: null,
       squadCapacity: 24,
       manager: null,
+      listedPlayerIds: [],
     };
     // No squad → calculateSquadStrength crashes on division by zero? Let me check...
     // Actually: totalRating / squad.length = 0/0 = NaN → Math.floor(NaN * 100) = NaN
@@ -131,6 +132,7 @@ describe('calculateClubStrength', () => {
       preferredFormation: null,
       squadCapacity: 24,
       manager: null,
+      listedPlayerIds: [],
     };
     const strength = calculateClubStrength(club);
     // squadStrength = floor(70 * 100) = 7000
@@ -156,6 +158,7 @@ describe('calculateClubStrength', () => {
       preferredFormation: null,
       squadCapacity: 24,
       manager: null,
+      listedPlayerIds: [],
     };
     const strength = calculateClubStrength(club);
     // squadStrength = 7000, staffBonus = 0, facilityBonus = 3 * 50 = 150, reputationBonus = 0

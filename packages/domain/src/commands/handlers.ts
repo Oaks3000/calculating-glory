@@ -11,7 +11,7 @@ import { validateTransfer, validateFacilityUpgrade, validateStaffHire } from '..
 import { simulateMatch, clubToTeam, generateAITeam, Team } from '../simulation/match';
 import { generateSeasonFixtures, getWeekFixtures, matchSeed } from '../simulation/season';
 import { createRng } from '../simulation/rng';
-import { generateWeekEvents, generatePoachAttempts, generateMoraleThresholdEvents, generateFinancialThresholdEvents, generateDaniFacilityObservationEvents, generateNpcMatchReactionEvents } from '../simulation/events';
+import { generateWeekEvents, generatePoachAttempts, generateMoraleThresholdEvents, generateFinancialThresholdEvents, generateDaniFacilityObservationEvents, generateNpcMatchReactionEvents, generateListedPlayerBids } from '../simulation/events';
 import { computeWeeklyFinancials, computeRunwayBand } from '../simulation/revenue';
 import { detectFormMilestone, FORM_MILESTONE_HEADLINES } from '../simulation/morale';
 import { getTeamsForDivision } from '../data/division-teams';
@@ -80,6 +80,10 @@ export function handleCommand(command: GameCommand, state: GameState): CommandRe
       return handleUpgradeCurriculum(command, state);
     case 'SET_BUDGET_ALLOCATION':
       return handleSetBudgetAllocation(command, state);
+    case 'LIST_PLAYER_FOR_SALE':
+      return handleListPlayerForSale(command, state);
+    case 'UNLIST_PLAYER':
+      return handleUnlistPlayer(command, state);
     default:
       return {
         error: {
@@ -290,8 +294,9 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
     };
   }
 
-  // Build Team objects for the player's club and AI opponents
-  const playerTeam = state.club.id ? clubToTeam(state.club) : null;
+  // Build Team objects for the player's club and AI opponents.
+  // Pass the week/season seed so manager XI noise varies each match.
+  const playerTeam = state.club.id ? clubToTeam(state.club, `${baseSeed}-S${season}-W${week}`) : null;
   const teamMap = buildTeamMap(state, playerTeam, baseSeed, season);
 
   // Simulate each match and produce events
@@ -385,9 +390,23 @@ function handleSimulateWeek(command: any, state: GameState): CommandResult {
     });
   }
 
+  // Generate NPC bids for listed players (0–N per week, one per listed player max)
+  const bidEvents = generateListedPlayerBids(state, week, season, baseSeed);
+  for (const pendingEvent of bidEvents) {
+    events.push({
+      type: 'CLUB_EVENT_OCCURRED',
+      timestamp: now,
+      eventId: pendingEvent.id,
+      templateId: pendingEvent.templateId,
+      week,
+      clubId: state.club.id,
+      pendingEvent
+    });
+  }
+
   // Generate morale threshold events (0 or 1 per week — only if no other events fired)
   // Only fires when the inbox would otherwise be clear to avoid stacking.
-  const hasNewEvents = clubEvents.length > 0 || poachEvents.length > 0;
+  const hasNewEvents = clubEvents.length > 0 || poachEvents.length > 0 || bidEvents.length > 0;
   if (!hasNewEvents) {
     const moraleEvents = generateMoraleThresholdEvents(state, week, season);
     for (const pendingEvent of moraleEvents) {
@@ -1061,6 +1080,16 @@ function handleSellPlayerToNpc(command: any, state: GameState): CommandResult {
     };
   }
 
+  // Player must be on the transfer list — sales must go through the list → bid flow
+  if (!(state.club.listedPlayerIds ?? []).includes(command.playerId)) {
+    return {
+      error: {
+        code: 'VALIDATION_FAILED',
+        message: `Player '${player.name}' must be listed for sale before a direct sale can be completed`,
+      },
+    };
+  }
+
   // Fee: use player's transferValue if set, otherwise derive from computed OVR
   const ovr = computeOverallRating(player);
   const fee = player.transferValue > 0
@@ -1081,6 +1110,43 @@ function handleSellPlayerToNpc(command: any, state: GameState): CommandResult {
   ];
 
   return { events };
+}
+
+function handleListPlayerForSale(command: any, state: GameState): CommandResult {
+  const player = state.club.squad.find(p => p.id === command.playerId);
+  if (!player) {
+    return { error: { code: 'PLAYER_NOT_FOUND', message: `Player '${command.playerId}' not found in squad` } };
+  }
+  if ((state.club.listedPlayerIds ?? []).includes(command.playerId)) {
+    return { error: { code: 'VALIDATION_FAILED', message: `Player '${player.name}' is already listed for sale` } };
+  }
+  return {
+    events: [{
+      type: 'PLAYER_LISTED',
+      timestamp: Date.now(),
+      playerId: player.id,
+      clubId: state.club.id,
+      playerName: player.name,
+    }],
+  };
+}
+
+function handleUnlistPlayer(command: any, state: GameState): CommandResult {
+  const player = state.club.squad.find(p => p.id === command.playerId);
+  if (!player) {
+    return { error: { code: 'PLAYER_NOT_FOUND', message: `Player '${command.playerId}' not found in squad` } };
+  }
+  if (!(state.club.listedPlayerIds ?? []).includes(command.playerId)) {
+    return { error: { code: 'VALIDATION_FAILED', message: `Player '${player.name}' is not currently listed` } };
+  }
+  return {
+    events: [{
+      type: 'PLAYER_UNLISTED',
+      timestamp: Date.now(),
+      playerId: player.id,
+      clubId: state.club.id,
+    }],
+  };
 }
 
 function handleBeginNextSeason(_command: any, state: GameState): CommandResult {
