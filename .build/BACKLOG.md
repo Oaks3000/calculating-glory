@@ -1,7 +1,7 @@
 ---
 project: "Calculating Glory"
 type: "build"
-lastUpdated: "2026-03-31"
+lastUpdated: "2026-04-12"
 ---
 
 # Calculating Glory - Backlog & Ideas
@@ -27,6 +27,12 @@ lastUpdated: "2026-03-31"
 - [x] InboxHistory full slide-over ✅
 - [x] Seeded news generator (transfer/injury/league) ✅
 - [x] Backroom Team slide-over ✅
+- [x] Backroom Team visibility: manager display, match impact bar, staff count fix ✅ (PR #123)
+- [x] Three-pool budget model: Transfer/Infrastructure/Wages with real wage deduction ✅ (PR #123)
+- [x] Budget allocation slider UI (linked sliders, transfer-window locked) ✅ (PR #123)
+- [x] Board bailout mechanic (10% penalty on wage shortfall) ✅ (PR #123)
+- [x] Runway-based validation (8-week minimum for signings/hiring) ✅ (PR #123)
+- [x] Name audit: all fictional team/player names reviewed ✅ (PR #123)
 - [x] Reputation flash animation ✅
 - [x] Learning Progress slide-over ✅
 

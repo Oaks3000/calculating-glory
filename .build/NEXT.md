@@ -1,12 +1,46 @@
 ---
 project: "Calculating Glory"
 type: "build"
-lastUpdated: "2026-04-03"
+lastUpdated: "2026-04-12"
 ---
 
 # Calculating Glory — Next Steps
 
 > Living document. Updated after each merged PR.
+
+---
+
+## Recently Completed (PR #123, merged 2026-04-12)
+
+### ✅ Name Audit
+- **Issues:** #40, #41
+- **Status:** MERGED (PR #123)
+- All 93 team names and 190+ player names reviewed across 8 data files
+- Fixed `Kevin De Bruyne` → `Kelvin De Bryne` (was unchanged from real name)
+- Resolved `sutbourne` ambiguity → Sutton United
+
+### ✅ Backroom Staff Visibility
+- **Issue:** #120
+- **Status:** MERGED (PR #123)
+- Fixed DataTiles bug: "Backroom Team" tile showed squad count, now shows staff X/5
+- Manager section in BackroomTeamSlideOver with attributes + star rating
+- Match impact bar: quantified staff (+0-12%) and manager (+0-6%) contributions
+
+### ✅ Three-Pool Budget Model
+- **Issues:** #61, #110
+- **Status:** MERGED (PR #123)
+- Replaced `transferBudget` + soft `wageBudget` cap with three real pools:
+  - Transfer Fund (50%): player purchases, scout fees, sale proceeds
+  - Infrastructure Fund (20%): facility upgrades
+  - Wage Reserve (30%): weekly wages deducted, revenue flows in
+- Board bailout: covers shortfall at 10% penalty from Transfer → Infrastructure
+- `SET_BUDGET_ALLOCATION` command: only during transfer windows
+- Runway-based validation: min 8 weeks for all wage commitments
+- Budget allocation slider UI: three linked sliders in slide-over from Financial Health Bar
+
+### ✅ News Ticker Speed
+- **Issue:** #59
+- **Status:** CLOSED (already fixed in PR #88, 147s→206s)
 
 ---
 

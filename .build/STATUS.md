@@ -4,8 +4,8 @@ type: "build"
 priority: 2
 phase: "Phase 8 — Polish"
 progress: 99
-lastUpdated: "2026-04-03"
-lastTouched: "2026-04-03"
+lastUpdated: "2026-04-12"
+lastTouched: "2026-04-12"
 status: "in-progress"
 ---
 
@@ -87,6 +87,18 @@ status: "in-progress"
 - #36 NPC poaching frontend: player snapshot in event metadata, morale pills, BREAKING ticker
 - #28 Construction lag visuals: interpolated block height, amber progress bars, ticker events
 
+**PR #123 — Three-pool budget model + housekeeping (merged 2026-04-12):**
+- #40/#41 Name audit: all 93 team names and 190+ player names reviewed; `Kevin De Bruyne` → `Kelvin De Bryne`; sutbourne ambiguity resolved → Sutton United
+- #59 News ticker speed: confirmed already fixed in PR #88 (147s→206s), closed
+- #120 Backroom staff visibility: DataTiles bug fix (showed squad count not staff count), manager section + match impact bar in Backroom Team slide-over
+- #61/#110 Three-pool budget model: replaced `transferBudget` + soft `wageBudget` with Transfer Fund (50%), Infrastructure Fund (20%), Wage Reserve (30%)
+  - Weekly wages now deducted from Wage Reserve each week; revenue flows in
+  - Board bailout: covers shortfall at 10% penalty from Transfer/Infra funds
+  - `SET_BUDGET_ALLOCATION` command: redistribute pools during transfer windows only
+  - Runway-based validation: 8-week minimum for signings/hiring
+  - Budget allocation slider UI: three linked sliders in slide-over, opened from Financial Health Bar
+  - Facility upgrades deduct from Infrastructure Fund, not Transfer Fund
+
 ## What's In Progress
 
 - Balance pass — passive, during play-testing
@@ -107,4 +119,5 @@ status: "in-progress"
 - **Live URL**: https://oaks3000.github.io/calculating-glory/ — auto-deploys on push to main
 - Dev server: `npm run dev --workspace=@calculating-glory/frontend`
 - Domain tests: `cd packages/domain && npm test` (478 tests)
+- **Financial model**: Three budget pools (Transfer 50% / Infrastructure 20% / Wages 30%), real weekly wage deduction, board bailout at 10% penalty, budget allocation locked outside transfer windows
 - **Design principle**: two-axis model — football division vs curriculum level fully independent
