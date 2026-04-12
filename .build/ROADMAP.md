@@ -2,7 +2,7 @@
 project: "Calculating Glory"
 type: "build"
 createdAt: "2026-03-03"
-lastUpdated: "2026-03-31"
+lastUpdated: "2026-04-12"
 ---
 
 # Calculating Glory - Roadmap
@@ -35,7 +35,7 @@ An educational football club management game for Year 7 maths, built on event-so
 - Owner's Box: real-time Kev commentary, 22-beat timeline, 8 crowd states, 60+ templates
 - Val financial threshold inbox messages
 
-### Phase 8: Polish ✅ (PRs #80, #82, #88–#94)
+### Phase 8: Polish ✅ (PRs #80, #82, #88–#94, #102)
 - Intro spotlight system, club identity/naming, stadium name
 - Transfer market drama, formation view, season arc moments
 - Owner's Box physics animations, no-duplicate commentary
@@ -44,6 +44,15 @@ An educational football club management game for Year 7 maths, built on event-so
 - Contract label UX, auto-exit negotiations, budget flash animation
 - Match pitch visualisation: 22-blip SVG, beat-driven state machine, goal celebrations
 - Morale news ticker milestones, Groundskeeper's Drill (geometry)
+
+### Phase 9: Financial Model ✅ (PR #123)
+- Three-pool budget: Transfer Fund (50%), Infrastructure Fund (20%), Wage Reserve (30%)
+- Real weekly wage deduction from Wage Reserve; revenue flows in
+- Board bailout at 10% penalty when Wage Reserve goes negative
+- Budget allocation slider UI (linked sliders, transfer-window locked)
+- Runway-based validation (8-week minimum for signings/hiring)
+- Backroom staff visibility: manager display, match impact bar
+- Name audit: all fictional names reviewed and approved
 
 ---
 
