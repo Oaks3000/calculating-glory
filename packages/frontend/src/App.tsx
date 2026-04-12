@@ -6,11 +6,9 @@ import {
   MatchCommentaryContext,
 } from '@calculating-glory/domain';
 import { useGameState } from './hooks/useGameState';
-import { CommandCentre } from './components/command-centre/CommandCentre';
+import { OwnerOffice } from './components/owner-office/OwnerOffice';
 import { StadiumView } from './components/stadium-view/StadiumView';
-import { ViewToggle, ActiveView } from './components/shared/ViewToggle';
-import { AppNav } from './components/nav/AppNav';
-import { AppNavMobile } from './components/nav/AppNavMobile';
+import { ActiveView } from './components/shared/ViewToggle';
 import { PreSeasonScreen } from './components/pre-season/PreSeasonScreen';
 import { SeasonEndScreen } from './components/season-end/SeasonEndScreen';
 import { ForcedOutScreen } from './components/forced-out/ForcedOutScreen';
@@ -23,6 +21,7 @@ import { PreMatchOverlay } from './components/owner-box/PreMatchOverlay';
 import { clearIntroCompleted } from './lib/introState';
 
 type Screen = 'menu' | 'intro' | 'game';
+// ActiveSection kept for compat with any remaining imports
 export type ActiveSection = 'overview' | 'inbox' | 'squad' | 'transfers' | 'finances' | 'backroom';
 
 interface OwnerBoxData {
@@ -35,7 +34,6 @@ export default function App() {
   const { state, events, dispatch, isLoading, resetGame } = useGameState();
   const [screen, setScreen] = useState<Screen>('menu');
   const [activeView, setActiveView] = useState<ActiveView>('command');
-  const [activeSection, setActiveSection] = useState<ActiveSection>('overview');
   const [error, setError] = useState<string | null>(null);
   const [ownerBoxData, setOwnerBoxData] = useState<OwnerBoxData | null>(null);
   const [showPostMatch, setShowPostMatch] = useState(false);
@@ -43,10 +41,8 @@ export default function App() {
   const [ultimatumDismissedWeek, setUltimatumDismissedWeek] = useState<number | null>(null);
   const processedEventCount = useRef<number | null>(null);
 
-  // Reset to overview when switching to stadium view
   function handleViewChange(view: ActiveView) {
     setActiveView(view);
-    if (view === 'stadium') setActiveSection('overview');
   }
 
   // Detect new MATCH_SIMULATED events after simulation completes
@@ -97,7 +93,6 @@ export default function App() {
   }, [events, isLoading]);
 
   const hasSave = events.length > 1;
-  const unresolvedCount = state.pendingEvents.filter(e => !e.resolved).length;
 
   function handleContinue() {
     setScreen('game');
@@ -161,70 +156,50 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-bg-deep text-txt-primary flex flex-col">
-      <ViewToggle
-        activeView={activeView}
-        onViewChange={handleViewChange}
-        state={state}
-        isLoading={isLoading}
-        dispatch={dispatch}
-        onError={setError}
-        onResetGame={resetGame}
-        onPreMatch={() => setShowPreMatch(true)}
-      />
 
-      {error && (
-        <div
-          className="mx-4 mt-2 bg-alert-red/10 border border-alert-red/40 rounded-card px-4 py-2
-                     text-sm text-alert-red flex items-center justify-between"
-        >
-          <span>{error}</span>
+      {/* ── Stadium view has a simple top bar ──────────────────────────── */}
+      {activeView === 'stadium' && (
+        <div className="shrink-0 flex items-center gap-3 px-4 py-2 bg-bg-surface border-b border-bg-raised">
           <button
-            onClick={() => setError(null)}
-            className="ml-4 text-alert-red/70 hover:text-alert-red"
+            onClick={() => handleViewChange('command')}
+            className="text-xs text-txt-muted hover:text-txt-primary transition-colors"
           >
-            ✕
+            ← Owner's Office
           </button>
+          <span className="text-xs text-txt-muted/40">|</span>
+          <span className="text-xs font-semibold text-txt-primary">{state.club.stadium.name}</span>
         </div>
       )}
 
-      <div className="flex flex-1 overflow-hidden">
-        <AppNav
-          activeSection={activeSection}
-          onSectionChange={s => { setActiveView('command'); setActiveSection(s); }}
-          activeView={activeView}
-          onViewChange={handleViewChange}
-          unresolvedCount={unresolvedCount}
-        />
-
-        <main className="flex-1 overflow-hidden flex flex-col pb-16 lg:pb-0">
-          {activeView === 'command' ? (
-            <CommandCentre
-              state={state}
-              events={events}
-              dispatch={dispatch}
-              isLoading={isLoading}
-              onNavigateToStadium={() => handleViewChange('stadium')}
-              activeSection={activeSection}
-              onSectionChange={s => { setActiveView('command'); setActiveSection(s); }}
-            />
-          ) : (
-            <StadiumView
-              state={state}
-              dispatch={dispatch}
-              onError={setError}
-            />
-          )}
-        </main>
-      </div>
-
-      {/* Mobile bottom nav — only visible during game, command view */}
-      {activeView === 'command' && (
-        <AppNavMobile
-          activeSection={activeSection}
-          onSectionChange={setActiveSection}
-          unresolvedCount={unresolvedCount}
-        />
+      {error && (
+        <div
+          className="mx-4 mt-2 shrink-0 bg-alert-red/10 border border-alert-red/40 rounded-card px-4 py-2
+                     text-sm text-alert-red flex items-center justify-between"
+        >
+          <span>{error}</span>
+          <button onClick={() => setError(null)} className="ml-4 text-alert-red/70 hover:text-alert-red">✕</button>
+        </div>
       )}
+
+      <main className="flex-1 overflow-hidden flex flex-col">
+        {activeView === 'command' ? (
+          <OwnerOffice
+            state={state}
+            events={events}
+            dispatch={dispatch}
+            isLoading={isLoading}
+            onNavigateToStadium={() => handleViewChange('stadium')}
+            onError={setError}
+            onPreMatch={() => setShowPreMatch(true)}
+          />
+        ) : (
+          <StadiumView
+            state={state}
+            dispatch={dispatch}
+            onError={setError}
+          />
+        )}
+      </main>
 
       {isLoading && (
         <div className="fixed inset-0 bg-bg-deep/60 flex items-center justify-center z-50">
