@@ -73,10 +73,8 @@ An educational football club management game for Year 7 maths, built on event-so
 
 ---
 
-## Current Work
-
-### Phase 13: Command Centre UX Overhaul
-- **#124** Full nav/layout overhaul — persistent left-rail (desktop) / bottom bar (mobile), section pages replacing slide-overs, budget allocation preview-first flow
+### Phase 13: Command Centre UX Overhaul (PR #129, in review)
+- **#124** ✅ Full nav/layout overhaul — persistent sidebar (lg+) / bottom tab bar (mobile), section pages replacing slide-overs, HeadlineStats strip, live runway counter in Finances
 - **#111** Progressive disclosure — priority ordering, collapsible sections, new-player ramp
 - **#119** Chat area rethink — negotiate panel becomes NPC conversation hub; inbox reverts to read-only updates
 - **#86** Mobile/touch feel — game must work well on phones and tablets

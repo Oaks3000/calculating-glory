@@ -2,8 +2,8 @@
 project: "Calculating Glory"
 type: "build"
 priority: 2
-phase: "Phase 8 — Polish"
-progress: 99
+phase: "Phase 13 — Command Centre UX Overhaul"
+progress: 30
 lastUpdated: "2026-04-12"
 lastTouched: "2026-04-12"
 status: "in-progress"
@@ -11,8 +11,8 @@ status: "in-progress"
 
 # Calculating Glory - Current Status
 
-**Phase:** Phase 8 — Polish (99% complete)
-**Last Updated:** 2026-04-03 (session 2)
+**Phase:** Phase 13 — Command Centre UX Overhaul (30% complete)
+**Last Updated:** 2026-04-12
 
 ## What's Done
 
@@ -99,9 +99,21 @@ status: "in-progress"
   - Budget allocation slider UI: three linked sliders in slide-over, opened from Financial Health Bar
   - Facility upgrades deduct from Infrastructure Fund, not Transfer Fund
 
+**PR #124 — Command Centre UX Overhaul (merged 2026-04-12, PR #129):**
+- Persistent sidebar (lg+): Overview / Inbox / Squad / Transfers / Finances / Backroom + Stadium
+- Fixed bottom tab bar (mobile) with unresolved-events badge on Inbox
+- HeadlineStats strip: Position / Board Confidence / Transfer Budget always above fold
+- OverviewSection: inbox-first stack order on mobile, then HeadlineStats → DataTiles → HubTiles → tables
+- InboxSection, TransferSection, BackroomSection, SquadSection: full-page wrappers
+- FinancesSection: FinancialHealthBar + budget allocation sliders with live ≈Nw runway counter
+- CommandCentre refactored: 7 slide-over booleans → 3 (Negotiations, Practice, Learning Progress)
+- App.tsx: activeSection state, flex sidebar layout, pb-16 lg:pb-0 for mobile safe area
+
 ## What's In Progress
 
-- Balance pass — passive, during play-testing
+- #111 Progressive disclosure — priority ordering, collapsible sections, new-player ramp
+- #119 Chat area rethink — negotiate panel as NPC conversation hub
+- #86 Mobile/touch feel
 
 ## What's Next
 
