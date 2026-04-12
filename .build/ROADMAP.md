@@ -54,48 +54,60 @@ An educational football club management game for Year 7 maths, built on event-so
 - Backroom staff visibility: manager display, match impact bar
 - Name audit: all fictional names reviewed and approved
 
+### Phase 10: Transfer Loop UX ✅ (PR #125)
+- Formation pitch grid in transfer market — players arranged in positional boxes
+- Squad selection screen rethink — formation-first view
+- Sell-with-jeopardy — listing + incoming offer + negotiation, not instant sale
+
+### Phase 11: Facilities ✅ (PR #66)
+- Construction lag time — upgrades take 2–6 weeks; `FACILITY_UPGRADE_STARTED` / `FACILITY_CONSTRUCTION_COMPLETED` event pair
+- Isometric scaffold state during construction (amber dashes, 🏗 icon, countdown)
+- NPC league persistence — previous season table with pill toggle from season 2+
+- Frontend test suite — 23 tests across FacilityCard and InboxCard
+
 ---
 
 ## Current Work
 
-### Remaining Polish
-- **#91** Season-end experience — final table, awards, promotion/relegation moment
-- **#92** Inbox overflow — multiple events stacking on same week
-- **#87** Stadium view — isometric facility panels with upgrade action
-- **#86** Math challenge difficulty scaling
-- **#80** Sponsor negotiation — Val presents deals, maths challenge
-
-### Phase 7 Visual Upgrade (SC2K)
-- **#66** Construction animations — hazard dashes, jostle, dust particles
-- **#65** Match pitch done ✅; remaining: seeded blip movement, crowd-flash on Stands, isometric migration
-- 3-tone SC2K tile shading, per-facility micro-animations
-- See BACKLOG.md Phase 7 section for full spec
+### Phase 12: Command Centre UX Overhaul
+- **#124** Full nav/layout overhaul — persistent left-rail (desktop) / bottom bar (mobile), section pages replacing slide-overs, budget allocation preview-first flow
+- **#111** Progressive disclosure — priority ordering, collapsible sections, new-player ramp
+- **#119** Chat area rethink — negotiate panel becomes NPC conversation hub; inbox reverts to read-only updates
+- **#86** Mobile/touch feel — game must work well on phones and tablets
 
 ---
 
-## Future Phases
+## Backlog
 
-### Gameplay Depth
-- #70 Formation tactics — player chooses formation and style
-- #71 Transfer windows — summer/January with deadline-day drama
-- #72 Dynamic sponsors — scale with league position and reputation
-- #73 Local derbies — special atmosphere and crowd boost
-- #74 Rival managers — named AI personalities
-- #75 Board objectives — start-of-season targets
-- #76 Morale system expansion
-- #77 Youth academy — promote youth players
-- #78 Player development — training affects individual growth
-- #79 Scout report deep-dive — profile cards with strengths/weaknesses
+### Squad & Transfer Depth
+- **#30** Player attributes wired into match sim — weighted attack/defence/teamwork/charisma by position
+- **#32** Scout facility — `revealedPotential` accuracy scales with scout level (55% → 95%)
+- **#36** NPC poaching — triggered by player quality + reputation gap; counter/negotiate/accept flow
+- **#34** Owner forced-out full design — game-over conditions, re-entry mechanics, multiplayer implications
+
+### Manager & NPC Depth
+- **#109** NPC manager shells — 5–8 named archetypes (The Philosopher, The Sergeant, etc.) with distinct inbox voices
+- **#112** Kev squad review chat — scripted week-1 walkthrough of squad gaps and recruitment priorities
+- **#29** Manager creation and impact — formation affinity, man-management, fan approval, sacking costs
+- **#84** Club identity — club name in commentary/ticker/NPCs, record tracking, badge/colour customisation
+
+### Freeform NPC Chat
+- **#113** LLM-backed NPC conversations — Claude Haiku with game-state context per NPC; Kev as first rollout; scripted fallback for school networks
+
+### Match & Stadium Immersion
+- **#65** Phase 7 match immersion — stadium atmosphere, animated blip movement, CM-style goal moments; SC2K tile shading and micro-animations
 
 ### Technical & Accessibility
-- #67 Chromebook performance audit (target 60fps, <500KB bundle)
-- #68 Accessibility audit — keyboard nav, screen reader, reduced-motion
-- #69 Save/load system — multiple save slots
+- Chromebook performance audit (target 60fps, <500KB bundle)
+- Accessibility audit — keyboard nav, screen reader, reduced-motion
+- Save/load system — multiple save slots
 
 ### Educational
 - Adaptive difficulty wired to live evidence (not just curriculum level)
 - Hint system with curriculum-appropriate scaffolding
 - Teacher dashboard — class view of student progress
+
+---
 
 ## Out of Scope (for now)
 
