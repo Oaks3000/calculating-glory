@@ -71,12 +71,17 @@ An educational football club management game for Year 7 maths, built on event-so
 - NPC poaching overhaul: teamwork-weighted targeting, strength-based club selection, maths-gated negotiate choice, offer-contract retention (#36)
 - Club identity (NPC dialogue layer): Kev references records, crowd atmosphere reactions, ticker history headlines (#84)
 
+### Phase 13: Command Centre UX Overhaul (PR #129, in review)
+- **#124** ✅ Full nav/layout overhaul — persistent sidebar (lg+) / bottom tab bar (mobile), section pages replacing slide-overs, HeadlineStats strip, live runway counter in Finances
+- **#111** Progressive disclosure — priority ordering, collapsible sections, new-player ramp
+- **#119** Chat area rethink — negotiate panel becomes NPC conversation hub; inbox reverts to read-only updates
+- **#86** Mobile/touch feel — game must work well on phones and tablets
+
 ---
 
 ## Current Work
 
-### Phase 13: Command Centre UX Overhaul
-- **#124** Full nav/layout overhaul — persistent left-rail (desktop) / bottom bar (mobile), section pages replacing slide-overs, budget allocation preview-first flow
+### Command Centre Depth
 - **#111** Progressive disclosure — priority ordering, collapsible sections, new-player ramp
 - **#119** Chat area rethink — negotiate panel becomes NPC conversation hub; inbox reverts to read-only updates
 - **#86** Mobile/touch feel — game must work well on phones and tablets
@@ -84,7 +89,6 @@ An educational football club management game for Year 7 maths, built on event-so
 ### Gameplay Systems
 - **#29** Manager creation, hiring, and impact on club performance
 - **#32** Scout facility — `truePotential` reveal accuracy beyond `publicPotential` baseline
-- **#28** Construction lag time + staged build visuals for facility upgrades
 
 ### NPC & Conversation Layer
 - **#113** Freeform NPC chat — LLM-backed conversations with Val/Marcus/Kev/Dani

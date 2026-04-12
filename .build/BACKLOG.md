@@ -35,6 +35,10 @@ lastUpdated: "2026-04-12"
 - [x] Name audit: all fictional team/player names reviewed ✅ (PR #123)
 - [x] Reputation flash animation ✅
 - [x] Learning Progress slide-over ✅
+- [x] Command Centre nav overhaul: persistent sidebar (lg+) + bottom tab bar (mobile) ✅ (PR #129)
+- [x] Section pages: Inbox, Transfers, Finances, Backroom, Squad replace slide-overs ✅ (PR #129)
+- [x] HeadlineStats strip: Position / Confidence / Budget above fold ✅ (PR #129)
+- [x] FinancesSection live runway counter alongside wage reserve slider ✅ (PR #129)
 
 ## Improvements / Optimisations
 

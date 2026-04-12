@@ -1,79 +1,78 @@
-# Session Progress — 2026-03-31
+# Session Progress — 2026-04-12
 
 ## Session Goals
-- Update priorities based on current project state
-- Implement #63, #64 (UX polish — contract labels, auto-exit, budget flash)
-- Implement #90 (Dani intro stadium tour)
-- Implement #85 (NPC match reactions)
-- Implement #65 (match pitch visualisation)
+- Implement #124 — Command Centre UX/UI overhaul (persistent nav, section routing, headline stats)
 - Update .build docs
+- Raise PR
 
 ## Completed Work
 
-### 1. UX Polish — #63 + #64 ✅ (PR #93, merged)
-- Contract label: "Contract: Xw left" with tooltip for full expiry week
-- Runway label: "Xw runway" (was "X wks")
-- Negotiations auto-close 2.5s after correct answer
-- Budget flash: useRef tracks previous value, shows +/- delta badge with bouncing animation for 2s
+### 1. Command Centre UX/UI Overhaul — #124 ✅ (PR #129, in review)
 
-### 2. Dani Intro Stadium Tour — #90 ✅ (PR #94, merged)
-- 6 new intro steps with stadium backdrop (Training Ground, Medical, Scout, Stadium)
-- `BackdropMode` type: 'command' | 'stadium' — IntroScreen switches dynamically
-- `highlightFacility` prop on IsometricBlueprint → `isHighlighted` on CoreUnit
-- Pulsing blue SVG overlay (intro-highlight keyframe)
-- Dani's voice: practical, dry — trade-off framing
+**New files:**
+- `AppNav.tsx` — persistent left sidebar (lg+): Overview/Inbox/Squad/Transfers/Finances/Backroom + Stadium at bottom
+- `AppNavMobile.tsx` — fixed bottom tab bar (mobile, lg:hidden): 6 sections + unresolved-events badge on Inbox
+- `HeadlineStats.tsx` — 3-stat headline strip (Position / Board Confidence / Transfer Budget) with trend arrows
+- `sections/OverviewSection.tsx` — inbox-first, HeadlineStats → DataTiles → HubTiles → tables
+- `sections/InboxSection.tsx` — full-page InboxHistory
+- `sections/TransferSection.tsx` — full-page TransferMarketSlideOver
+- `sections/FinancesSection.tsx` — FinancialHealthBar + budget sliders + live ≈Nw runway counter
+- `sections/BackroomSection.tsx` — full-page BackroomTeamSlideOver
+- `sections/SquadSection.tsx` — full-page SquadAuditTable
 
-### 3. NPC Match Reactions — #85 ✅ (PR #94, merged)
-- 30+ templates across 3 NPCs × 7 scenarios (big_win, win, draw, loss, bad_loss, winning_streak, losing_streak)
-- `generateNpcMatchReactionEvents()` in simulation/events.ts
-- Wired into SIMULATE_WEEK handler after match results
-- Deterministic (seeded RNG), non-stacking, Kev double-weighted, 40% chance on ordinary results
+**Modified files:**
+- `CommandCentre.tsx` — section routing via activeSection prop; 7 slide-over booleans → 3 (Negotiations, Practice, Learning)
+- `App.tsx` — activeSection state, flex sidebar layout, pb-16 lg:pb-0 for mobile safe area
+- `IntroScreen.tsx` — 1-line compat fix: pass activeSection="overview" onSectionChange={() => {}}
 
-### 4. Match Pitch Visualisation — #65 ✅ (committed, awaiting PR)
-- `MatchPitch.tsx`: top-down SVG pitch (280×180), 22 blips in 4-4-2 formation
-- `BlipState` machine: IDLE → BUILD_UP → CHANCE → CELEBRATE_HOME/AWAY → RESET
-- Beat-driven: OwnerBox maps BeatType → BlipState transitions via timeouts
-- Goal celebration: radial pulse (goalPulse keyframe) + blip convergence + scoreboard bounce (scoreBounce)
-- Crowd glow on pitch border (crowdGlow keyframe) for ROAR/CELEBRATION/HOSTILE
-- 7 new Tailwind keyframes + 3 CSS keyframes for SVG animations
-- prefers-reduced-motion disables all match animations
-
-### 5. .build Docs Updated ✅
-- NEXT.md: complete rewrite with priority queue
-- BACKLOG.md: Phase 7d items marked done, match director documented
-- STATUS.md: refreshed to 98% Phase 8
-- ROADMAP.md: all phases through 8 marked complete
+### 2. .build Docs Updated ✅
+- STATUS.md: Phase 13, progress 30%, PR #129 listed
+- NEXT.md: PR #129 section added at top
+- ROADMAP.md: Phase 13 shows #124 as done, remaining issues still open
+- BACKLOG.md: 4 new ✅ items for PR #129
+- SESSION_START.md: this file
 
 ## Architecture Notes
 
-- Match pitch piggybacks on existing MatchTimeline beats — no streaming events needed
-- Beat → BlipState mapping: GOAL→CELEBRATE (3s), CHANCE→BUILD_UP→CHANCE (2.5s), NEAR_MISS→CHANCE (1.8s)
-- All CSS keyframes, no setInterval — Chromebook-safe
-- OwnerBox layout: top bar → scoreboard (with bounce) → pitch → crowd label → commentary → post-match
+- No router introduced — section routing via `activeSection` state in App.tsx
+- `ActiveSection` type exported from App.tsx; imported by AppNav, AppNavMobile, CommandCentre
+- FinancesSection is a self-contained reimplementation of BudgetAllocationSlideOver content (not a wrapper) — adds live runway counter per-slider
+- Slide-overs that remain: Negotiations (contextual, linked to PendingClubEvent), Practice (Marcus Webb), Learning Progress (acumen breakdown)
+- Worktree domain symlink rule: domain dist always reads from main project — rebuild there if domain changes
 
 ## Current Status
 
 ### ✅ Working
-- All features shipped, tests pass (478 domain tests)
-- Zero new TypeScript errors (149 total = all pre-existing module resolution)
+- TypeScript: 0 errors
+- Sidebar visible at lg+, hidden mobile
+- Bottom tab bar visible mobile, hidden lg+
+- All 6 sections render correctly
+- Inbox badge shows unresolved count
+- FinancesSection: runway counter updates live as slider moves
+- Negotiations/Practice slide-overs still open from Overview HubTiles
+- Intro walkthrough: spotlight dimming unaffected
 
 ### 🟡 Pending
-- PR for #65 match pitch (on branch, pushed)
+- PR #129 awaiting review/merge
 
 ### 🔴 Blocked
 - Nothing
 
-## Key Files Modified
+## Key Files
 
-- `packages/frontend/src/components/owner-box/MatchPitch.tsx` — NEW: pitch SVG + blips
-- `packages/frontend/src/components/owner-box/OwnerBox.tsx` — blip state, goal flash, scoreboard bounce
-- `packages/frontend/tailwind.config.js` — 7 new animation keyframes
-- `packages/frontend/src/index.css` — 3 SVG keyframes + reduced-motion rules
-- `packages/frontend/src/components/intro/IntroScreen.tsx` — backdrop switching, Dani tour
-- `packages/frontend/src/components/isometric/CoreUnit.tsx` — isHighlighted prop
-- `packages/frontend/src/components/isometric/IsometricBlueprint.tsx` — highlightFacility prop
-- `packages/domain/src/simulation/events.ts` — NPC match reaction templates + generator
-- `packages/domain/src/commands/handlers.ts` — wire NPC reactions into SIMULATE_WEEK
-- `packages/frontend/src/components/shared/FinancialHealthBar.tsx` — budget flash
-- `packages/frontend/src/components/social-feed/SocialFeed.tsx` — auto-exit callback
-- `packages/frontend/src/components/transfer-market/TransferMarketSlideOver.tsx` — contract labels
+- `src/App.tsx` — activeSection state, layout wrapper
+- `src/components/nav/AppNav.tsx` — desktop sidebar
+- `src/components/nav/AppNavMobile.tsx` — mobile bottom bar
+- `src/components/command-centre/HeadlineStats.tsx` — 3-stat strip
+- `src/components/command-centre/sections/` — 6 section components
+- `src/components/command-centre/CommandCentre.tsx` — section router
+
+## Next Session Goals
+
+- Merge PR #129
+- Pick up #111 (progressive disclosure) or #119 (chat area rethink)
+- Consider #92 inbox overflow full fix
+
+---
+
+**Status**: PR #129 in review — Command Centre nav overhaul complete, Phase 13 ~30% done

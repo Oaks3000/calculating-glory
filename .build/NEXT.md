@@ -10,6 +10,23 @@ lastUpdated: "2026-04-12"
 
 ---
 
+## Recently Completed (PR #129, in review 2026-04-12)
+
+### ✅ Command Centre UX/UI Overhaul
+- **Issue:** #124
+- **Status:** IN REVIEW (PR #129)
+- Persistent sidebar (lg+) with Overview / Inbox / Squad / Transfers / Finances / Backroom / Stadium
+- Fixed bottom tab bar (mobile) — 6 sections with unresolved-events badge on Inbox
+- HeadlineStats: 3-stat strip (Position / Confidence / Budget) always above fold on overview
+- OverviewSection: inbox-first stack, HeadlineStats → DataTiles → HubTiles → League Table + Squad
+- Full-page sections: Inbox, Transfers (with pitch grid), Finances, Backroom, Squad
+- FinancesSection: live ≈Nw wage runway counter that updates as wage reserve slider moves
+- CommandCentre: reduced from 7 slide-over booleans to 3 (Negotiations, Practice, Learning Progress)
+- Clicking FinancialHealthBar now navigates to Finances section (not budget slide-over)
+- Backroom/Acumen DataTile clicks navigate to their sections (not slide-overs)
+
+---
+
 ## Recently Completed (PR #123, merged 2026-04-12)
 
 ### ✅ Name Audit
