@@ -75,6 +75,13 @@ export interface PendingClubEvent {
    * Not present on standard club events.
    */
   metadata?: {
+    /**
+     * Discriminant for transfer-related inbox events.
+     * 'poach' = NPC approaching to buy one of your players (inbound).
+     * 'bid'   = NPC responding to your transfer listing (outbound).
+     * Used by PendingEventCard to render the correct player-snapshot strip.
+     */
+    eventKind?: 'poach' | 'bid';
     poachTargetPlayerId?: string;
     npcClubId?: string;
     npcClubName?: string;

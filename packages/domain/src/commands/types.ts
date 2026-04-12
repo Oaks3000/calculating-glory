@@ -33,7 +33,9 @@ export type GameCommand =
   | AcceptTakeoverCommand
   | AcceptIntroSponsorDealCommand
   | UpgradeCurriculumCommand
-  | SetBudgetAllocationCommand;
+  | SetBudgetAllocationCommand
+  | ListPlayerForSaleCommand
+  | UnlistPlayerCommand;
 
 export interface MakeTransferCommand {
   type: 'MAKE_TRANSFER';
@@ -173,6 +175,16 @@ export interface SetBudgetAllocationCommand {
   transfer: number;
   infrastructure: number;
   wages: number;
+}
+
+export interface ListPlayerForSaleCommand {
+  type: 'LIST_PLAYER_FOR_SALE';
+  playerId: string;
+}
+
+export interface UnlistPlayerCommand {
+  type: 'UNLIST_PLAYER';
+  playerId: string;
 }
 
 export interface CommandResult {

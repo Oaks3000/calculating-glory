@@ -46,6 +46,7 @@ function makeState(entries: LeagueTableEntry[], playerClubId: string = 'club-1')
       preferredFormation: null,
       squadCapacity: 24,
       manager: null,
+      listedPlayerIds: [],
     },
     league: {
       entries,

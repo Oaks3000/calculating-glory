@@ -58,16 +58,16 @@ const freeAgentPlayer: Player = {
   stats: { goals: 0, assists: 0, cleanSheets: 0, appearances: 0, averageRating: 70 },
 };
 
-function stateWithSquad(players: Player[]): GameState {
+function stateWithSquad(players: Player[], listedPlayerIds: string[] = []): GameState {
   const base = buildState([gameStartedEvent]);
-  return { ...base, club: { ...base.club, squad: players } };
+  return { ...base, club: { ...base.club, squad: players, listedPlayerIds } };
 }
 
 // ─── handleCommand: SELL_PLAYER_TO_NPC ────────────────────────────────────────
 
 describe('SELL_PLAYER_TO_NPC command', () => {
   it('returns PLAYER_SOLD event on valid sale', () => {
-    const state = stateWithSquad([squadPlayer]);
+    const state = stateWithSquad([squadPlayer], ['player-1']);
     const result = handleCommand(
       { type: 'SELL_PLAYER_TO_NPC', playerId: 'player-1', npcClubId: 'swinton' },
       state,
@@ -78,7 +78,7 @@ describe('SELL_PLAYER_TO_NPC command', () => {
   });
 
   it('event carries correct fee (transferValue when > 0)', () => {
-    const state = stateWithSquad([squadPlayer]);
+    const state = stateWithSquad([squadPlayer], ['player-1']);
     const result = handleCommand(
       { type: 'SELL_PLAYER_TO_NPC', playerId: 'player-1', npcClubId: 'swinton' },
       state,
@@ -88,7 +88,7 @@ describe('SELL_PLAYER_TO_NPC command', () => {
   });
 
   it('event carries correct fee derived from OVR when transferValue is 0', () => {
-    const state = stateWithSquad([freeAgentPlayer]);
+    const state = stateWithSquad([freeAgentPlayer], ['player-2']);
     const result = handleCommand(
       { type: 'SELL_PLAYER_TO_NPC', playerId: 'player-2', npcClubId: 'bradfield' },
       state,
@@ -99,7 +99,7 @@ describe('SELL_PLAYER_TO_NPC command', () => {
   });
 
   it('event carries playerName and npcClubName', () => {
-    const state = stateWithSquad([squadPlayer]);
+    const state = stateWithSquad([squadPlayer], ['player-1']);
     const result = handleCommand(
       { type: 'SELL_PLAYER_TO_NPC', playerId: 'player-1', npcClubId: 'swinton' },
       state,
@@ -177,7 +177,7 @@ describe('PLAYER_SOLD reducer', () => {
 
 describe('SELL_PLAYER_TO_NPC round-trip', () => {
   it('squad shrinks and budget grows after full command → reduce cycle', () => {
-    const state = stateWithSquad([squadPlayer]);
+    const state = stateWithSquad([squadPlayer], ['player-1']);
     const budgetBefore = state.club.transferBudget;
 
     const result = handleCommand(

@@ -79,6 +79,7 @@ function makeMinimalClub(overrides: Partial<Club> = {}): Club {
     preferredFormation: null,
     squadCapacity: 24,
     manager: null,
+    listedPlayerIds: [],
     ...overrides,
   };
 }

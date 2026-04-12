@@ -117,6 +117,22 @@ export function reduceEvent(state: GameState, event: GameEvent): GameState {
           },
         },
       };
+    case 'PLAYER_LISTED':
+      return {
+        ...state,
+        club: {
+          ...state.club,
+          listedPlayerIds: [...(state.club.listedPlayerIds ?? []), event.playerId],
+        },
+      };
+    case 'PLAYER_UNLISTED':
+      return {
+        ...state,
+        club: {
+          ...state.club,
+          listedPlayerIds: (state.club.listedPlayerIds ?? []).filter(id => id !== event.playerId),
+        },
+      };
     default:
       return state;
   }
@@ -259,6 +275,7 @@ function handleGameStarted(state: GameState, event: GameStartedEvent): GameState
       squad: inheritedSquad,
       squadCapacity: 24,
       manager: null,
+      listedPlayerIds: [],
       stadium: {
         ...state.club.stadium,
         name: event.stadiumName ?? deriveStadiumName(event.clubName),
@@ -294,7 +311,8 @@ function handlePlayerSold(state: GameState, event: any): GameState {
     club: {
       ...state.club,
       squad: state.club.squad.filter(p => p.id !== event.playerId),
-      transferBudget: state.club.transferBudget + event.fee
+      transferBudget: state.club.transferBudget + event.fee,
+      listedPlayerIds: (state.club.listedPlayerIds ?? []).filter(id => id !== event.playerId),
     }
   };
 }
@@ -888,6 +906,7 @@ function handlePlayerReleased(state: GameState, event: PlayerReleasedEvent): Gam
       ...state.club,
       squad: state.club.squad.filter(p => p.id !== event.playerId),
       transferBudget: state.club.transferBudget + event.releaseFee,
+      listedPlayerIds: (state.club.listedPlayerIds ?? []).filter(id => id !== event.playerId),
     },
   };
 }
@@ -1005,6 +1024,7 @@ function handlePreSeasonStarted(state: GameState, event: PreSeasonStartedEvent):
       form: [],
       trainingFocus: null,
       preferredFormation: null,
+      listedPlayerIds: [], // clear transfer listings at start of each season
     },
   };
 }
@@ -1136,6 +1156,7 @@ function handleTakeoverAccepted(state: GameState, event: TakeoverAcceptedEvent):
       squadCapacity:  24,
       facilities:     getDefaultFacilities(),
       manager:        null,
+      listedPlayerIds: [],
       staff:          [],
       reputation:     newReputation,
     },
@@ -1167,6 +1188,7 @@ function createEmptyClub(): Club {
     preferredFormation: null,
     squadCapacity: 24,
     manager: null,
+    listedPlayerIds: [],
   };
 }
 

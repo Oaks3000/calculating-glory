@@ -9,9 +9,10 @@
  * team strength, which changes results even with the same seed.
  */
 
-import { createRng, Rng } from './rng';
+import { createRng, Rng, seededIntNoise } from './rng';
 import { Club } from '../types/club';
-import { Player } from '../types/player';
+import { Player, Position, computeOverallRating } from '../types/player';
+import { Formation, FORMATION_CONFIG } from '../types/formation';
 import { isUnsettled } from './morale';
 
 /** Base expected goals for an average-vs-average matchup (League Two realistic) */
@@ -146,6 +147,53 @@ export function simulateMatch(
   };
 }
 
+const POSITION_ORDER: Position[] = ['GK', 'DEF', 'MID', 'FWD'];
+
+/**
+ * Select the manager's starting XI from the squad.
+ *
+ * The manager assesses each player through a noise-adjusted OVR lens.
+ * A poor manager (low tactical rating) may misjudge player quality and
+ * field a weaker player over a stronger one. An elite manager always
+ * selects the optimal XI.
+ *
+ * noiseRange:
+ *   tactical = 0   → ±20  (routinely wrong — frequent poor picks)
+ *   tactical = 50  → ±10  (occasional errors)
+ *   tactical = 100 → ±0   (always optimal)
+ *
+ * The weekSeed ensures mistakes rotate each match rather than being
+ * permanently fixed to the same player.
+ *
+ * If no formation is set, returns the full squad (no selection applied).
+ */
+export function selectManagerXI(
+  squad: Player[],
+  formation: Formation | null,
+  managerTactical: number,
+  weekSeed: string,
+): Player[] {
+  if (!formation) return squad;
+  const config = FORMATION_CONFIG[formation];
+  if (!config) return squad;
+
+  const noiseRange = Math.max(0, 20 - (managerTactical / 100) * 20);
+  const xi: Player[] = [];
+
+  for (const pos of POSITION_ORDER) {
+    const slots = config.slots[pos];
+    const candidates = squad.filter(p => p.position === pos);
+    const sorted = candidates.slice().sort((a, b) => {
+      const aOvr = computeOverallRating(a) + seededIntNoise(a.id + weekSeed, noiseRange);
+      const bOvr = computeOverallRating(b) + seededIntNoise(b.id + weekSeed, noiseRange);
+      return bOvr - aOvr;
+    });
+    xi.push(...sorted.slice(0, slots));
+  }
+
+  return xi;
+}
+
 /**
  * Build a Team from the player's Club.
  *
@@ -161,9 +209,17 @@ export function simulateMatch(
  *   FITNESS         → teamModifier    + 0.03
  *   SET_PIECES      → attackStrength  × 1.03
  *   YOUTH_INTEGRATION → no match effect (developmental only)
+ *
+ * weekSeed is used to seed the manager's XI selection noise.
+ * Pass the current week/season string for match-accurate selection.
+ * Defaults to 'default' for backward-compatible tests.
  */
-export function clubToTeam(club: Club): Team {
-  const { attack, defence } = calculatePositionalStrengths(club.squad);
+export function clubToTeam(club: Club, weekSeed: string = 'default'): Team {
+  // The manager selects the starting XI; a poor manager may misread the squad.
+  // No manager → apply a low tactical quality (20) as a penalty.
+  const managerTactical = club.manager ? club.manager.attributes.tactical : 20;
+  const xi = selectManagerXI(club.squad, club.preferredFormation, managerTactical, weekSeed);
+  const { attack, defence } = calculatePositionalStrengths(xi.length > 0 ? xi : club.squad);
   const { modifier, fanZoneBonus } = calculateTeamModifier(club);
 
   // Apply training focus multipliers after base calculation.

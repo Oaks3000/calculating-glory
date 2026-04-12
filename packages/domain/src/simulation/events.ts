@@ -17,6 +17,7 @@ import { createRng } from './rng';
 import { getTeamsForDivision } from '../data/division-teams';
 import { avgSquadMorale, isUnsettled } from './morale';
 import { computeOverallRating } from '../types/player';
+import { isTransferWindowOpen } from '../types/facility';
 
 /**
  * Check whether a template's prerequisite has been met.
@@ -337,6 +338,7 @@ export function generatePoachAttempts(
     description: `${npcClub.name} have submitted a formal bid of ${feeStr} for ${target.name}. How do you respond?`,
     severity: 'major',
     metadata: {
+      eventKind: 'poach',
       poachTargetPlayerId: target.id,
       npcClubId: npcClub.id,
       npcClubName: npcClub.name,
@@ -381,6 +383,119 @@ export function generatePoachAttempts(
   };
 
   return [poachEvent];
+}
+
+// ── NPC bids on listed players ─────────────────────────────────────────────────
+
+/**
+ * Generate 0–N NPC bids for players the owner has listed for sale.
+ * At most one bid per listed player per week (no per-week global cap —
+ * multiple listed players can each receive a bid in the same week).
+ *
+ * Only fires during an open transfer window (weeks 1–4 and 23–26).
+ * Listing is allowed outside a window; bids only arrive within one.
+ *
+ * Bid probability scales with player OVR (better players attract more interest):
+ *   OVR 40–49 → ~20%/week  |  OVR 50–59 → ~35%/week  |  OVR 60+ → ~55%/week
+ */
+export function generateListedPlayerBids(
+  state: GameState,
+  week: number,
+  season: number,
+  seed: string,
+): PendingClubEvent[] {
+  // Bids only arrive during open transfer windows
+  if (!isTransferWindowOpen(week, state.phase)) return [];
+  if (state.phase === 'PRE_SEASON' || state.phase === 'SEASON_END') return [];
+
+  const listed = (state.club.listedPlayerIds ?? []);
+  if (listed.length === 0) return [];
+
+  const npcClubs = getTeamsForDivision(state.division).filter(t => t.id !== state.club.id);
+  if (npcClubs.length === 0) return [];
+
+  const bids: PendingClubEvent[] = [];
+  const rng = createRng(`${seed}-S${season}-W${week}-bids`);
+
+  for (const playerId of listed) {
+    const player = state.club.squad.find(p => p.id === playerId);
+    if (!player) continue; // stale listing — player already left
+
+    // Skip if a bid for this player is already pending in the inbox
+    const alreadyPending = state.pendingEvents.some(
+      e => e.templateId === 'npc-bid' && !e.resolved && e.metadata?.poachTargetPlayerId === playerId
+    );
+    if (alreadyPending) continue;
+
+    const ovr = computeOverallRating(player);
+
+    // Bid probability: ~20% for OVR 40, scaling to ~55% for OVR 60+
+    const bidChance = 0.20 + Math.max(0, ovr - 40) * 0.0175;
+    if (rng.next() > bidChance) continue;
+
+    const npcClub = npcClubs[rng.nextInt(0, npcClubs.length - 1)];
+    const fee = offeredFee(player.wage, ovr);
+    const counterFee = Math.round(fee * 1.25);
+
+    const feeStr = (fee / 100).toLocaleString('en-GB', {
+      style: 'currency', currency: 'GBP', maximumFractionDigits: 0,
+    });
+    const counterFeeStr = (counterFee / 100).toLocaleString('en-GB', {
+      style: 'currency', currency: 'GBP', maximumFractionDigits: 0,
+    });
+
+    const bidEvent: PendingClubEvent = {
+      id: `evt-S${season}-W${week}-bid-${playerId.slice(-6)}`,
+      templateId: 'npc-bid',
+      week,
+      title: `${npcClub.name} want to sign ${player.name}`,
+      description: `${npcClub.name} have come in for ${player.name} with a bid of ${feeStr}. They're on your transfer list — what's your response?`,
+      severity: 'major',
+      // bankTopic drives the maths challenge question on the counter-offer choice
+      bankTopic: 'PERCENTAGES',
+      metadata: {
+        eventKind: 'bid',
+        poachTargetPlayerId: player.id,
+        npcClubId: npcClub.id,
+        npcClubName: npcClub.name,
+        offeredFee: fee,
+        playerName: player.name,
+        playerPosition: player.position,
+        playerOverall: ovr,
+        playerWage: player.wage,
+      },
+      choices: [
+        {
+          id: 'accept',
+          label: 'Accept the bid',
+          description: `Sell ${player.name} to ${npcClub.name} for ${feeStr}. The funds arrive immediately.`,
+          budgetEffect: fee,
+          reputationEffect: 2,
+          playerLeaves: true,
+        },
+        {
+          id: 'counter',
+          label: `Counter at ${counterFeeStr}`,
+          description: `Demand 25% more. Answer the maths question correctly to negotiate an extra 5% premium on top.`,
+          budgetEffect: counterFee,
+          mathsCorrectBudgetEffect: Math.round(counterFee * 1.05),
+          reputationEffect: 3,
+          playerLeaves: true,
+          requiresMath: true,
+        },
+        {
+          id: 'reject',
+          label: 'Reject the bid',
+          description: `Turn down the offer. ${player.name} stays on the list but this bid lapses.`,
+        },
+      ],
+      resolved: false,
+    };
+
+    bids.push(bidEvent);
+  }
+
+  return bids;
 }
 
 // ── Morale threshold events ────────────────────────────────────────────────────

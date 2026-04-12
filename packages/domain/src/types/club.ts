@@ -55,6 +55,13 @@ export interface Club {
 
   /** Currently hired manager (null = no manager appointed) */
   manager: Manager | null;
+
+  /**
+   * IDs of squad players currently listed for sale.
+   * NPC clubs will only submit bids for listed players during an open
+   * transfer window. Cleared on PRE_SEASON_STARTED.
+   */
+  listedPlayerIds: string[];
 }
 
 /**
