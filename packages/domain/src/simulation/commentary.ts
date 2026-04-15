@@ -214,6 +214,9 @@ export function generateMatchTimeline(ctx: MatchCommentaryContext): MatchTimelin
   let runningOpponent = 0;
 
   for (const event of allGoalEvents) {
+    // Capture lead BEFORE this goal to determine reaction context
+    const leadBeforeGoal = runningPlayer - runningOpponent;
+
     if (event.isPlayer) runningPlayer++;
     else                runningOpponent++;
 
@@ -223,14 +226,34 @@ export function generateMatchTimeline(ctx: MatchCommentaryContext): MatchTimelin
     if (event.isPlayer) {
       const scorer = randomPlayerName();
 
+      // Pick reaction pool based on score context:
+      //   opener      — from 0-0 to 1-0 (first goal of match)
+      //   equaliser   — was trailing, now level
+      //   go_ahead    — was level (non-zero), now leading
+      //   reaction    — already leading, adding another goal
+      let reactionPool: readonly string[];
+      if (leadBeforeGoal === 0 && runningOpponent === 0) {
+        // No goals at all yet — this is the opener
+        reactionPool = KEV_TEMPLATES.goal_player_opener;
+      } else if (leadBeforeGoal < 0 && runningPlayer === runningOpponent) {
+        // Was behind, now level — equaliser
+        reactionPool = KEV_TEMPLATES.goal_player_equaliser;
+      } else if (leadBeforeGoal <= 0 && runningPlayer > runningOpponent) {
+        // Was level or behind, now ahead — go-ahead goal
+        reactionPool = KEV_TEMPLATES.goal_player_go_ahead;
+      } else {
+        // Already leading, extending the advantage
+        reactionPool = KEV_TEMPLATES.goal_player_reaction;
+      }
+
       // GOAL beat: buildup line + reaction line (UI displays with brief gap between)
       beats.push({
         matchMinute: event.minute,
         realTimeOffset: 0,
         type: 'GOAL',
         content: [
-          { sender: 'KEV', text: fill(pick(KEV_TEMPLATES.goal_player_buildup),  scorer), mood: 'excited' },
-          { sender: 'KEV', text: fill(pick(KEV_TEMPLATES.goal_player_reaction), scorer), mood: 'elated'  },
+          { sender: 'KEV', text: fill(pick(KEV_TEMPLATES.goal_player_buildup), scorer), mood: 'excited' },
+          { sender: 'KEV', text: fill(pick(reactionPool),                       scorer), mood: 'elated'  },
         ],
         crowdState: 'ROAR',
         scoreboardUpdate: { home: homeScore, away: awayScore },
@@ -288,18 +311,27 @@ export function generateMatchTimeline(ctx: MatchCommentaryContext): MatchTimelin
   }
 
   // NEAR_MISS beats (0–1 per half, 60% chance) ──────────────────────────────
+  // Pool and mood scale with how comfortable our lead is at that moment:
+  //   2+ goal lead → near_miss_comfortable (relaxed, no panic)
+  //   anything else → near_miss_opponent (worried, crowd groans)
   for (let half = 0; half < 2; half++) {
     if (rng.next() < 0.6) {
       const [lo, hi] = half === 0 ? [10, 42] : [50, 86];
       const m = pickMinute(lo, hi, reserved);
       if (m !== null) {
         reserved.add(m);
+        const leadAtMoment = playerLeadAtMinute(m);
+        const isComfortable = leadAtMoment >= 2;
         beats.push({
           matchMinute: m,
           realTimeOffset: 0,
           type: 'NEAR_MISS',
-          content: [{ sender: 'KEV', text: fill(pick(KEV_TEMPLATES.near_miss_opponent)), mood: 'worried' }],
-          crowdState: 'GROAN',
+          content: [{
+            sender: 'KEV',
+            text:  fill(pick(isComfortable ? KEV_TEMPLATES.near_miss_comfortable : KEV_TEMPLATES.near_miss_opponent)),
+            mood:  isComfortable ? 'neutral' : 'worried',
+          }],
+          crowdState: isComfortable ? 'MURMUR' : 'GROAN',
         });
       }
     }
