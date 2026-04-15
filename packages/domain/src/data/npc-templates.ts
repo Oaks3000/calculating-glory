@@ -546,3 +546,59 @@ export const KEV_SEASON_REVIEW_CLOSE = [
   "Season moves fast. Make the changes early and we've got a real chance.",
   "That's my read. Window's open and there's work to do. Let's go.",
 ];
+
+// ── Kev Mulligan — January Window (weeks 21 & 23) ─────────────────────────
+//
+// Week 21: window opens — 2–3 messages: opener, form context, optional gap, closer.
+// Week 23: one short deadline nudge.
+
+/** Week 21 — window open opener */
+export const KEV_JANUARY_WINDOW_OPENER = [
+  "January window's open. Four weeks. Let's take stock of where we are.",
+  "Window's open. Four weeks to make changes if we need to. Here's my read.",
+  "Right. January. Window opens now — let's have a look at the squad.",
+  "Transfer window's back. Four weeks. Time to be smart about it.",
+  "January's here. Window's open. Let's see what needs doing.",
+];
+
+/** Week 21 — form/position context: struggling (bottom half + poor recent form) */
+export const KEV_JANUARY_CONTEXT_STRUGGLING = [
+  "We're not where we need to be in the table. This window could define the season.",
+  "Form's been poor and the table reflects it. A January signing could change the mood.",
+  "Difficult spell. The window is a chance to reset — bring in someone who changes the dynamic.",
+  "Bottom half of the table and we're not convincing. Need something from this window.",
+  "The honest truth: we need a lift. Right player in this window and the second half of the season looks different.",
+];
+
+/** Week 21 — form/position context: in decent shape (top half or good recent form) */
+export const KEV_JANUARY_CONTEXT_STRONG = [
+  "We're in a decent position. Only sign if it genuinely improves the starting XI — don't disrupt a good thing.",
+  "Good half of the season. Window's a chance to add depth, not panic buy.",
+  "In good shape. If the right player's available, great. If not, hold the line — don't force it.",
+  "Top half and form's decent. Be selective. This squad doesn't need a rebuild, it might just need cover.",
+];
+
+/** Week 21 — form/position context: mid-table, nothing decided */
+export const KEV_JANUARY_CONTEXT_NEUTRAL = [
+  "Mid-table. Season's in the balance. The right signing now could push us up — wrong one and we drift.",
+  "Nothing's decided yet. Window could be the difference between a push and finishing nowhere.",
+  "We could go either way from here. Window's a genuine opportunity if we use it right.",
+  "Tight. The table's open. A good January could make the second half look very different.",
+];
+
+/** Week 21 closer — deadline reminder */
+export const KEV_JANUARY_WINDOW_CLOSE = [
+  "Window shuts week 24. Four weeks. Don't leave it to the last minute.",
+  "Four weeks. Deadline's week 24. Make the call early.",
+  "Closes week 24. Whatever you're doing, do it before deadline day.",
+  "Window's open until week 24. Act early — late deals always cost more.",
+];
+
+/** Week 23 — single deadline nudge */
+export const KEV_JANUARY_DEADLINE_NUDGE = [
+  "Deadline's week 24. One week left. If there's a move to make, make it.",
+  "One week to deadline. Window closes week 24. Final chance.",
+  "Deadline week next week. If you're signing, do it now — don't wait until the last day.",
+  "Week 24 closes the window. This is the last chance to bring anyone in before the end of the season.",
+  "Deadline approaching. Whatever's needed — sort it this week.",
+];
