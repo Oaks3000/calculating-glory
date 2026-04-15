@@ -5,18 +5,26 @@
  * the same message. Placeholders are filled by generateNpcMessages().
  *
  * Placeholders:
- *   [WAGES]    — weekly wage bill, formatted (e.g. "£3,859")
- *   [INCOME]   — weekly income, formatted
- *   [NET]      — net per week (signed, e.g. "+£541" or "−£320")
- *   [RUNWAY]   — weeks of runway (integer)
- *   [BUDGET]   — current transfer budget, formatted
- *   [OPPONENT] — opponent team name
- *   [SCORE]    — match scoreline e.g. "2–1"
- *   [FORM]     — last 5 results string e.g. "W W D L W"
- *   [SQUAD]    — current squad count
- *   [STREAK]   — current streak length (wins or losses)
- *   [CLUB]     — club name (e.g. "Hartfield FC")
- *   [STADIUM]  — stadium name (e.g. "Calder Park")
+ *   [WAGES]           — weekly wage bill, formatted (e.g. "£3,859")
+ *   [INCOME]          — weekly income, formatted
+ *   [NET]             — net per week (signed, e.g. "+£541" or "−£320")
+ *   [RUNWAY]          — weeks of runway (integer)
+ *   [BUDGET]          — current transfer budget, formatted
+ *   [OPPONENT]        — opponent team name
+ *   [SCORE]           — match scoreline e.g. "2–1"
+ *   [FORM]            — last 5 results string e.g. "W W D L W"
+ *   [SQUAD]           — current squad count
+ *   [STREAK]          — current streak length (wins or losses)
+ *   [CLUB]            — club name (e.g. "Hartfield FC")
+ *   [STADIUM]         — stadium name (e.g. "Calder Park")
+ *   [SEASON]          — current season number
+ *   [GK_COUNT]        — number of goalkeepers in squad
+ *   [DEF_COUNT]       — number of defenders
+ *   [MID_COUNT]       — number of midfielders
+ *   [FWD_COUNT]       — number of forwards
+ *   [AGING_COUNT]     — players aged 33+
+ *   [LOW_MORALE_COUNT]— players with morale below threshold
+ *   [EXPIRING_COUNT]  — players with contract expiring this season
  */
 
 // ── Val Okoro — Finance Director ───────────────────────────────────────────
@@ -440,4 +448,101 @@ export const MARCUS_COMMERCIAL_OBS = [
   'Bit of unsolicited analysis: [CLUB] are [POSITION]th in the league and the fanbase feels it. Winning brings people in, people in means income, income means better players. It\'s all connected.',
   'Word from the youth players — they want to play for a club with a buzz about it. Commercial investment creates that at [CLUB]. It\'s not just about money.',
   'The food and beverage revenue on matchday at [STADIUM] is underrated. I know it sounds unglamorous but a well-run concession adds up over a season. Val\'s probably already told you this.',
+];
+
+// ── Kev Mulligan — Season Review (week 1 of each season) ──────────────────
+//
+// Fires as a sequence of 3–4 messages at the start of every season.
+// Kev analyses the squad and flags gaps, concerns, and actions.
+//
+// Additional placeholders (season-review only):
+//   [SEASON] [GK_COUNT] [DEF_COUNT] [MID_COUNT] [FWD_COUNT]
+//   [AGING_COUNT] [LOW_MORALE_COUNT] [EXPIRING_COUNT]
+
+/** Season review opener — always fires first */
+export const KEV_SEASON_REVIEW_OPENER = [
+  "Right, season [SEASON] is here. [SQUAD] players registered. Let me give you my honest read on what we've got.",
+  "New season. [SQUAD] players in the squad. Here's my take on where we stand before a ball's been kicked.",
+  "Season [SEASON]. Before anything else — quick squad audit. [SQUAD] registered. Let's see what we're working with.",
+  "First week. [SQUAD] players, season [SEASON]. I've had a look and I want to flag a few things.",
+  "Season [SEASON] starts now. [SQUAD] in the squad. Here's my honest assessment — no sugar-coating.",
+];
+
+/** No goalkeeper registered — critical */
+export const KEV_SQUAD_NO_GK = [
+  "No goalkeeper registered. I don't know how that's happened but it needs fixing immediately. That's not a squad, that's a crisis.",
+  "We've got no recognised goalkeeper. That has to be the first signing. Everything else can wait.",
+];
+
+/** Only one goalkeeper — thin cover */
+export const KEV_SQUAD_THIN_GK = [
+  "One goalkeeper. [GK_COUNT]. Any injury there and we're in serious trouble. Worth looking at adding cover.",
+  "Thin between the sticks — just [GK_COUNT] keeper registered. We're one knock away from a real problem.",
+  "I'd flag the goalkeeping situation. [GK_COUNT] keeper means no cover. That needs addressing.",
+];
+
+/** Fewer than 4 defenders */
+export const KEV_SQUAD_THIN_DEF = [
+  "Only [DEF_COUNT] defenders. That's not enough cover — any injuries at the back and it'll show in the results.",
+  "[DEF_COUNT] at the back. Tight over a full season. Need at least one more defender before the window closes.",
+  "Defensive depth is the concern here — [DEF_COUNT] options. We need to fix that before we start shipping goals through sheer rotation.",
+];
+
+/** Fewer than 4 midfielders */
+export const KEV_SQUAD_THIN_MID = [
+  "[MID_COUNT] midfielders. The workload through the middle is going to be heavy. One or two injuries and you'll feel it in the results.",
+  "Midfield looks stretched — [MID_COUNT] to cover the whole campaign. I'd be looking for another body in there.",
+  "Need more options in midfield. [MID_COUNT] is tight over forty-six games.",
+];
+
+/** Fewer than 2 forwards */
+export const KEV_SQUAD_THIN_FWD = [
+  "[FWD_COUNT] up front. If one of them goes down, you're asking midfielders to lead the line. That never works.",
+  "Thin in attack — [FWD_COUNT] recognised forwards. You'll hit a run without goals at some point and you'll need options.",
+  "Attack needs strengthening. [FWD_COUNT] forwards is not enough for a full season. Goals win games.",
+];
+
+/** Positional coverage looks solid — 'all clear' variant */
+export const KEV_SQUAD_POSITIONS_SOLID = [
+  "Positionally we're not badly set. Cover in every area. That's something at least.",
+  "Looked at the positions — no glaring holes. Bodies in the right places. That's the starting point.",
+  "Squad's balanced across the positions. No obvious gap jumping out at me on paper.",
+];
+
+/** 2+ players aged 33+ — aging concern */
+export const KEV_SQUAD_AGING = [
+  "[AGING_COUNT] players on the wrong side of 32. Good experience in there, but plan for the rebuild while you still can.",
+  "I'm looking at the ages — [AGING_COUNT] players over 32. They won't run forever. Think about what comes next.",
+  "[AGING_COUNT] players in the squad that are heading towards the end. Experience is valuable, but you need to be building for what's next.",
+];
+
+/** 2+ players with low morale */
+export const KEV_SQUAD_LOW_MORALE = [
+  "[LOW_MORALE_COUNT] players with their head down before a ball's been kicked. Sort the dressing room early — low morale spreads.",
+  "Morale's a concern. [LOW_MORALE_COUNT] players not fully bought in. That will affect the group if you don't address it quickly.",
+  "[LOW_MORALE_COUNT] unhappy heads in the dressing room. Deal with it early or it becomes everyone's problem.",
+];
+
+/** 2+ contracts expiring this season */
+export const KEV_SQUAD_CONTRACT_EXPIRY = [
+  "[EXPIRING_COUNT] contracts up this season. Get those conversations started early — losing players for nothing hurts twice.",
+  "Worth flagging — [EXPIRING_COUNT] players out of contract during the season. Renew or replace, but don't let them walk for free.",
+  "[EXPIRING_COUNT] contracts expiring. Every one of those is a negotiation you need to have. Don't leave it to the last minute.",
+];
+
+/** Wage pressure at season start — runway is tight */
+export const KEV_SQUAD_WAGE_PRESSURE = [
+  "Val's numbers don't look great — [RUNWAY] weeks of runway. This squad needs to deliver results or we'll be selling.",
+  "I've seen the finances. [RUNWAY] weeks runway is tight for a season opener. Keep an eye on the wage bill.",
+  "Budget's stretched — [RUNWAY] weeks of runway. Any signings need to be smart ones. Can't afford a mistake in this window.",
+];
+
+/** Season review closer — always fires last */
+export const KEV_SEASON_REVIEW_CLOSE = [
+  "Transfer window's open. Use it. Early business is always better than panic buying in February.",
+  "That's the picture. Act early — late deals cost more and deliver less.",
+  "Right. Honest take delivered. What you do with it is up to you. Window's open.",
+  "The free agent list has options. Have a look. This stuff doesn't fix itself.",
+  "Season moves fast. Make the changes early and we've got a real chance.",
+  "That's my read. Window's open and there's work to do. Let's go.",
 ];

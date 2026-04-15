@@ -49,6 +49,18 @@ import {
   KEV_TOP_SCORER_RECALL,
   MARCUS_ATTENDANCE_BUZZ,
   MARCUS_ATTENDANCE_QUIET,
+  KEV_SEASON_REVIEW_OPENER,
+  KEV_SQUAD_NO_GK,
+  KEV_SQUAD_THIN_GK,
+  KEV_SQUAD_THIN_DEF,
+  KEV_SQUAD_THIN_MID,
+  KEV_SQUAD_THIN_FWD,
+  KEV_SQUAD_POSITIONS_SOLID,
+  KEV_SQUAD_AGING,
+  KEV_SQUAD_LOW_MORALE,
+  KEV_SQUAD_CONTRACT_EXPIRY,
+  KEV_SQUAD_WAGE_PRESSURE,
+  KEV_SEASON_REVIEW_CLOSE,
 } from '../data/npc-templates';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -63,7 +75,8 @@ export type NpcMessageCategory =
   | 'FORM_UPDATE'
   | 'STREAK_UPDATE'
   | 'TABLE_UPDATE'
-  | 'COMMERCIAL_UPDATE';
+  | 'COMMERCIAL_UPDATE'
+  | 'SEASON_REVIEW';
 
 export interface NpcMessage {
   /** Stable ID for React keys: `${sender}-${category}-w${week}-s${season}` */
@@ -190,6 +203,142 @@ export function generateNpcMessages(
       week,
       season,
       category: 'FINANCIAL_ALERT',
+    });
+  }
+
+  // ── Kev season review (week 1 only) ───────────────────────────────────
+  // Fires a 3–4 message sequence: opener → positional gap → top concern → closer.
+  // Repeats every season so returning players get a fresh read at the start of S2, S3 etc.
+
+  if (week === 1) {
+    const squad  = state.club.squad;
+    const gks    = squad.filter(p => p.position === 'GK');
+    const defs   = squad.filter(p => p.position === 'DEF');
+    const mids   = squad.filter(p => p.position === 'MID');
+    const fwds   = squad.filter(p => p.position === 'FWD');
+
+    // Absolute game-week (seasons are 46 weeks each)
+    const absoluteWeek   = (season - 1) * 46 + week;
+    const agingPlayers   = squad.filter(p => p.age >= 33);
+    const lowMoralePlayers = squad.filter(p => p.morale < 45);
+    const expiringContracts = squad.filter(
+      p => p.contractExpiresWeek > 0 && p.contractExpiresWeek <= absoluteWeek + 46
+    );
+
+    const reviewFill: Record<string, string> = {
+      ...fillVars,
+      SEASON:            String(season),
+      GK_COUNT:          String(gks.length),
+      DEF_COUNT:         String(defs.length),
+      MID_COUNT:         String(mids.length),
+      FWD_COUNT:         String(fwds.length),
+      AGING_COUNT:       String(agingPlayers.length),
+      LOW_MORALE_COUNT:  String(lowMoralePlayers.length),
+      EXPIRING_COUNT:    String(expiringContracts.length),
+    };
+
+    // 1. Opener
+    messages.push({
+      id:       `KEV-SEASON_REVIEW-opener-w${week}-s${season}`,
+      sender:   'KEV',
+      text:     fillPlaceholders(pick(KEV_SEASON_REVIEW_OPENER, rng), reviewFill),
+      week, season,
+      category: 'SEASON_REVIEW',
+    });
+
+    // 2. Positional gap — flag the most critical shortage (priority: GK > FWD > DEF > MID)
+    if (gks.length === 0) {
+      messages.push({
+        id:       `KEV-SEASON_REVIEW-pos-w${week}-s${season}`,
+        sender:   'KEV',
+        text:     fillPlaceholders(pick(KEV_SQUAD_NO_GK, rng), reviewFill),
+        week, season,
+        category: 'SEASON_REVIEW',
+      });
+    } else if (gks.length === 1) {
+      messages.push({
+        id:       `KEV-SEASON_REVIEW-pos-w${week}-s${season}`,
+        sender:   'KEV',
+        text:     fillPlaceholders(pick(KEV_SQUAD_THIN_GK, rng), reviewFill),
+        week, season,
+        category: 'SEASON_REVIEW',
+      });
+    } else if (fwds.length < 2) {
+      messages.push({
+        id:       `KEV-SEASON_REVIEW-pos-w${week}-s${season}`,
+        sender:   'KEV',
+        text:     fillPlaceholders(pick(KEV_SQUAD_THIN_FWD, rng), reviewFill),
+        week, season,
+        category: 'SEASON_REVIEW',
+      });
+    } else if (defs.length < 4) {
+      messages.push({
+        id:       `KEV-SEASON_REVIEW-pos-w${week}-s${season}`,
+        sender:   'KEV',
+        text:     fillPlaceholders(pick(KEV_SQUAD_THIN_DEF, rng), reviewFill),
+        week, season,
+        category: 'SEASON_REVIEW',
+      });
+    } else if (mids.length < 4) {
+      messages.push({
+        id:       `KEV-SEASON_REVIEW-pos-w${week}-s${season}`,
+        sender:   'KEV',
+        text:     fillPlaceholders(pick(KEV_SQUAD_THIN_MID, rng), reviewFill),
+        week, season,
+        category: 'SEASON_REVIEW',
+      });
+    } else {
+      messages.push({
+        id:       `KEV-SEASON_REVIEW-pos-w${week}-s${season}`,
+        sender:   'KEV',
+        text:     pick(KEV_SQUAD_POSITIONS_SOLID, rng),
+        week, season,
+        category: 'SEASON_REVIEW',
+      });
+    }
+
+    // 3. Top concern — wage pressure > aging > morale > contracts (pick one)
+    if (runway < 15) {
+      messages.push({
+        id:       `KEV-SEASON_REVIEW-concern-w${week}-s${season}`,
+        sender:   'KEV',
+        text:     fillPlaceholders(pick(KEV_SQUAD_WAGE_PRESSURE, rng), reviewFill),
+        week, season,
+        category: 'SEASON_REVIEW',
+      });
+    } else if (agingPlayers.length >= 2) {
+      messages.push({
+        id:       `KEV-SEASON_REVIEW-concern-w${week}-s${season}`,
+        sender:   'KEV',
+        text:     fillPlaceholders(pick(KEV_SQUAD_AGING, rng), reviewFill),
+        week, season,
+        category: 'SEASON_REVIEW',
+      });
+    } else if (lowMoralePlayers.length >= 2) {
+      messages.push({
+        id:       `KEV-SEASON_REVIEW-concern-w${week}-s${season}`,
+        sender:   'KEV',
+        text:     fillPlaceholders(pick(KEV_SQUAD_LOW_MORALE, rng), reviewFill),
+        week, season,
+        category: 'SEASON_REVIEW',
+      });
+    } else if (expiringContracts.length >= 2) {
+      messages.push({
+        id:       `KEV-SEASON_REVIEW-concern-w${week}-s${season}`,
+        sender:   'KEV',
+        text:     fillPlaceholders(pick(KEV_SQUAD_CONTRACT_EXPIRY, rng), reviewFill),
+        week, season,
+        category: 'SEASON_REVIEW',
+      });
+    }
+
+    // 4. Closer
+    messages.push({
+      id:       `KEV-SEASON_REVIEW-close-w${week}-s${season}`,
+      sender:   'KEV',
+      text:     pick(KEV_SEASON_REVIEW_CLOSE, rng),
+      week, season,
+      category: 'SEASON_REVIEW',
     });
   }
 
