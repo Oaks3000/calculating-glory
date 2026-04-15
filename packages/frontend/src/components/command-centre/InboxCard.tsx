@@ -1,4 +1,13 @@
-import { GameEvent, GameCommand, PendingClubEvent, LeagueTableEntry, NpcMessage, NpcSender } from '@calculating-glory/domain';
+import {
+  GameEvent,
+  GameCommand,
+  PendingClubEvent,
+  LeagueTableEntry,
+  NpcMessage,
+  NpcSender,
+  Manager,
+  MANAGER_PERSONAS,
+} from '@calculating-glory/domain';
 import { PendingEventCard } from './PendingEventCard';
 import {
   buildNotableMatches,
@@ -9,12 +18,33 @@ import {
 
 // ── NPC sender display config ─────────────────────────────────────────────────
 
-const NPC_CONFIG: Record<NpcSender, { initial: string; name: string; avatarClass: string; nameClass: string }> = {
+type StaticNpcSender = Exclude<NpcSender, 'MANAGER'>;
+
+const NPC_CONFIG: Record<StaticNpcSender, { initial: string; name: string; avatarClass: string; nameClass: string }> = {
   VAL:    { initial: 'V', name: 'Val Chen',       avatarClass: 'bg-warn-amber/20 text-warn-amber',   nameClass: 'text-warn-amber'   },
   KEV:    { initial: 'K', name: 'Kev Mulligan',   avatarClass: 'bg-data-blue/20 text-data-blue',     nameClass: 'text-data-blue'    },
   MARCUS: { initial: 'M', name: 'Marcus Webb',    avatarClass: 'bg-pitch-green/20 text-pitch-green', nameClass: 'text-pitch-green'  },
   DANI:   { initial: 'D', name: 'Dani Osei',      avatarClass: 'bg-alert-red/20 text-alert-red',     nameClass: 'text-alert-red'    },
 };
+
+function getSenderConfig(
+  sender: NpcSender,
+  manager?: Manager | null
+): { initial: string; name: string; avatarClass: string; nameClass: string } {
+  if (sender === 'MANAGER') {
+    if (!manager) {
+      return { initial: 'M', name: 'Manager', avatarClass: 'bg-white/10 text-txt-muted', nameClass: 'text-txt-muted' };
+    }
+    const persona = MANAGER_PERSONAS[manager.archetype];
+    return {
+      initial:     manager.name.charAt(0),
+      name:        manager.name,
+      avatarClass: persona.avatarClass,
+      nameClass:   persona.nameClass,
+    };
+  }
+  return NPC_CONFIG[sender as StaticNpcSender];
+}
 
 interface InboxCardProps {
   pendingEvents: PendingClubEvent[];
@@ -31,6 +61,8 @@ interface InboxCardProps {
   onMathChallenge: (event: PendingClubEvent) => void;
   onViewAll: () => void;
   npcMessages?: NpcMessage[];
+  /** Current hired manager — used to resolve MANAGER sender display config */
+  manager?: Manager | null;
 }
 
 const PREVIEW_LIMIT = 4;
@@ -50,6 +82,7 @@ export function InboxCard({
   onMathChallenge,
   onViewAll,
   npcMessages = [],
+  manager,
 }: InboxCardProps) {
   const unresolvedDecisions = pendingEvents.filter(e => !e.resolved);
 
@@ -187,7 +220,7 @@ export function InboxCard({
               From the Team
             </p>
             {npcMessages.map((msg) => {
-              const cfg = NPC_CONFIG[msg.sender];
+              const cfg = getSenderConfig(msg.sender, manager);
               return (
                 <div
                   key={msg.id}

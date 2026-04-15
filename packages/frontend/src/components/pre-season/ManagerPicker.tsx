@@ -1,4 +1,4 @@
-import { Manager, formatMoney } from '@calculating-glory/domain';
+import { Manager, formatMoney, MANAGER_PERSONAS } from '@calculating-glory/domain';
 
 interface ManagerPickerProps {
   managers: Manager[];
@@ -55,6 +55,8 @@ function ManagerCard({
     avgRating >= 50 ? { label: 'Experienced', colour: 'text-warn-amber' } :
     { label: 'Journeyman', colour: 'text-txt-muted' };
 
+  const persona = MANAGER_PERSONAS[manager.archetype];
+
   return (
     <button
       onClick={affordable ? onSelect : undefined}
@@ -68,13 +70,25 @@ function ManagerCard({
             : 'border-white/5 bg-bg-surface opacity-50 cursor-not-allowed',
       ].join(' ')}
     >
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div>
-          <div className="flex items-center gap-2">
+      <div className="flex items-start justify-between gap-3 mb-2">
+        <div className="flex-1 min-w-0">
+          {/* Name + tier */}
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-semibold text-txt-primary">{manager.name}</span>
             <span className={`text-xs ${tier.colour}`}>{tier.label}</span>
           </div>
-          <div className="text-xs text-txt-muted mt-0.5">
+          {/* Archetype pill */}
+          <div className="flex items-center gap-2 mt-1">
+            <span className={`text-xs font-medium px-1.5 py-0.5 rounded-sm ${persona.avatarClass}`}>
+              {persona.label}
+            </span>
+          </div>
+          {/* Persona description */}
+          <p className="text-xs2 text-txt-muted mt-1 leading-relaxed italic">
+            {persona.shortDesc}
+          </p>
+          {/* Wage + contract */}
+          <div className="text-xs text-txt-muted mt-1.5">
             {formatMoney(manager.wage)}/wk
             <span className="mx-1.5 text-white/20">·</span>
             {manager.contractLengthWeeks / 52} season contract
@@ -96,7 +110,7 @@ function ManagerCard({
         )}
       </div>
 
-      <div className="space-y-1.5">
+      <div className="space-y-1.5 mt-3">
         <StatBar value={manager.attributes.tactical} label="Tactical" />
         <StatBar value={manager.attributes.motivation} label="Motivation" />
         <StatBar value={manager.attributes.experience} label="Experience" />

@@ -11,6 +11,8 @@ import { GameEvent, MatchSimulatedEvent } from '../events/types';
 import { computeWeeklyFinancials } from './revenue';
 import { formatMoney } from '../money/utils';
 import { createRng } from './rng';
+import { MANAGER_MESSAGE_POOLS } from '../data/manager-message-templates';
+import { MANAGER_PERSONAS } from '../data/manager-archetypes';
 import {
   VAL_SUMMARY_SURPLUS,
   VAL_SUMMARY_GREEN,
@@ -53,7 +55,7 @@ import {
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
-export type NpcSender = 'VAL' | 'KEV' | 'MARCUS' | 'DANI';
+export type NpcSender = 'VAL' | 'KEV' | 'MARCUS' | 'DANI' | 'MANAGER';
 
 export type NpcMessageCategory =
   | 'WEEKLY_SUMMARY'
@@ -527,5 +529,97 @@ export function generateNpcMessages(
     });
   }
 
+  // ── Manager archetype messages ─────────────────────────────────────────
+  // The hired manager sends one message per week, in character.
+  // Post-match messages fire on match weeks; weekly check-ins on non-match weeks
+  // (throttled to every 3rd non-match week to avoid noise).
+  // Form messages overlay the post-match message when a 3+ run is active.
+
+  const manager = state.club.manager;
+  if (manager) {
+    const pools = MANAGER_MESSAGE_POOLS[manager.archetype];
+    const managerFill: Record<string, string> = {
+      ...fillVars,
+      MANAGER: manager.name,
+    };
+
+    if (thisWeekMatch) {
+      // Post-match message — win or loss
+      const isManagerHome = thisWeekMatch.homeTeamId === state.club.id;
+      const mgrPlayerG    = isManagerHome ? thisWeekMatch.homeGoals : thisWeekMatch.awayGoals;
+      const mgrOppG       = isManagerHome ? thisWeekMatch.awayGoals : thisWeekMatch.homeGoals;
+
+      const postMatchPool = mgrPlayerG > mgrOppG ? pools.postWin : pools.postLoss;
+      messages.push({
+        id: `MANAGER-POST_MATCH-w${week}-s${season}`,
+        sender: 'MANAGER',
+        text: fillPlaceholders(pick(postMatchPool, rng), managerFill),
+        week,
+        season,
+        category: 'POST_MATCH',
+      });
+
+      // Additionally: form overlay if 3+ run active
+      if (state.club.form.length >= 3) {
+        const last3 = state.club.form.slice(-3);
+        const win3  = last3.every(r => r === 'W');
+        const loss3 = last3.every(r => r === 'L');
+        if (win3) {
+          messages.push({
+            id: `MANAGER-FORM_UPDATE-w${week}-s${season}`,
+            sender: 'MANAGER',
+            text: fillPlaceholders(pick(pools.formGood, rng), managerFill),
+            week,
+            season,
+            category: 'FORM_UPDATE',
+          });
+        } else if (loss3) {
+          messages.push({
+            id: `MANAGER-FORM_UPDATE-w${week}-s${season}`,
+            sender: 'MANAGER',
+            text: fillPlaceholders(pick(pools.formPoor, rng), managerFill),
+            week,
+            season,
+            category: 'FORM_UPDATE',
+          });
+        }
+      }
+    } else if (week % 3 === 0) {
+      // Non-match week check-in (throttled)
+      messages.push({
+        id: `MANAGER-WEEKLY_SUMMARY-w${week}-s${season}`,
+        sender: 'MANAGER',
+        text: fillPlaceholders(pick(pools.weeklyCheckin, rng), managerFill),
+        week,
+        season,
+        category: 'WEEKLY_SUMMARY',
+      });
+    }
+  }
+
   return messages;
+}
+
+// ── Manager persona helper ─────────────────────────────────────────────────
+
+/**
+ * Returns the display config (avatar colour, label, etc.) for the given
+ * manager's archetype. Falls back to a neutral style if no manager.
+ */
+export function getManagerSenderConfig(manager: import('../types/staff').Manager | null): {
+  initial: string;
+  name: string;
+  avatarClass: string;
+  nameClass: string;
+} {
+  if (!manager) {
+    return { initial: 'M', name: 'Manager', avatarClass: 'bg-white/10 text-txt-muted', nameClass: 'text-txt-muted' };
+  }
+  const persona = MANAGER_PERSONAS[manager.archetype];
+  return {
+    initial:     manager.name.charAt(0),
+    name:        manager.name,
+    avatarClass: persona.avatarClass,
+    nameClass:   persona.nameClass,
+  };
 }

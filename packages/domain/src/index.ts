@@ -45,6 +45,8 @@ export * from './data/club-events';
 export * from './data/squad-generator';
 export * from './data/free-agent-generator';
 export * from './data/manager-generator';
+export * from './data/manager-archetypes';
+export * from './data/manager-message-templates';
 export * from './data/scout-target-generator';
 
 // Morale system

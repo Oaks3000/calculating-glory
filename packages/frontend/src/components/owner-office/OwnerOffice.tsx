@@ -9,6 +9,8 @@ import {
   formatMoney,
   isTransferWindowOpen,
   NpcMessage,
+  NpcSender,
+  MANAGER_PERSONAS,
 } from '@calculating-glory/domain';
 import { NewsTicker } from '../command-centre/NewsTicker';
 import { SlideOver } from '../shared/SlideOver';
@@ -414,7 +416,9 @@ interface InboxFeedProps {
   npcMessages: NpcMessage[];
 }
 
-const NPC_MSG_CONFIG = {
+type StaticNpcSender = Exclude<NpcSender, 'MANAGER'>;
+
+const NPC_MSG_CONFIG: Record<StaticNpcSender, { initial: string; avatarClass: string; nameClass: string; name: string }> = {
   VAL:    { initial: 'V', avatarClass: 'bg-warn-amber/20 text-warn-amber',   nameClass: 'text-warn-amber',   name: 'Val Okoro'    },
   KEV:    { initial: 'K', avatarClass: 'bg-data-blue/20 text-data-blue',     nameClass: 'text-data-blue',    name: 'Kev Mulligan' },
   MARCUS: { initial: 'M', avatarClass: 'bg-pitch-green/20 text-pitch-green', nameClass: 'text-pitch-green',  name: 'Marcus Webb'  },
@@ -463,7 +467,14 @@ function InboxFeed({
           )}
           <p className="text-xs2 text-txt-muted uppercase tracking-wider">From the Team</p>
           {npcMessages.map(msg => {
-            const cfg = NPC_MSG_CONFIG[msg.sender];
+            const cfg = msg.sender === 'MANAGER' && state.club.manager
+              ? {
+                  initial:     state.club.manager.name.charAt(0),
+                  avatarClass: MANAGER_PERSONAS[state.club.manager.archetype].avatarClass,
+                  nameClass:   MANAGER_PERSONAS[state.club.manager.archetype].nameClass,
+                  name:        state.club.manager.name,
+                }
+              : NPC_MSG_CONFIG[msg.sender as StaticNpcSender];
             const isDismissed = typeof msg.id === 'number' ? dismissed.has(msg.id) : false;
             if (isDismissed) return null;
             return (

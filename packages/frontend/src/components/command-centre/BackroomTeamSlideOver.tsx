@@ -1,4 +1,4 @@
-import { GameState, GameCommand, Staff, StaffRole, Manager } from '@calculating-glory/domain';
+import { GameState, GameCommand, Staff, StaffRole, Manager, MANAGER_PERSONAS } from '@calculating-glory/domain';
 import { formatMoney } from '@calculating-glory/domain';
 
 // ── Role display config ───────────────────────────────────────────────────────
@@ -155,21 +155,62 @@ function ManagerRow({ manager }: { manager: Manager | null }) {
   }
 
   const { tactical, motivation, experience } = manager.attributes;
+  const persona = MANAGER_PERSONAS[manager.archetype];
+
+  // Confidence thresholds
+  const confidenceLabel =
+    manager.confidence >= 75 ? { text: 'Confident', colour: 'text-pitch-green' } :
+    manager.confidence >= 45 ? { text: 'Settled',   colour: 'text-txt-muted'  } :
+    manager.confidence >= 20 ? { text: 'Unsettled', colour: 'text-warn-amber' } :
+                               { text: 'Under pressure', colour: 'text-alert-red' };
+
   return (
-    <div className="flex items-center gap-3 py-3">
+    <div className="py-3 flex gap-3">
       <span className="text-2xl w-8 text-center shrink-0">🧑‍💼</span>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-txt-primary">Manager</span>
+        {/* Name + hired badge */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm font-semibold text-txt-primary">{manager.name}</span>
           <span className="badge bg-pitch-green/15 text-pitch-green text-xs2">Hired</span>
         </div>
-        <span className="text-xs2 text-txt-muted font-mono">{manager.name}</span>
-        <div className="flex items-center gap-3 mt-1 text-xs2 text-txt-muted">
+
+        {/* Archetype pill */}
+        <div className="mt-1">
+          <span className={`text-xs font-medium px-1.5 py-0.5 rounded-sm ${persona.avatarClass}`}>
+            {persona.label}
+          </span>
+        </div>
+
+        {/* Stats */}
+        <div className="flex items-center gap-3 mt-1.5 text-xs2 text-txt-muted flex-wrap">
           <span>⚔️ Tactical {tactical}</span>
           <span>📣 Motivation {motivation}</span>
           <span>📋 Experience {experience}</span>
         </div>
+
+        {/* Confidence bar */}
+        <div className="mt-2">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs2 text-txt-muted">Manager confidence</span>
+            <span className={`text-xs2 font-medium ${confidenceLabel.colour}`}>
+              {confidenceLabel.text}
+            </span>
+          </div>
+          <div className="h-1 bg-bg-raised rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${
+                manager.confidence >= 75 ? 'bg-pitch-green' :
+                manager.confidence >= 45 ? 'bg-warn-amber/60' :
+                manager.confidence >= 20 ? 'bg-warn-amber' :
+                'bg-alert-red'
+              }`}
+              style={{ width: `${manager.confidence}%` }}
+            />
+          </div>
+        </div>
       </div>
+
+      {/* Wage + experience stars */}
       <div className="flex flex-col items-end gap-1 shrink-0">
         <span className="text-xs2 font-mono text-txt-muted">
           {formatMoney(manager.wage)}<span className="text-txt-muted/50">/wk</span>
