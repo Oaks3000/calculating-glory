@@ -10,6 +10,17 @@
  *   [KEEPER]   — goalkeeper's name
  *   [OPPONENT] — opposing team name
  *   [SCORE]    — current scoreline e.g. "2-1"
+ *
+ * Goal reaction pools are score-context aware:
+ *   goal_player_opener     — first goal of the game (0-0 → 1-0)
+ *   goal_player_equaliser  — scoring to draw level (behind → level)
+ *   goal_player_go_ahead   — scoring to take the lead (level → ahead)
+ *   goal_player_reaction   — any other goal (adding to a lead)
+ *   goal_player_aftermath  — the beat after any player goal
+ *
+ * Near-miss pools are split by match state:
+ *   near_miss_opponent          — opponent nearly scores; we're under pressure or close
+ *   near_miss_comfortable       — opponent nearly scores; we're comfortable (2+ goal lead)
  */
 
 export const KEV_TEMPLATES = {
@@ -89,7 +100,7 @@ export const KEV_TEMPLATES = {
     "Chance wasted. Should've done better.",
     "Gets a shot away, just over the bar!",
     "Brilliant save! [SCORER] looked certain to score.",
-    "NEARLY! Inches away from the opener.",
+    "NEARLY! Agonisingly close to that.",
     "[SCORER] drives at goal, blocked on the line!",
     "What a chance! Gets there a fraction too late.",
   ],
@@ -107,6 +118,20 @@ export const KEV_TEMPLATES = {
     "[KEEPER] coming up big for us. Massive.",
   ],
 
+  /** Opponent near-miss when we're winning comfortably (2+ goal lead) — lower stakes reaction */
+  near_miss_comfortable: [
+    "Chance for them. [KEEPER] has it covered.",
+    "They had a go. Comfortable enough.",
+    "Good save but we're in control here.",
+    "They're not going away. Keep the shape.",
+    "Keeper's alert. Nothing to panic about.",
+    "Half chance. Nothing doing.",
+    "Managed well. Keep it tight.",
+    "They're trying. We're coping fine.",
+  ],
+
+  // ── Goal build-up — generic, fires before all player goals ─────────────
+
   goal_player_buildup: [
     "[SCORER] picks it up on the edge... drives inside...",
     "Good move, good move... [SCORER] through on goal...",
@@ -120,6 +145,51 @@ export const KEV_TEMPLATES = {
     "Cutback! [SCORER] unmarked six yards out...",
   ],
 
+  // ── Goal reactions — score-context aware ────────────────────────────────
+
+  /** First goal of the match — opening the scoring from 0-0 */
+  goal_player_opener: [
+    "OPENER! [SCORER]! GET IN!",
+    "GOAL! [SCORER]! WE'VE BROKEN THE DEADLOCK!",
+    "YES! [SCORER]! FIRST BLOOD! COME ON!",
+    "IT'S IN! [SCORER]! THE OPENER! BEAUTIFUL!",
+    "SCORES! [SCORER]! THAT'S WHAT WE NEEDED!",
+    "GOAL! [SCORER]! IN FRONT FIRST! GET IN!",
+    "YES YES YES! [SCORER]! THAT CHANGES EVERYTHING!",
+    "[SCORER]!!! THE OPENER!!! COME ON!!!",
+    "FIRST GOAL OF THE GAME! [SCORER]! YES!",
+    "IN! [SCORER]! WE'VE DONE IT! COME ON [TEAM]!",
+  ],
+
+  /** Scoring to draw level — from behind to level */
+  goal_player_equaliser: [
+    "EQUALISER! [SCORER]! WE'RE BACK LEVEL!",
+    "YES! [SCORER]! RIGHT BACK IN THIS!",
+    "WE'VE LEVELLED IT! [SCORER]! COME ON!",
+    "GOAL! [SCORER]! GAME ON!",
+    "[SCORER]!!! WE'RE LEVEL!!! DON'T STOP!!!",
+    "THAT'S MORE LIKE IT! [SCORER]! BACK IN THE GAME!",
+    "YES! LEVEL! [SCORER]! COME ON LADS!",
+    "WE'VE PULLED ONE BACK! [SCORER]! BRILLIANT!",
+    "BACK LEVEL! [SCORER]! THE FIGHT IS IN THIS SIDE!",
+    "GOAL! [SCORER]! ALL SQUARE! THIS ISN'T OVER!",
+  ],
+
+  /** Scoring to take the lead from level — 0-0→1-0, 1-1→2-1 etc. */
+  goal_player_go_ahead: [
+    "[SCORER]! WE'RE IN FRONT! GET IN!",
+    "THE GO-AHEAD GOAL! [SCORER]! YES!",
+    "GOAL! [SCORER]! WE'VE TAKEN THE LEAD!",
+    "IN FRONT! [SCORER]! THAT'S THE ONE WE NEEDED!",
+    "[SCORER]!!! LEADS!!! GET IN!!!",
+    "GOAL! [SCORER]! AHEAD FOR THE FIRST TIME! BRILLIANT!",
+    "YES! [SCORER]! IN FRONT! HOLD ON TO THIS!",
+    "WE'VE GOT THE LEAD! [SCORER]! ABSOLUTELY CLASS!",
+    "THAT'S IT! [SCORER]! AHEAD! COME ON [TEAM]!",
+    "GOAL! [SCORER]! WE'VE NICKED THE LEAD!",
+  ],
+
+  /** All other player goals — already ahead, adding to the lead */
   goal_player_reaction: [
     "SCORES! [SCORER]! GET IN!",
     "GOAL! [SCORER]! WHAT A STRIKE!",
@@ -131,8 +201,8 @@ export const KEV_TEMPLATES = {
     "[SCORER]!!! TAKE A BOW!!! GET IN!!!",
     "IN OFF THE POST! [SCORER]! DOESN'T MATTER HOW!",
     "HEADER! [SCORER]! BRILLIANT! ABSOLUTELY BRILLIANT!",
-    "GOAL! [SCORER]! [TEAM] ARE IN FRONT!",
-    "YES! [SCORER]! THAT'S WHAT [TEAM] ARE ABOUT!",
+    "GOAL! [SCORER]! ANOTHER ONE! COME ON!",
+    "YES! [SCORER]! THAT'S [TEAM] AT THEIR BEST!",
   ],
 
   goal_player_aftermath: [
