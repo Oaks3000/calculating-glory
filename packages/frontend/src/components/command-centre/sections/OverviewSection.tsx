@@ -82,6 +82,7 @@ export function OverviewSection({
           onMathChallenge={onMathChallenge}
           onViewAll={() => onSectionChange('inbox')}
           npcMessages={npcMessages}
+          manager={state.club.manager}
         />
         {dim('inbox')}
       </div>

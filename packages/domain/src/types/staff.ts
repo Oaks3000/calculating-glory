@@ -2,6 +2,8 @@
  * Staff-related types
  */
 
+import { ManagerArchetype } from '../data/manager-archetypes';
+
 export type StaffRole =
   | 'MANAGER'
   | 'ATTACKING_COACH'
@@ -46,19 +48,32 @@ export interface Manager {
   contractLengthWeeks: number;
   /** Absolute week the contract expires (set on hire) */
   contractExpiresWeek: number;
+  /**
+   * Personality archetype — defines voice, inbox style, and the character
+   * of the owner–manager relationship.
+   */
+  archetype: ManagerArchetype;
+  /**
+   * Manager's confidence in their position (0–100).
+   * Rises with wins, falls with losses. Drives inbox message tone and
+   * will eventually unlock friction events at extremes.
+   *
+   * Default: 60 (settled, no strong opinion either way).
+   */
+  confidence: number;
 }
 
 export interface Staff {
   id: string;
   name: string;
   role: StaffRole;
-  
+
   /** Quality rating (0-100) */
   quality: number;
-  
+
   /** Weekly salary in pence */
   salary: number;
-  
+
   /** Specialization bonus */
   bonus: StaffBonus;
 }
@@ -66,7 +81,7 @@ export interface Staff {
 export interface StaffBonus {
   /** What stat this improves */
   type: 'goals' | 'defense' | 'fitness' | 'youth' | 'injury';
-  
+
   /** Percentage improvement (e.g., 10 = 10% improvement) */
   improvement: number;
 }

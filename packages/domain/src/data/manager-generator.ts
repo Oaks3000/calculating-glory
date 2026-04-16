@@ -13,6 +13,12 @@
  */
 
 import { Manager, ManagerAttributes } from '../types/staff';
+import {
+  ManagerArchetype,
+  ARCHETYPE_POOL_ELITE,
+  ARCHETYPE_POOL_MID,
+  ARCHETYPE_POOL_BUDGET,
+} from './manager-archetypes';
 import { createRng, Rng } from '../simulation/rng';
 
 // ─── Manager name pool ─────────────────────────────────────────────────────────
@@ -47,6 +53,7 @@ interface ManagerTier {
   /** Weekly wage range in pence */
   wageRange: [number, number];
   contractLengthWeeks: number;
+  archetypePool: ManagerArchetype[];
 }
 
 const TIERS: ManagerTier[] = [
@@ -58,6 +65,7 @@ const TIERS: ManagerTier[] = [
     experienceRange: [75, 95],
     wageRange: [400_000, 700_000],   // £4,000–£7,000/wk
     contractLengthWeeks: 104,        // 2 seasons
+    archetypePool: ARCHETYPE_POOL_ELITE,
   },
   // Mid-tier — three managers. One stat dominates. Affordable.
   {
@@ -67,6 +75,7 @@ const TIERS: ManagerTier[] = [
     experienceRange: [45, 75],
     wageRange: [150_000, 350_000],   // £1,500–£3,500/wk
     contractLengthWeeks: 52,         // 1 season
+    archetypePool: ARCHETYPE_POOL_MID,
   },
   // Budget — three managers. Low stats, very cheap.
   {
@@ -76,6 +85,7 @@ const TIERS: ManagerTier[] = [
     experienceRange: [15, 45],
     wageRange: [50_000, 130_000],    // £500–£1,300/wk
     contractLengthWeeks: 52,
+    archetypePool: ARCHETYPE_POOL_BUDGET,
   },
 ];
 
@@ -83,6 +93,10 @@ const TIERS: ManagerTier[] = [
 
 function randInt(rng: Rng, min: number, max: number): number {
   return Math.round(min + rng.next() * (max - min));
+}
+
+function pickArchetype(rng: Rng, pool: ManagerArchetype[]): ManagerArchetype {
+  return pool[Math.floor(rng.next() * pool.length)];
 }
 
 /**
@@ -112,6 +126,8 @@ export function generateManagerPool(seed: string): Manager[] {
       // Round wage to nearest £100 (10_000 pence)
       const roundedWage = Math.round(wage / 10_000) * 10_000;
 
+      const archetype = pickArchetype(rng, tier.archetypePool);
+
       managers.push({
         id: `mgr-${idCounter++}`,
         name,
@@ -119,6 +135,8 @@ export function generateManagerPool(seed: string): Manager[] {
         wage: roundedWage,
         contractLengthWeeks: tier.contractLengthWeeks,
         contractExpiresWeek: 0, // set on hire
+        archetype,
+        confidence: 60,         // default: settled, neutral
       });
     }
   }

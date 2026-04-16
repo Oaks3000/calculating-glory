@@ -419,10 +419,22 @@ function handleMatchSimulated(state: GameState, event: MatchSimulatedEvent): Gam
     boardConfidence = Math.max(5, Math.min(95, boardConfidence + confDelta));
   }
 
+  // Manager confidence — tracks their belief in their own position.
+  // Win: +5  |  Draw: +1  |  Loss: -6
+  // Clamped 0–100. Drives inbox tone; extreme values will eventually surface events.
+  let updatedManager = state.club.manager;
+  if (updatedManager && clubResult) {
+    const managerConfDelta = clubResult === 'W' ? 5 : clubResult === 'D' ? 1 : -6;
+    updatedManager = {
+      ...updatedManager,
+      confidence: Math.max(0, Math.min(100, updatedManager.confidence + managerConfDelta)),
+    };
+  }
+
   return {
     ...state,
     league: { ...state.league, entries: sorted },
-    club: { ...state.club, form: clubForm, squad },
+    club: { ...state.club, form: clubForm, squad, manager: updatedManager },
     clubRecords,
     currentWinStreak,
     boardConfidence,
