@@ -4,7 +4,7 @@
  * Pure functions that apply events to state.
  */
 
-import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent, ManagerHiredEvent, ManagerSackedEvent, PreSeasonStartedEvent, ScoutMissionStartedEvent, ScoutTargetFoundEvent, ScoutBidPlacedEvent, ScoutTransferCompletedEvent, OwnerForcedOutEvent, TakeoverAcceptedEvent, ParachuteOfferedEvent, CurriculumUpgradedEvent, BoardUltimatumIssuedEvent } from '../events/types';
+import { GameEvent, GameStartedEvent, MatchSimulatedEvent, TransferCompletedEvent, StaffHiredEvent, MathAttemptRecordedEvent, ClubEventOccurredEvent, ClubEventResolvedEvent, SeasonStartedEvent, TrainingFocusSetEvent, FormationSetEvent, FreeAgentSignedEvent, PlayerReleasedEvent, NpcPlayerSignedEvent, ManagerHiredEvent, ManagerSackedEvent, PreSeasonStartedEvent, ScoutMissionStartedEvent, ScoutTargetFoundEvent, ScoutBidPlacedEvent, ScoutTransferCompletedEvent, OwnerForcedOutEvent, TakeoverAcceptedEvent, ParachuteOfferedEvent, CurriculumUpgradedEvent, BoardUltimatumIssuedEvent, TransferListedPlayerBoughtEvent } from '../events/types';
 import { GameState, Division } from '../types/game-state-updated';
 import { Club } from '../types/club';
 import { LeagueTable, LeagueTableEntry, sortLeagueTable } from '../types/league';
@@ -14,6 +14,7 @@ import { getDefaultFacilities, getUpgradeCost } from '../types/facility';
 import { facilityRevenue, squadCharismaRevenue } from '../simulation/revenue';
 import { generateStartingSquad } from '../data/squad-generator';
 import { generateFreeAgentPool } from '../data/free-agent-generator';
+import { generateTransferListedPool } from '../data/transfer-listed-generator';
 import { generateManagerPool } from '../data/manager-generator';
 import {
   applyResultMoraleDelta,
@@ -135,6 +136,8 @@ export function reduceEvent(state: GameState, event: GameEvent): GameState {
       };
     case 'BOARD_ULTIMATUM_ISSUED':
       return handleBoardUltimatumIssued(state, event);
+    case 'TRANSFER_LISTED_PLAYER_BOUGHT':
+      return handleTransferListedPlayerBought(state, event as TransferListedPlayerBoughtEvent);
     default:
       return state;
   }
@@ -172,6 +175,7 @@ export function buildState(events: GameEvent[]): GameState {
     resolvedEventHistory: [],
     season: 1,
     freeAgentPool: [],
+    transferListedPool: [],
     managerPool: [],
     lowMoraleWeeks: 0,
     moraleEventCooldowns: {},
@@ -261,6 +265,16 @@ function handleGameStarted(state: GameState, event: GameStartedEvent): GameState
     initialNpcStrengths[team.id] = team.baseStrength;
   }
 
+  // Generate the transfer listed pool for season 1
+  const npcTeamsForListing = getTeamsForDivision('LEAGUE_TWO');
+  const transferListedPool = generateTransferListedPool(
+    npcTeamsForListing,
+    initialNpcStrengths,
+    1,
+    event.clubId,
+    'LEAGUE_TWO',
+  );
+
   return {
     ...state,
     phase: 'PRE_SEASON',
@@ -294,8 +308,21 @@ function handleGameStarted(state: GameState, event: GameStartedEvent): GameState
       entries: sortedEntries
     },
     freeAgentPool,
+    transferListedPool,
     managerPool,
     npcStrengths: initialNpcStrengths,
+  };
+}
+
+function handleTransferListedPlayerBought(state: GameState, event: TransferListedPlayerBoughtEvent): GameState {
+  return {
+    ...state,
+    club: {
+      ...state.club,
+      squad: [...state.club.squad, event.player],
+      transferBudget: state.club.transferBudget - event.fee,
+    },
+    transferListedPool: (state.transferListedPool ?? []).filter(p => p.id !== event.playerId),
   };
 }
 
@@ -1039,6 +1066,15 @@ function handlePreSeasonStarted(state: GameState, event: PreSeasonStartedEvent):
     state.division,
   );
 
+  // Refresh transfer listed pool for the new season.
+  const freshTransferListedPool = generateTransferListedPool(
+    npcTeams,
+    evolvedStrengths,
+    event.season,
+    state.club.id,
+    state.division,
+  );
+
   return {
     ...state,
     phase: 'PRE_SEASON',
@@ -1048,6 +1084,7 @@ function handlePreSeasonStarted(state: GameState, event: PreSeasonStartedEvent):
     league: { ...state.league, entries: freshEntries },
     npcStrengths: evolvedStrengths,
     freeAgentPool: freshFreeAgentPool,
+    transferListedPool: freshTransferListedPool,
     club: {
       ...state.club,
       squad: updatedSquad,

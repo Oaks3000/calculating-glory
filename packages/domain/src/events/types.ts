@@ -52,7 +52,8 @@ export type GameEvent =
   | BudgetAllocationSetEvent
   | PlayerListedEvent
   | PlayerUnlistedEvent
-  | BoardUltimatumIssuedEvent;
+  | BoardUltimatumIssuedEvent
+  | TransferListedPlayerBoughtEvent;
 
 export interface TransferCompletedEvent {
   type: 'TRANSFER_COMPLETED';
@@ -472,4 +473,18 @@ export interface BudgetAllocationSetEvent {
   transfer: number;
   infrastructure: number;
   wages: number;
+}
+
+/** Player bought a transfer-listed player from an NPC club. */
+export interface TransferListedPlayerBoughtEvent {
+  type: 'TRANSFER_LISTED_PLAYER_BOUGHT';
+  timestamp: number;
+  /** ID of the player being transferred */
+  playerId: string;
+  /** NPC club selling the player */
+  sellingClubId: string;
+  /** Transfer fee paid (pence) */
+  fee: number;
+  /** Full player object, updated with new contractExpiresWeek */
+  player: Player;
 }

@@ -154,6 +154,19 @@ function generateAttributes(position: Position, rng: Rng, qualityBoost = 0): Pla
  * Generate the free agent pool (60 players) from a seed.
  * Deterministic — same seed always produces the same pool.
  *
+ * The pool is bimodal by design:
+ *
+ *   Bargain bin (40 players) — age 28–36, OVR ~25–50.
+ *   Released castoffs, over-the-hill journeymen, youth that never made it.
+ *   Low wages because nobody else wants them.
+ *
+ *   Expensive gamble (20 players) — age 23–30, OVR ~52–72.
+ *   Decent players demanding a freedom premium for their time without a club.
+ *   Good enough to strengthen the squad; expensive enough to be a budget risk.
+ *
+ * This creates a real decision: pay the premium for quality, or save wages
+ * and accept the risk of a bargain-bin signing.
+ *
  * @param division  Current division — scales attribute quality upward for higher tiers.
  *                  Defaults to LEAGUE_TWO (original baseline).
  */
@@ -161,50 +174,54 @@ export function generateFreeAgentPool(seed: string, division: Division = 'LEAGUE
   const qualityBoost = DIVISION_QUALITY_BOOST[division];
   const rng = createRng(`${seed}-free-agents`);
 
-  // Build full name list: parody names first, then journeymen
-  // Shuffle both lists separately using rng for variety
   const allNames = [...PARODY_NAMES, ...JOURNEYMEN_NAMES];
-
-  // Shuffle the name list deterministically
   const shuffledNames = [...allNames];
   for (let i = shuffledNames.length - 1; i > 0; i--) {
     const j = Math.floor(rng.next() * (i + 1));
     [shuffledNames[i], shuffledNames[j]] = [shuffledNames[j], shuffledNames[i]];
   }
 
-  // Shuffle position distribution
   const positions = [...POSITION_DISTRIBUTION];
   for (let i = positions.length - 1; i > 0; i--) {
     const j = Math.floor(rng.next() * (i + 1));
     [positions[i], positions[j]] = [positions[j], positions[i]];
   }
 
+  // Wage bands per division tier index (0=L2, 1=L1, 2=Champ, 3=PL)
+  const tierIdx = DIVISION_QUALITY_BOOST[division] / 10;
+  // Bargain bin wages — low, reflects unwantedness
+  const bargainWageFloor = [20_000,  40_000,  80_000, 200_000][tierIdx] ?? 20_000;
+  const bargainWageCeil  = [80_000, 160_000, 320_000, 800_000][tierIdx] ?? 80_000;
+  // Expensive gamble wages — premium for freedom
+  const premiumWageFloor = [180_000, 360_000, 700_000, 1_500_000][tierIdx] ?? 180_000;
+  const premiumWageCeil  = [450_000, 900_000, 1_800_000, 4_500_000][tierIdx] ?? 450_000;
+
   return positions.map((position, index) => {
+    const playerId = `free-agent-${index}-${seed}`;
     const name = shuffledNames[index] ?? `Free Agent ${index + 1}`;
 
-    // Age: 18–34
-    const age = rng.nextInt(18, 34);
+    // First 40 = bargain bin; last 20 = expensive gamble
+    const isBargain = index < 40;
 
-    // Wages scale with division: L2 £500–£3k, L1 £1k–£5k, Champ £2k–£10k, PL £5k–£25k (pence)
-    const wageFloor = [50_000, 100_000, 200_000, 500_000][DIVISION_QUALITY_BOOST[division] / 10] ?? 50_000;
-    const wageCeil  = [300_000, 500_000, 1_000_000, 2_500_000][DIVISION_QUALITY_BOOST[division] / 10] ?? 300_000;
-    const wage = rng.nextInt(wageFloor, wageCeil);
+    const age = isBargain
+      ? rng.nextInt(28, 36)   // older / declining
+      : rng.nextInt(23, 30);  // prime / pre-peak
 
-    // Attributes based on position, scaled up for higher divisions
-    const attributes = generateAttributes(position, rng, qualityBoost);
+    // Quality boost for bargain bin is reduced (these are poor players)
+    const bargainQualityPenalty = isBargain ? -10 : 10;
+    const attributes = generateAttributes(position, rng, qualityBoost + bargainQualityPenalty);
 
-    // Career curve — determines growth/decline arc and retirement age
+    const wage = isBargain
+      ? rng.nextInt(bargainWageFloor, bargainWageCeil)
+      : rng.nextInt(premiumWageFloor, premiumWageCeil);
+
     const curve = generatePlayerCurve(rng, age, attributes.attack, attributes.defence, position);
-
-    // truePotential: career-arc position indicator derived from the curve
     const truePotential = computeTruePotential(curve, age);
-
-    // publicPotential: noisy level-0 read of truePotential (±15 noise at L0 scout)
-    const playerId = `free-agent-${index}-${seed}`;
     attributes.publicPotential = getScoutedPotential({ id: playerId, truePotential } as Player, 0);
 
-    // Morale: 65–85 (they're keen to get a club)
-    const morale = rng.nextInt(65, 85);
+    // Bargain bin morale: 55–75 (frustrated, not despairing)
+    // Expensive gamble morale: 70–88 (confident, knows their worth)
+    const morale = isBargain ? rng.nextInt(55, 75) : rng.nextInt(70, 88);
 
     return {
       id: playerId,
