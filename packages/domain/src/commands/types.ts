@@ -35,7 +35,8 @@ export type GameCommand =
   | UpgradeCurriculumCommand
   | SetBudgetAllocationCommand
   | ListPlayerForSaleCommand
-  | UnlistPlayerCommand;
+  | UnlistPlayerCommand
+  | BuyTransferListedPlayerCommand;
 
 export interface MakeTransferCommand {
   type: 'MAKE_TRANSFER';
@@ -185,6 +186,14 @@ export interface ListPlayerForSaleCommand {
 export interface UnlistPlayerCommand {
   type: 'UNLIST_PLAYER';
   playerId: string;
+}
+
+export interface BuyTransferListedPlayerCommand {
+  type: 'BUY_TRANSFER_LISTED_PLAYER';
+  /** ID of the player in transferListedPool */
+  playerId: string;
+  /** The player's own club ID (for validation) */
+  clubId: string;
 }
 
 export interface CommandResult {

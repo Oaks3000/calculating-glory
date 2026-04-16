@@ -9,7 +9,7 @@ import { GameEvent } from '../events/types';
 import { Club } from './club';
 import { LeagueTable } from './league';
 import { CurriculumConfig } from '../curriculum/curriculum-config';
-import { Player, Position } from './player';
+import { Player, Position, TransferListedPlayer } from './player';
 import { Manager } from './staff';
 import { MathsChallengeSpec, NpcId } from '../data/club-events';
 import { MathTopic } from '../curriculum/curriculum-config';
@@ -182,6 +182,13 @@ export interface GameState {
 
   /** Pool of available free agents */
   freeAgentPool: Player[];
+
+  /**
+   * Players listed for sale by NPC clubs this season.
+   * Generated at PRE_SEASON_STARTED; players are removed when bought.
+   * Requires an open transfer window to purchase.
+   */
+  transferListedPool: TransferListedPlayer[];
 
   /** Available managers to hire (generated at game start, removed on hire) */
   managerPool: Manager[];
@@ -393,7 +400,8 @@ export type ErrorCode =
   | 'SQUAD_LIMIT_EXCEEDED'
   | 'PLAYER_NOT_FOUND'
   | 'INVALID_PHASE'
-  | 'VALIDATION_FAILED';
+  | 'VALIDATION_FAILED'
+  | 'WINDOW_CLOSED';
 
 /**
  * Projection builder function type

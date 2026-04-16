@@ -3,6 +3,7 @@ import {
   GameState,
   GameCommand,
   Player,
+  TransferListedPlayer,
   Position,
   Formation,
   formatMoney,
@@ -24,7 +25,7 @@ interface TransferMarketSlideOverProps {
   onError: (msg: string) => void;
 }
 
-type Tab = 'free-agents' | 'my-squad';
+type Tab = 'transfer-market' | 'free-agents' | 'my-squad';
 type SortKey = 'rating' | 'attack' | 'defence' | 'wage';
 type PlayerWillingness = 'eager' | 'neutral' | 'reluctant';
 /** formation = manage mode (list + sell/release); list = flat list; lineup = manager's selected XI */
@@ -749,6 +750,126 @@ function SquadPlayerCard({
   );
 }
 
+// ─── Transfer listed player card ──────────────────────────────────────────────
+
+interface TransferListedCardProps {
+  player: TransferListedPlayer;
+  canAfford: boolean;
+  hasSquadRoom: boolean;
+  scoutLevel: number;
+  isWindowOpen: boolean;
+  onBuy: () => void;
+}
+
+function TransferListedCard({ player, canAfford, hasSquadRoom, scoutLevel, isWindowOpen, onBuy }: TransferListedCardProps) {
+  const [buying, setBuying] = useState(false);
+  const [done, setDone] = useState(false);
+  const ovr = computeOverallRating(player);
+  const potential = getScoutedPotential(player, scoutLevel);
+  const noiseRange = scoutNoiseRange(scoutLevel);
+
+  if (done) {
+    const signingLine = getSigningLine(player.id);
+    return (
+      <div className="bg-pitch-green/5 border border-pitch-green/20 rounded-card px-4 py-3 flex items-center gap-3 animate-fade-in">
+        <div className="w-6 h-6 rounded-full bg-pitch-green/20 flex items-center justify-center text-xs text-pitch-green">✓</div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-semibold text-pitch-green">{player.name} signed!</p>
+          <p className={`text-xs2 ${signingLine.colour}`}>"{signingLine.line}" — {signingLine.name}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-bg-surface border border-white/[0.06] rounded-card px-3 py-3 flex flex-col gap-2">
+      {/* Header row */}
+      <div className="flex items-start gap-3">
+        {/* Position badge */}
+        <div className="shrink-0 w-8 h-8 rounded-md bg-data-blue/10 border border-data-blue/20 flex items-center justify-center text-xs font-bold text-data-blue">
+          {player.position}
+        </div>
+
+        {/* Name + club */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-semibold text-txt-primary">{player.name}</span>
+            <span className="text-xs2 text-txt-muted/60">Age {player.age}</span>
+          </div>
+          <div className="flex items-center gap-1 mt-0.5">
+            <span className="text-xs2 text-txt-muted">From</span>
+            <span className="text-xs2 font-medium text-warn-amber">{player.sellingClubName}</span>
+          </div>
+        </div>
+
+        {/* OVR */}
+        <div className={`shrink-0 text-sm font-bold tabular-nums ${ovrTextClass(ovr)}`}>
+          {ovr}
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div className="flex items-center gap-3 text-xs2 text-txt-muted">
+        <span>⚔ {player.attributes.attack}</span>
+        <span>🛡 {player.attributes.defence}</span>
+        <span>🤝 {player.attributes.teamwork}</span>
+        <span className="ml-auto">
+          ◈ {potential}{noiseRange > 0 ? <span className="text-txt-muted/50"> ±{noiseRange}</span> : null}
+        </span>
+      </div>
+
+      {/* Fee + wage row */}
+      <div className="flex items-center gap-3 text-xs">
+        <span className="text-warn-amber font-semibold font-mono">{formatMoney(player.askingPrice)}</span>
+        <span className="text-txt-muted/40">fee</span>
+        <span className="text-txt-muted font-mono">{formatMoney(player.wage)}/wk</span>
+        <span className="text-txt-muted/40">wages</span>
+      </div>
+
+      {/* Buy action */}
+      {buying ? (
+        <div className="flex items-center gap-2 text-xs">
+          <span className="text-txt-muted flex-1">Pay {formatMoney(player.askingPrice)} to sign {player.name}?</span>
+          <button
+            onClick={() => { onBuy(); setDone(true); setBuying(false); }}
+            className="px-2.5 py-1 bg-pitch-green/20 text-pitch-green border border-pitch-green/40 rounded hover:bg-pitch-green/30 transition-colors"
+          >
+            Confirm
+          </button>
+          <button
+            onClick={() => setBuying(false)}
+            className="px-2.5 py-1 bg-white/5 text-txt-muted border border-white/10 rounded hover:bg-white/10 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setBuying(true)}
+          disabled={!isWindowOpen || !canAfford || !hasSquadRoom}
+          title={
+            !isWindowOpen ? 'Transfer window is closed'
+            : !canAfford ? 'Insufficient transfer budget'
+            : !hasSquadRoom ? 'Squad is at capacity'
+            : undefined
+          }
+          className={[
+            'w-full text-xs py-1.5 rounded border transition-colors font-semibold',
+            isWindowOpen && canAfford && hasSquadRoom
+              ? 'bg-data-blue/15 text-data-blue border-data-blue/40 hover:bg-data-blue/25'
+              : 'bg-white/5 text-txt-muted border-white/10 opacity-50 cursor-not-allowed',
+          ].join(' ')}
+        >
+          {!isWindowOpen ? 'Window closed'
+            : !canAfford ? `Need ${formatMoney(player.askingPrice - 0)}`
+            : !hasSquadRoom ? 'Squad full'
+            : `Sign for ${formatMoney(player.askingPrice)}`}
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ─── Deadline day banner ───────────────────────────────────────────────────────
 
 function DeadlineDayBanner({ week, phase }: { week: number; phase: string }) {
@@ -791,7 +912,7 @@ function DeadlineDayBanner({ week, phase }: { week: number; phase: string }) {
 // ─── Main component ────────────────────────────────────────────────────────────
 
 export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMarketSlideOverProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('free-agents');
+  const [activeTab, setActiveTab] = useState<Tab>('transfer-market');
   const [positionFilter, setPositionFilter] = useState<Position | 'ALL'>('ALL');
   const [sortKey, setSortKey] = useState<SortKey>('rating');
   const [squadViewMode, setSquadViewMode] = useState<SquadViewMode>('formation');
@@ -830,9 +951,15 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
   }
 
   const filteredFreeAgents = filterPlayers(state.freeAgentPool ?? []);
+  const filteredListed = filterPlayers(state.transferListedPool ?? []);
   const filteredSquad = filterPlayers(state.club.squad);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
+
+  function handleBuyListed(playerId: string) {
+    const result = dispatch({ type: 'BUY_TRANSFER_LISTED_PLAYER', playerId, clubId: state.club.id });
+    if (result.error) onError(result.error);
+  }
 
   function handleSign(playerId: string, wage: number) {
     const result = dispatch({ type: 'SIGN_FREE_AGENT', playerId, offeredWage: wage });
@@ -885,6 +1012,10 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
       {/* ── Budget / squad bar ─────────────────────────────────────────────── */}
       <div className="bg-bg-raised rounded-card border border-white/5 px-4 py-2 flex items-center gap-4 text-sm flex-wrap">
         <span className="text-txt-muted">
+          Budget: <span className="text-warn-amber font-semibold font-mono">{formatMoney(state.club.transferBudget)}</span>
+        </span>
+        <span className="text-white/20">|</span>
+        <span className="text-txt-muted">
           Wage runway: <span className={wageRunway < 8 ? 'text-alert-red font-semibold' : 'text-pitch-green font-semibold'}>{wageRunway === Infinity || !isFinite(wageRunway) ? '∞' : `${Math.floor(wageRunway)}w`}</span>
         </span>
         <span className="text-white/20">|</span>
@@ -897,17 +1028,21 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
 
       {/* ── Tabs ──────────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-1">
-        {(['free-agents', 'my-squad'] as Tab[]).map(tab => (
+        {([
+          { id: 'transfer-market', label: `Transfer Market (${(state.transferListedPool ?? []).length})` },
+          { id: 'free-agents',    label: `Free Agents (${(state.freeAgentPool ?? []).length})` },
+          { id: 'my-squad',       label: `My Squad (${squadCount})` },
+        ] as { id: Tab; label: string }[]).map(({ id, label }) => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            key={id}
+            onClick={() => setActiveTab(id)}
             className={`px-3 py-1.5 text-sm rounded-card transition-colors ${
-              activeTab === tab
+              activeTab === id
                 ? 'bg-data-blue/20 text-data-blue border border-data-blue/40'
                 : 'text-txt-muted hover:text-txt-primary border border-white/5 hover:border-white/10'
             }`}
           >
-            {tab === 'free-agents' ? `Free Agents (${(state.freeAgentPool ?? []).length})` : `My Squad (${squadCount})`}
+            {label}
           </button>
         ))}
         {/* View mode toggle — only visible on My Squad tab */}
@@ -967,7 +1102,28 @@ export function TransferMarketSlideOver({ state, dispatch, onError }: TransferMa
 
       {/* ── Player list ──────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto flex flex-col gap-2 pr-1">
-        {activeTab === 'free-agents' ? (
+        {activeTab === 'transfer-market' ? (
+          !isWindowOpen ? (
+            <div className="text-center py-8">
+              <p className="text-txt-muted text-sm">Transfer window is closed.</p>
+              <p className="text-txt-muted/60 text-xs mt-1">Window opens weeks 1–4 (summer) and 21–24 (January).</p>
+            </div>
+          ) : filteredListed.length === 0 ? (
+            <div className="text-txt-muted text-sm text-center py-8">No listed players match your filters.</div>
+          ) : (
+            filteredListed.map(player => (
+              <TransferListedCard
+                key={player.id}
+                player={player}
+                canAfford={state.club.transferBudget >= player.askingPrice}
+                hasSquadRoom={squadCount < squadCapacity}
+                scoutLevel={scoutLevel}
+                isWindowOpen={isWindowOpen}
+                onBuy={() => handleBuyListed(player.id)}
+              />
+            ))
+          )
+        ) : activeTab === 'free-agents' ? (
           filteredFreeAgents.length === 0 ? (
             <div className="text-txt-muted text-sm text-center py-8">No free agents match your filters.</div>
           ) : (

@@ -84,6 +84,8 @@ export function handleCommand(command: GameCommand, state: GameState): CommandRe
       return handleListPlayerForSale(command, state);
     case 'UNLIST_PLAYER':
       return handleUnlistPlayer(command, state);
+    case 'BUY_TRANSFER_LISTED_PLAYER':
+      return handleBuyTransferListedPlayer(command, state);
     default:
       return {
         error: {
@@ -1208,6 +1210,61 @@ function handleUnlistPlayer(command: any, state: GameState): CommandResult {
       timestamp: Date.now(),
       playerId: player.id,
       clubId: state.club.id,
+    }],
+  };
+}
+
+function handleBuyTransferListedPlayer(command: any, state: GameState): CommandResult {
+  // Must be inside a transfer window
+  if (!isTransferWindowOpen(state.currentWeek, state.phase)) {
+    return { error: { code: 'WINDOW_CLOSED', message: 'The transfer window is not open.' } };
+  }
+
+  // Find the player in the transfer listed pool
+  const listed = state.transferListedPool?.find(p => p.id === command.playerId);
+  if (!listed) {
+    return { error: { code: 'PLAYER_NOT_FOUND', message: `Player '${command.playerId}' not found in transfer market.` } };
+  }
+
+  // Check squad capacity
+  if (state.club.squad.length >= state.club.squadCapacity) {
+    return { error: { code: 'SQUAD_LIMIT_EXCEEDED', message: `Squad is at capacity (${state.club.squadCapacity} players).` } };
+  }
+
+  // Check transfer budget covers the asking price
+  if (state.club.transferBudget < listed.askingPrice) {
+    return { error: { code: 'INSUFFICIENT_BUDGET', message: `Transfer budget too low. Need ${listed.askingPrice} pence, have ${state.club.transferBudget}.` } };
+  }
+
+  // Check wage runway — new player's wages must leave ≥ 8 weeks runway
+  const currentTotalWages = state.club.squad.reduce((sum, p) => sum + p.wage, 0);
+  const newTotalWages = currentTotalWages + listed.wage;
+  const runwayAfter = newTotalWages > 0 ? state.club.wageReserve / newTotalWages : Infinity;
+  if (runwayAfter < 8) {
+    return {
+      error: {
+        code: 'INSUFFICIENT_BUDGET',
+        message: `Wage reserve too low — would leave only ${Math.floor(runwayAfter)} weeks of wages.`,
+      },
+    };
+  }
+
+  // Strip TransferListedPlayer-specific fields to get a plain Player
+  const { sellingClubId, sellingClubName, askingPrice, ...playerBase } = listed;
+  const player: Player = {
+    ...playerBase,
+    contractExpiresWeek: state.currentWeek + 46,
+    morale: Math.min(100, listed.morale + 5), // slight morale boost from move
+  };
+
+  return {
+    events: [{
+      type: 'TRANSFER_LISTED_PLAYER_BOUGHT',
+      timestamp: Date.now(),
+      playerId: listed.id,
+      sellingClubId,
+      fee: askingPrice,
+      player,
     }],
   };
 }

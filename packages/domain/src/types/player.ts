@@ -211,3 +211,23 @@ export function getTotalContractCost(
   const totalWages = getAnnualWageCost(player) * contractYears;
   return transferFee + totalWages;
 }
+
+/**
+ * A player currently contracted to an NPC club and available for purchase.
+ * Extends Player with the selling club identity and the asking transfer fee.
+ *
+ * The asking price is set above the player's transferValue (clubs don't sell at cost).
+ * Wages are the player's existing contract rate — generally lower than a free agent
+ * demanding a freedom premium.
+ */
+export interface TransferListedPlayer extends Player {
+  /** ID of the NPC club selling this player */
+  sellingClubId: string;
+  /** Display name of the selling club */
+  sellingClubName: string;
+  /**
+   * Fee required to sign this player (pence).
+   * Always > transferValue (1.3–1.6× markup set at generation).
+   */
+  askingPrice: number;
+}

@@ -44,6 +44,7 @@ export * from './data/division-teams';
 export * from './data/club-events';
 export * from './data/squad-generator';
 export * from './data/free-agent-generator';
+export * from './data/transfer-listed-generator';
 export * from './data/manager-generator';
 export * from './data/scout-target-generator';
 
