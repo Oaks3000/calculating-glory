@@ -2,17 +2,17 @@
 project: "Calculating Glory"
 type: "build"
 priority: 2
-phase: "Phase 13 — Owner's Office"
-progress: 70
-lastUpdated: "2026-04-12"
-lastTouched: "2026-04-12"
+phase: "Phase 14 — NPC depth & transfer market"
+progress: 80
+lastUpdated: "2026-04-17"
+lastTouched: "2026-04-17"
 status: "in-progress"
 ---
 
 # Calculating Glory - Current Status
 
-**Phase:** Phase 13 — Owner's Office (70% complete)
-**Last Updated:** 2026-04-12
+**Phase:** Phase 14 — NPC depth & transfer market (80% complete)
+**Last Updated:** 2026-04-17
 
 ## What's Done
 
@@ -99,7 +99,7 @@ status: "in-progress"
   - Budget allocation slider UI: three linked sliders in slide-over, opened from Financial Health Bar
   - Facility upgrades deduct from Infrastructure Fund, not Transfer Fund
 
-**PR #131 — Owner's Office — Three-Zone Fixed Layout (in review 2026-04-12):**
+**PR #131 — Owner's Office — Three-Zone Fixed Layout (merged 2026-04-12):**
 - Replaces PR #129 sidebar-nav/section architecture with three-zone fixed layout per design brief
 - Left zone — Decisions & News: InboxFeed with priority pips, NewsTicker strip
 - Centre zone — Pitch & League: CompactLeague (top 3 + you ±1, gap separator), full table modal, Next Week button anchored at bottom
@@ -108,14 +108,36 @@ status: "in-progress"
 - IntroScreen.tsx: spotlight IDs remapped to zone IDs (header-stats, decisions-zone, pitch-zone, people-zone)
 - Issue #130 raised: mobile layout brief with three candidate approaches
 
+**PR #135 — Manager archetype shells (#109) (merged 2026-04-15):**
+- 5 named manager archetypes with distinct personas (The Philosopher, The Sergeant, The Youth Developer, The Pragmatist, The Firefighter)
+- In-character inbox voice per archetype; owner–manager confidence arc tied to results
+
+**PR #136 — Kev commentary keyed to actual score context (#132) (merged 2026-04-15):**
+- Commentary now reads live match state (score, momentum, key events) rather than static templates
+- Positive/negative tone tracks result; goals, red cards, late equalisers trigger appropriate lines
+
+**PR #137 — Kev squad review (#112) (merged 2026-04-16):**
+- Structured season-start inbox sequence walking through squad gaps, recruitment priorities, and departures
+
+**PR #138 / #139 — Paid transfer market + NPC-listed players + free-agent bimodal rebalance (merged 2026-04-17):**
+- NPC clubs now list players at the start of transfer windows with asking prices
+- Free-agent pool rebalanced to a bimodal distribution (cheap fillers + rare premium veterans)
+- Full paid-transfer flow: bid → counter → accept/reject across both directions
+
 ## What's In Progress
 
 - #130 Mobile layout — Owner's Office mobile reimagining
 - #111 Progressive disclosure — priority ordering, collapsible sections, new-player ramp
 - #119 Chat area rethink — negotiate panel as NPC conversation hub
+- #29 Manager creation + impact — domain `MANAGER_HIRED` event and hiring UI exist; archetype personas landed (#135); remaining work is the full hiring flow and performance-impact mechanics
+- #134 Management team meetings — NPCs argue, player mediates (new, design-first)
+- #133 State toggle buttons too small (stadium vs dash) — UI polish
 
 ## What's Next
 
+- #127 Club colour + badge customisation at game start (now unblocked — #124 shipped in PR #131)
+- #113 Freeform LLM-backed NPC chat — depends on #119 chat area redesign
+- #32 Scout facility — `truePotential` reveal accuracy beyond `publicPotential` baseline
 - #80 Sponsor negotiation — Val presents deals, negotiate via maths challenge
 - #92 Inbox overflow — fully resolve multi-event stacking (partial fix in PR #97)
 - #87 Stadium view — remaining isometric facility panels (Training, Medical, Scout, Youth Academy)

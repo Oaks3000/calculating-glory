@@ -1,7 +1,7 @@
 ---
 project: "Calculating Glory"
 type: "build"
-lastUpdated: "2026-04-12"
+lastUpdated: "2026-04-17"
 ---
 
 # Calculating Glory — Next Steps
@@ -10,7 +10,35 @@ lastUpdated: "2026-04-12"
 
 ---
 
-## Recently Completed (PR #131, in review 2026-04-12)
+## Recently Completed (PRs #135–#139, merged 2026-04-15 → 2026-04-17)
+
+### ✅ Manager Archetype Shells
+- **Issue:** #109
+- **Status:** MERGED (PR #135)
+- 5 named archetypes with distinct voices: The Philosopher, The Sergeant, The Youth Developer, The Pragmatist, The Firefighter
+- In-character inbox messages; owner–manager confidence arc tied to results
+
+### ✅ Kev Commentary — Score-Reactive
+- **Issue:** #132
+- **Status:** MERGED (PR #136)
+- Commentary lines now keyed to live match state (score, momentum, key events)
+- Positive/negative tone tracks result; goals/red cards/late equalisers trigger matching lines
+
+### ✅ Kev Squad Review
+- **Issue:** #112
+- **Status:** MERGED (PR #137)
+- Structured season-start inbox sequence — squad gaps, recruitment priorities, likely departures
+
+### ✅ Paid Transfer Market + Free-Agent Rebalance
+- **Issues:** transfer-market depth (new)
+- **Status:** MERGED (PRs #138, #139)
+- NPC clubs list players with asking prices at window open
+- Free-agent pool rebalanced to bimodal distribution (cheap fillers + rare premium veterans)
+- Full bid/counter/accept flow in both directions
+
+---
+
+## Recently Completed (PR #131, merged 2026-04-12)
 
 ### ✅ Owner's Office — Three-Zone Fixed Layout
 - **Issue:** #124
@@ -147,24 +175,53 @@ lastUpdated: "2026-04-12"
 - Three candidate approaches: tabbed zones, stacked vertical, priority-first fold
 - See issue #130 for full brief and AC
 
-### 2. 🔜 Sponsor Negotiation
+### 2. 🔜 Chat Area Rethink
+- **Issue:** #119
+- **Priority:** HIGH — blocks #113 freeform NPC chat
+- Negotiate panel becomes NPC conversation hub; inbox reverts to read-only updates
+- Design-first: needs an IA sketch before implementation
+
+### 3. 🔜 Progressive Disclosure (Command Centre)
+- **Issue:** #111
+- **Priority:** MEDIUM-HIGH
+- Priority ordering, collapsible sections, new-player ramp
+- First-time vs returning-player experience separation
+
+### 4. 🔜 Visual Club Identity
+- **Issue:** #127
+- **Priority:** MEDIUM — now unblocked (#124 shipped in PR #131)
+- Colour picker (8–12 curated swatches) + preset SVG badges at game start
+- Propagates to DataTiles, league table row, season-end, pre-season, stadium seat tint
+
+### 5. 🔜 State Toggle Buttons (stadium vs dash)
+- **Issue:** #133
+- **Priority:** LOW — but small, discoverability win
+- Make the toggle clearly visible and easy to hit
+
+### 6. 🔜 Sponsor Negotiation
 - **Issue:** #80
-- **Priority:** HIGH — decision density
+- **Priority:** MEDIUM — decision density
 - Val presents weekly sponsorship deals
 - Negotiate terms via maths challenge (percentage/ratio question gates a better deal)
 - Accept/reject with visible financial impact
 
-### 3. 🔜 Inbox Overflow — Full Fix
+### 7. 🔜 Inbox Overflow — Full Fix
 - **Issue:** #92
 - **Priority:** MEDIUM
 - Remaining stacking edge cases: NPC messages + pending events + news within PREVIEW_LIMIT
 - Check for double-notification on poach + construction events
 
-### 4. 🔜 Stadium View — Remaining Facility Panels
+### 8. 🔜 Stadium View — Remaining Facility Panels
 - **Issue:** #87 (remaining)
 - **Priority:** MEDIUM
 - Training Ground, Medical Centre, Scout Network, Youth Academy panels
 - Commercial panels already done (PR #100)
+
+### 9. 🔜 Scout Facility — truePotential Reveal
+- **Issue:** #32
+- **Priority:** MEDIUM
+- Scout levels interpolate revealed potential between `publicPotential` and `truePotential`
+- Scout confidence % shown on the scouted view
 
 ---
 

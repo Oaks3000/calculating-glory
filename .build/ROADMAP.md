@@ -2,7 +2,7 @@
 project: "Calculating Glory"
 type: "build"
 createdAt: "2026-03-03"
-lastUpdated: "2026-04-12"
+lastUpdated: "2026-04-17"
 ---
 
 # Calculating Glory - Roadmap
@@ -79,6 +79,13 @@ An educational football club management game for Year 7 maths, built on event-so
 - Intro spotlight system remapped to new zone IDs
 - **#130** Mobile layout brief raised — candidate approaches defined (tabbed zones, stacked, priority-first fold)
 
+### Phase 14: NPC Depth & Transfer Market ✅ (PRs #135–#139)
+- **#109** ✅ NPC manager archetype shells — 5 named personas (The Philosopher, The Sergeant, The Youth Developer, The Pragmatist, The Firefighter) with distinct inbox voice and confidence arc (PR #135)
+- **#132** ✅ Kev commentary keyed to actual match state — score, momentum and key events drive tone and lines (PR #136)
+- **#112** ✅ Kev squad review — structured season-start inbox sequence walking through squad gaps and recruitment priorities (PR #137)
+- **#65** ✅ Match pitch visualisation — 22-blip SVG, beat-driven state machine, goal celebrations, crowd atmosphere glow (committed earlier, included here for completeness)
+- **Paid transfer market** — NPC-listed players with asking prices; free-agent pool rebalanced to bimodal distribution; full bid/counter/accept flow both ways (PRs #138/#139)
+
 ---
 
 ## Current Work
@@ -87,19 +94,18 @@ An educational football club management game for Year 7 maths, built on event-so
 - **#130** Mobile layout — implement mobile-first layout for Owner's Office (tabbed zones or priority-first fold)
 - **#111** Progressive disclosure — priority ordering, collapsible sections, new-player ramp
 - **#119** Chat area rethink — negotiate panel becomes NPC conversation hub; inbox reverts to read-only updates
+- **#133** State toggle buttons too small (stadium vs dash) — UI discoverability fix
 
 ### Gameplay Systems
-- **#29** Manager creation, hiring, and impact on club performance
+- **#29** Manager creation, hiring, and impact on club performance (archetype personas shipped in #135; hiring flow + impact mechanics remain)
 - **#32** Scout facility — `truePotential` reveal accuracy beyond `publicPotential` baseline
 
 ### NPC & Conversation Layer
-- **#113** Freeform NPC chat — LLM-backed conversations with Val/Marcus/Kev/Dani
-- **#112** Kev squad review chat — guided squad analysis at season start
-- **#109** NPC manager shell personas — distinct personalities managers can inhabit
+- **#113** Freeform NPC chat — LLM-backed conversations with Val/Marcus/Kev/Dani (blocked on #119)
+- **#134** Management team meetings — NPCs argue, player mediates; design-first
 
-### Visual & Match Immersion
-- **#65** Phase 7 match immersion — stadium atmosphere, animated play, CM-style goal moments
-- **#127** Visual club identity — badge and colour customisation
+### Visual & Club Identity
+- **#127** Visual club identity — badge and colour customisation (now unblocked — #124 shipped)
 
 ---
 
@@ -114,15 +120,11 @@ An educational football club management game for Year 7 maths, built on event-so
 - Player development — individual training affects growth
 
 ### Manager & NPC Depth
-- **#109** NPC manager shells — 5–8 named archetypes (The Philosopher, The Sergeant, etc.) with distinct inbox voices
-- **#112** Kev squad review chat — scripted week-1 walkthrough of squad gaps and recruitment priorities
 - **#29** Manager creation and impact — formation affinity, man-management, fan approval, sacking costs
+- **#134** Management team meetings with mediation
 
 ### Freeform NPC Chat
 - **#113** LLM-backed NPC conversations — Claude Haiku with game-state context per NPC; Kev as first rollout; scripted fallback for school networks
-
-### Match & Stadium Immersion
-- **#65** Phase 7 match immersion — stadium atmosphere, animated blip movement, CM-style goal moments; SC2K tile shading and micro-animations
 
 ### Technical & Accessibility
 - Chromebook performance audit (target 60fps, <500KB bundle)
