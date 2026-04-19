@@ -18,7 +18,7 @@ import { IntroScreen } from './components/intro/IntroScreen';
 import { OwnerBox } from './components/owner-box/OwnerBox';
 import { PostMatchScreen } from './components/owner-box/PostMatchScreen';
 import { PreMatchOverlay } from './components/owner-box/PreMatchOverlay';
-import { clearIntroCompleted } from './lib/introState';
+import { clearIntroCompleted, OnboardingMode } from './lib/introState';
 
 type Screen = 'menu' | 'intro' | 'game';
 // ActiveSection kept for compat with any remaining imports
@@ -98,10 +98,10 @@ export default function App() {
     setScreen('game');
   }
 
-  function handleNewGame(level: CurriculumLevel, clubName: string, stadiumName: string) {
+  function handleNewGame(level: CurriculumLevel, clubName: string, stadiumName: string, mode: OnboardingMode) {
     clearIntroCompleted();
     resetGame(level, clubName, stadiumName);
-    setScreen('intro');
+    setScreen(mode === 'skip' ? 'game' : 'intro');
   }
 
   function handleIntroComplete() {
