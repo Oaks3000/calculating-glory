@@ -2,17 +2,17 @@
 project: "Calculating Glory"
 type: "build"
 priority: 2
-phase: "Phase 13 — Owner's Office"
-progress: 70
-lastUpdated: "2026-04-12"
-lastTouched: "2026-04-12"
+phase: "Phase 14 — New-Player Ramp"
+progress: 20
+lastUpdated: "2026-04-20"
+lastTouched: "2026-04-20"
 status: "in-progress"
 ---
 
 # Calculating Glory - Current Status
 
-**Phase:** Phase 13 — Owner's Office (70% complete)
-**Last Updated:** 2026-04-12
+**Phase:** Phase 14 — New-Player Ramp (20% complete)
+**Last Updated:** 2026-04-20
 
 ## What's Done
 
@@ -99,7 +99,7 @@ status: "in-progress"
   - Budget allocation slider UI: three linked sliders in slide-over, opened from Financial Health Bar
   - Facility upgrades deduct from Infrastructure Fund, not Transfer Fund
 
-**PR #131 — Owner's Office — Three-Zone Fixed Layout (in review 2026-04-12):**
+**PR #131 — Owner's Office — Three-Zone Fixed Layout (merged 2026-04-12):**
 - Replaces PR #129 sidebar-nav/section architecture with three-zone fixed layout per design brief
 - Left zone — Decisions & News: InboxFeed with priority pips, NewsTicker strip
 - Centre zone — Pitch & League: CompactLeague (top 3 + you ±1, gap separator), full table modal, Next Week button anchored at bottom
@@ -108,10 +108,17 @@ status: "in-progress"
 - IntroScreen.tsx: spotlight IDs remapped to zone IDs (header-stats, decisions-zone, pitch-zone, people-zone)
 - Issue #130 raised: mobile layout brief with three candidate approaches
 
+**PR #140 — Ambition-first intro + NPC colour coding + skip mode + jargon explainers (merged 2026-04-20):**
+- #111 New-player ramp: intro re-toned to lead with ambition (Kev opens; Val reframes money as the enabler, not the headline). Cut from 23 steps to 10 — stadium tour and per-NPC introductions dropped; maths challenge + sponsor decision kept as the first real pre-season choice
+- NPC colour coding via new `lib/npcs.ts` as single source of truth: Val emerald, Kev sky, Marcus amber, Dani violet. `NpcMessage` gains a `colour` prop (left-border accent + avatar ring + name tint)
+- "Meet the team / Skip intro" picker after club setup, persisted in `cg-onboarding-mode-v1`. Existing saves default to skip
+- `GuidedTaskCard` on Command Centre for guided-mode players — 4 tasks (sponsor, manager, signing, facility upgrade) derived from existing event log; no new domain state
+- Hybrid jargon explainers for 5 opaque finance terms (Runway, Burn/wk, Budget, Board, Wage reserve): first tap per term opens full NPC modal with "goes up when… / goes down when…" rows; subsequent taps show short line with expand link. Seen state per-term in `cg-glossary-seen-v1`
+- Terms wired into Command Centre header strip, `HeadlineStats`, and Pre-Season budget/runway labels
+
 ## What's In Progress
 
 - #130 Mobile layout — Owner's Office mobile reimagining
-- #111 Progressive disclosure — priority ordering, collapsible sections, new-player ramp
 - #119 Chat area rethink — negotiate panel as NPC conversation hub
 
 ## What's Next

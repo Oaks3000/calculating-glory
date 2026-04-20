@@ -1,7 +1,7 @@
 ---
 project: "Calculating Glory"
 type: "build"
-lastUpdated: "2026-04-12"
+lastUpdated: "2026-04-20"
 ---
 
 # Calculating Glory — Next Steps
@@ -10,11 +10,31 @@ lastUpdated: "2026-04-12"
 
 ---
 
-## Recently Completed (PR #131, in review 2026-04-12)
+## Recently Completed (PR #140, merged 2026-04-20)
+
+### ✅ Ambition-first intro + NPC colour coding + skip mode + jargon explainers
+- **Issue:** #111 (new-player ramp portion)
+- **Status:** MERGED (PR #140)
+- Intro re-toned to lead with ambition: Kev opens with promotion/cups/fans; Val reframes money as the enabler, not the headline. Cut from 23 steps to 10 — stadium tour and per-NPC introductions dropped
+- Maths challenge + sponsor decision retained as the first real pre-season choice
+- NPC colour coding via new `lib/npcs.ts`: Val emerald (finance), Kev sky (football), Marcus amber (commercial), Dani violet (operations). `NpcMessage` gains a `colour` prop (left-border accent + avatar ring + name tint)
+- "Meet the team / Skip intro" picker after club setup. Persisted in `cg-onboarding-mode-v1`. Existing saves default to skip so there's no UI regression
+- `GuidedTaskCard` on the Command Centre for guided-mode players — 4 tasks (sponsor deal, manager hire, signing, facility upgrade) derived from the existing event log. No new domain state
+- Hybrid jargon explainers for 5 opaque finance terms (Runway, Burn/wk, Budget, Board, Wage reserve): first tap opens a full NPC-voiced modal with "goes up when… / goes down when…" rows; subsequent taps show the short line with a "Show full explainer →" link. Seen state tracked per-term in `cg-glossary-seen-v1`
+- Terms wired into Command Centre header strip, `HeadlineStats`, and Pre-Season budget/runway labels
+
+**Deferred from the plan (follow-ups):**
+- Progressive disclosure on `OverviewSection` (hide league table / squad / news ticker until tasks complete) — not shipped
+- Gating "Begin Season" on guided task completion — structurally blocked: transfers and facility upgrades aren't reachable from `PreSeasonScreen` in the current flow
+- Stadium first-visit overlay — redundant once Dani's stadium monologue was cut
+
+---
+
+## Recently Completed (PR #131, merged 2026-04-12)
 
 ### ✅ Owner's Office — Three-Zone Fixed Layout
 - **Issue:** #124
-- **Status:** IN REVIEW (PR #131)
+- **Status:** MERGED (PR #131)
 - Replaces PR #129 sidebar-nav/section architecture with three-zone fixed layout per design brief
 - Left zone — Decisions & News: InboxFeed with priority pips, NewsTicker strip
 - Centre zone — Pitch & League: CompactLeague (top 3 + you ±1, gap separator), full table modal, Next Week button anchored at bottom
@@ -147,20 +167,26 @@ lastUpdated: "2026-04-12"
 - Three candidate approaches: tabbed zones, stacked vertical, priority-first fold
 - See issue #130 for full brief and AC
 
-### 2. 🔜 Sponsor Negotiation
+### 2. 🔜 Guided-mode follow-ups (from PR #140)
+- **Priority:** MEDIUM — finishes off the new-player ramp
+- Progressive disclosure on `OverviewSection` while guided tasks are outstanding (hide league table / squad / news ticker until sponsor+manager done)
+- Rework pre-season flow so transfers + facility upgrades are reachable before `START_SEASON` — unblocks gating "Begin Season" on guided task completion
+- Extend glossary to more jargon: Position, Morale, Formation, Free agent, Reputation (add entries to `GLOSSARY`, drop `TermInfo` onto labels)
+
+### 3. 🔜 Sponsor Negotiation
 - **Issue:** #80
 - **Priority:** HIGH — decision density
 - Val presents weekly sponsorship deals
 - Negotiate terms via maths challenge (percentage/ratio question gates a better deal)
 - Accept/reject with visible financial impact
 
-### 3. 🔜 Inbox Overflow — Full Fix
+### 4. 🔜 Inbox Overflow — Full Fix
 - **Issue:** #92
 - **Priority:** MEDIUM
 - Remaining stacking edge cases: NPC messages + pending events + news within PREVIEW_LIMIT
 - Check for double-notification on poach + construction events
 
-### 4. 🔜 Stadium View — Remaining Facility Panels
+### 5. 🔜 Stadium View — Remaining Facility Panels
 - **Issue:** #87 (remaining)
 - **Priority:** MEDIUM
 - Training Ground, Medical Centre, Scout Network, Youth Academy panels

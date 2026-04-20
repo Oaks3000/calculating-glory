@@ -2,7 +2,7 @@
 project: "Calculating Glory"
 type: "build"
 createdAt: "2026-03-03"
-lastUpdated: "2026-04-12"
+lastUpdated: "2026-04-20"
 ---
 
 # Calculating Glory - Roadmap
@@ -79,13 +79,25 @@ An educational football club management game for Year 7 maths, built on event-so
 - Intro spotlight system remapped to new zone IDs
 - **#130** Mobile layout brief raised — candidate approaches defined (tabbed zones, stacked, priority-first fold)
 
+### Phase 14: New-Player Ramp ✅ (PR #140)
+- **#111** (partial) ✅ Ambition-first intro cold-open — Kev opens with stakes (promotion/cups/fans); Val reframes money as the enabler. Intro cut from 23 steps to 10; stadium tour and per-NPC introductions dropped
+- ✅ NPC colour coding — shared `lib/npcs.ts` (Val emerald, Kev sky, Marcus amber, Dani violet); `NpcMessage` left-border accent + avatar ring + name tint
+- ✅ Skip-intro mode — "Meet the team / Skip intro" picker after club setup, persisted in `cg-onboarding-mode-v1`; existing saves default to skip
+- ✅ `GuidedTaskCard` on Command Centre — 4 tasks (sponsor / manager / signing / facility upgrade) derived from existing event log; no new domain state
+- ✅ Hybrid jargon explainers — `TermInfo` component: first tap opens NPC-voiced full explainer with "goes up when / goes down when" rows, subsequent taps show compact popup. 5 terms wired (Runway, Burn/wk, Budget, Board, Wage reserve); seen state per-term in `cg-glossary-seen-v1`
+
+**Deferred from the ramp plan (follow-ups, tracked in NEXT.md):**
+- Progressive disclosure on `OverviewSection` while guided tasks are outstanding
+- Gating "Begin Season" on guided task completion (blocked on current pre-season flow not exposing transfers/facilities)
+- Extending glossary to Position, Morale, Formation, Free agent, Reputation
+
 ---
 
 ## Current Work
 
 ### Owner's Office Depth
 - **#130** Mobile layout — implement mobile-first layout for Owner's Office (tabbed zones or priority-first fold)
-- **#111** Progressive disclosure — priority ordering, collapsible sections, new-player ramp
+- **#111** (remainder) Progressive disclosure + task-gated "Begin Season" — blocked on pre-season flow rework
 - **#119** Chat area rethink — negotiate panel becomes NPC conversation hub; inbox reverts to read-only updates
 
 ### Gameplay Systems

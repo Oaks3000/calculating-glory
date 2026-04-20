@@ -1,7 +1,7 @@
 ---
 project: "Calculating Glory"
 type: "build"
-lastUpdated: "2026-04-12"
+lastUpdated: "2026-04-20"
 ---
 
 # Calculating Glory - Backlog & Ideas
@@ -14,7 +14,7 @@ lastUpdated: "2026-04-12"
 - [ ] Geometry challenges — 4 new MathTopics, stadium-themed templates (#21 PR 6)
 - [ ] Player database/market — pool of purchasable players with real(ish) names and stats
 - [ ] Transfer window UI — browse market, make offers, negotiate
-- [x] Tutorial/onboarding flow — Dani intro stadium tour with facility walkthrough ✅ (PR #94)
+- [x] Tutorial/onboarding flow — Dani intro stadium tour with facility walkthrough ✅ (PR #94; stadium tour later retired in PR #140 in favour of guided-task card)
 - [ ] Pre-season flow — squad building before the season starts
 - [ ] Season end screen — promotion/relegation celebration/commiseration
 - [ ] localStorage persistence — serialise event log on every command, rehydrate on load; prevents progress loss on browser close (no infrastructure needed)
@@ -39,6 +39,11 @@ lastUpdated: "2026-04-12"
 - [x] Section pages: Inbox, Transfers, Finances, Backroom, Squad replace slide-overs ✅ (PR #129)
 - [x] HeadlineStats strip: Position / Confidence / Budget above fold ✅ (PR #129)
 - [x] FinancesSection live runway counter alongside wage reserve slider ✅ (PR #129)
+- [x] Ambition-first intro cold-open — Kev opens with promotion/cups/fans, Val reframes money as enabler; cut from 23 steps to 10 ✅ (PR #140)
+- [x] NPC colour coding — shared `lib/npcs.ts` (Val emerald, Kev sky, Marcus amber, Dani violet); `NpcMessage` colour prop ✅ (PR #140)
+- [x] Skip-intro mode — onboarding mode picker after club setup, persisted in `cg-onboarding-mode-v1` ✅ (PR #140)
+- [x] Guided task card — 4 pre-season tasks (sponsor / manager / signing / facility) derived from event log ✅ (PR #140)
+- [x] Hybrid jargon explainers — `TermInfo` component, first-view NPC modal + short popup after; 5 terms wired (Runway, Burn/wk, Budget, Board, Wage reserve) ✅ (PR #140)
 
 ## Improvements / Optimisations
 
