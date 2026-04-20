@@ -17,6 +17,8 @@ import { SlideOver } from '../shared/SlideOver';
 import { SocialFeed } from '../social-feed/SocialFeed';
 import { LearningProgressSlideOver } from '../command-centre/LearningProgressSlideOver';
 import { PendingEventCard } from '../command-centre/PendingEventCard';
+import { TermInfo } from '../shared/TermInfo';
+import { GlossaryTermId } from '../../lib/glossary';
 
 // ── NPC display config ────────────────────────────────────────────────────────
 
@@ -630,18 +632,22 @@ export function OwnerOffice({
           id="header-stats"
         >
           <SpotlightOverlay zoneId="header-stats" spotlight={introSpotlight} />
-          {[
-            { label: 'Budget',   value: fmtMoney(state.club.transferBudget),  colour: '' },
-            { label: 'Burn/wk', value: fmtMoney(burnPerWeek),                 colour: burnPerWeek > weeklyIncome ? 'text-alert-red' : 'text-txt-primary' },
-            { label: 'Board',   value: `${state.boardConfidence}%`,           colour: state.boardConfidence >= 60 ? 'text-pitch-green' : state.boardConfidence >= 40 ? 'text-warn-amber' : 'text-alert-red' },
-            { label: 'Position', value: `${playerPos}/${totalClubs}`,          colour: playerPos <= 3 ? 'text-pitch-green' : playerPos >= totalClubs - 3 ? 'text-alert-red' : 'text-txt-primary' },
-            { label: 'Runway',  value: fmtRunway(runwayVal),                  colour: runwayColour },
-          ].map(stat => (
+          {([
+            { label: 'Budget',   termId: 'transfer-budget' as GlossaryTermId,  value: fmtMoney(state.club.transferBudget),  colour: '' },
+            { label: 'Burn/wk',  termId: 'burn-per-week' as GlossaryTermId,    value: fmtMoney(burnPerWeek),                 colour: burnPerWeek > weeklyIncome ? 'text-alert-red' : 'text-txt-primary' },
+            { label: 'Board',    termId: 'board-confidence' as GlossaryTermId, value: `${state.boardConfidence}%`,           colour: state.boardConfidence >= 60 ? 'text-pitch-green' : state.boardConfidence >= 40 ? 'text-warn-amber' : 'text-alert-red' },
+            { label: 'Position', termId: undefined,                             value: `${playerPos}/${totalClubs}`,          colour: playerPos <= 3 ? 'text-pitch-green' : playerPos >= totalClubs - 3 ? 'text-alert-red' : 'text-txt-primary' },
+            { label: 'Runway',   termId: 'runway' as GlossaryTermId,            value: fmtRunway(runwayVal),                  colour: runwayColour },
+          ]).map(stat => (
             <div key={stat.label} className="px-3 py-1.5 text-center min-w-[56px]">
               <div className={`text-xs font-bold tabular-nums data-font ${stat.colour || 'text-txt-primary'}`}>
                 {stat.value}
               </div>
-              <div className="text-xs2 text-txt-muted">{stat.label}</div>
+              <div className="text-xs2 text-txt-muted">
+                {stat.termId
+                  ? <TermInfo termId={stat.termId} label={stat.label} size="inline" />
+                  : stat.label}
+              </div>
             </div>
           ))}
         </div>

@@ -1,5 +1,7 @@
 import { GameState } from '@calculating-glory/domain';
 import { formatMoney } from '@calculating-glory/domain';
+import { TermInfo } from '../shared/TermInfo';
+import { GlossaryTermId } from '../../lib/glossary';
 
 interface HeadlineStatsProps {
   state: GameState;
@@ -14,15 +16,20 @@ function TrendArrow({ trend }: { trend: 'up' | 'down' | 'flat' }) {
 
 interface StatCardProps {
   label: string;
+  termId?: GlossaryTermId;
   value: string;
   trend: 'up' | 'down' | 'flat';
   color: string;
 }
 
-function StatCard({ label, value, trend, color }: StatCardProps) {
+function StatCard({ label, termId, value, trend, color }: StatCardProps) {
   return (
     <div className="card flex flex-col gap-1">
-      <span className="text-xs text-txt-muted uppercase tracking-wide">{label}</span>
+      <span className="text-xs text-txt-muted uppercase tracking-wide">
+        {termId
+          ? <TermInfo termId={termId} label={label} size="inline" />
+          : label}
+      </span>
       <div className={`text-2xl font-bold flex items-center gap-1 ${color}`}>
         {value}
         <TrendArrow trend={trend} />
@@ -67,12 +74,14 @@ export function HeadlineStats({ state }: HeadlineStatsProps) {
       />
       <StatCard
         label="Confidence"
+        termId="board-confidence"
         value={`${boardConfidence}%`}
         trend={confidenceTrend}
         color={confidenceColor}
       />
       <StatCard
         label="Budget"
+        termId="transfer-budget"
         value={formatMoney(club.transferBudget)}
         trend={budgetTrend}
         color={budgetColor}

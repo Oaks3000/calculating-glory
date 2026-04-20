@@ -5,7 +5,10 @@ import { HubTile } from '../HubTiles';
 import { InboxCard } from '../InboxCard';
 import { LeagueTable } from '../LeagueTable';
 import { SquadAuditTable } from '../SquadAuditTable';
+import { GuidedTaskCard } from '../GuidedTaskCard';
 import { ActiveSection } from '../../../App';
+import { getGuidedTasks, GuidedTaskId } from '../../../lib/guidedTasks';
+import { getOnboardingMode } from '../../../lib/introState';
 
 interface OverviewSectionProps {
   state: GameState;
@@ -52,6 +55,19 @@ export function OverviewSection({
     f => f.level > 0 && f.level < 5 && !(f.constructionWeeksRemaining ?? 0) && f.upgradeCost <= state.club.transferBudget
   );
 
+  const guidedTasks = getGuidedTasks(state, events);
+  const allDone = guidedTasks.every(t => t.done);
+  const showGuidedCard = getOnboardingMode() === 'guided' && !allDone && introSpotlight === undefined;
+
+  const handleTaskClick = (id: GuidedTaskId) => {
+    switch (id) {
+      case 'sponsor':  onSectionChange('inbox');     return;
+      case 'manager':  onSectionChange('inbox');     return;
+      case 'signing':  onSectionChange('transfers'); return;
+      case 'facility': onNavigateToStadium();        return;
+    }
+  };
+
   const dim = (sectionId: string) => {
     if (introSpotlight === undefined) return null;
     return (
@@ -64,6 +80,11 @@ export function OverviewSection({
 
   return (
     <div className="flex flex-col gap-2 px-4 pb-4">
+
+      {/* ── Guided task card (new players, tasks outstanding) ───────────── */}
+      {showGuidedCard && (
+        <GuidedTaskCard tasks={guidedTasks} onTaskClick={handleTaskClick} />
+      )}
 
       {/* ── Inbox (priority: at top, full height) ───────────────────────── */}
       <div className="relative">

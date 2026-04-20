@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { GameState, formatMoney, CurriculumLevel, CURRICULUM_LEVELS } from '@calculating-glory/domain';
+import { OnboardingMode, setOnboardingMode } from '../../lib/introState';
 
 interface Props {
   state: GameState;
   hasSave: boolean;
   onContinue: () => void;
-  onNewGame: (level: CurriculumLevel, clubName: string, stadiumName: string) => void;
+  onNewGame: (level: CurriculumLevel, clubName: string, stadiumName: string, mode: OnboardingMode) => void;
 }
 
-type MenuStep = 'main' | 'yearGroup' | 'clubSetup';
+type MenuStep = 'main' | 'yearGroup' | 'clubSetup' | 'onboarding';
 
 function phaseLabel(phase: GameState['phase']): string {
   switch (phase) {
@@ -55,10 +56,11 @@ export function MenuScreen({ state, hasSave, onContinue, onNewGame }: Props) {
     setStadiumName(value);
   }
 
-  function handleStartGame() {
+  function handleStartGame(mode: OnboardingMode) {
     const finalClub    = clubName.trim()    || 'Calculating Glory FC';
     const finalStadium = stadiumName.trim() || suggestStadiumName(finalClub) || 'Glory Park';
-    onNewGame(selected, finalClub, finalStadium);
+    setOnboardingMode(mode);
+    onNewGame(selected, finalClub, finalStadium, mode);
   }
 
   // ── Step: club name + stadium name ────────────────────────────────────────
@@ -116,7 +118,7 @@ export function MenuScreen({ state, hasSave, onContinue, onNewGame }: Props) {
           </div>
 
           <button
-            onClick={handleStartGame}
+            onClick={() => canStart && setMenuStep('onboarding')}
             disabled={!canStart}
             className={`w-full font-semibold text-sm rounded-card py-3 transition-all duration-150
               ${canStart
@@ -124,8 +126,51 @@ export function MenuScreen({ state, hasSave, onContinue, onNewGame }: Props) {
                 : 'bg-bg-raised text-txt-muted cursor-not-allowed'
               }`}
           >
-            Start game →
+            Next →
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Step: onboarding mode choice ──────────────────────────────────────────
+  if (menuStep === 'onboarding') {
+    return (
+      <div className="min-h-screen bg-bg-deep flex flex-col items-center justify-center px-6">
+        <div className="w-full max-w-xs">
+          <button
+            onClick={() => setMenuStep('clubSetup')}
+            className="text-xs text-txt-muted hover:text-txt-primary mb-6 flex items-center gap-1 transition-colors duration-150"
+          >
+            ← Back
+          </button>
+
+          <h2 className="text-xl font-bold text-txt-primary mb-1">How do you want to start?</h2>
+          <p className="text-sm text-txt-muted mb-6 leading-relaxed">
+            You can meet the team first, or jump straight to running the club.
+          </p>
+
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => handleStartGame('guided')}
+              className="rounded-card px-5 py-4 text-left transition-all duration-150 bg-data-blue hover:bg-data-blue/90 active:scale-[0.99] text-white"
+            >
+              <div className="font-semibold text-sm leading-tight">Meet the team</div>
+              <div className="text-xs mt-1 text-blue-200 leading-snug">
+                A short intro from your staff — what the club is chasing, and the first decisions waiting for you.
+              </div>
+            </button>
+
+            <button
+              onClick={() => handleStartGame('skip')}
+              className="rounded-card px-5 py-4 text-left transition-all duration-150 bg-bg-surface hover:bg-bg-raised border border-bg-raised text-txt-primary"
+            >
+              <div className="font-semibold text-sm leading-tight">Skip intro</div>
+              <div className="text-xs mt-1 text-txt-muted leading-snug">
+                Drop straight into pre-season. No hand-holding.
+              </div>
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -193,7 +238,7 @@ export function MenuScreen({ state, hasSave, onContinue, onNewGame }: Props) {
           Calculating<br />Glory
         </h1>
         <p className="text-txt-muted text-sm max-w-xs mx-auto leading-relaxed">
-          You're the owner. Every decision comes back to money. Keep the bar green.
+          Take a club from nothing and chase the glory. Cups, promotions, a stadium full of fans — it's yours to build.
         </p>
       </div>
 
