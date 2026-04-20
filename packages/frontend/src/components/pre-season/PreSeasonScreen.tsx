@@ -3,6 +3,7 @@ import { GameState, GameCommand, Formation, Manager, formatMoney } from '@calcul
 import { FormationPicker } from './FormationPicker';
 import { InheritedSquad } from './InheritedSquad';
 import { ManagerPicker } from './ManagerPicker';
+import { TermInfo } from '../shared/TermInfo';
 
 interface PreSeasonScreenProps {
   state: GameState;
@@ -82,7 +83,8 @@ export function PreSeasonScreen({ state, dispatch }: PreSeasonScreenProps) {
           </div>
           <h1 className="text-xl font-bold text-txt-primary">{club.name}</h1>
           <p className="text-sm text-txt-muted mt-0.5">
-            Budget: <span className="text-txt-primary font-mono">{formatMoney(club.transferBudget)}</span>
+            <TermInfo termId="transfer-budget" label="Budget" size="inline" />
+            : <span className="text-txt-primary font-mono">{formatMoney(club.transferBudget)}</span>
             <span className="mx-2 text-white/10">|</span>
             Weekly wages: <span className="text-txt-primary font-mono">{formatMoney(totalWages)}/wk</span>
           </p>
@@ -182,7 +184,8 @@ export function PreSeasonScreen({ state, dispatch }: PreSeasonScreenProps) {
                       a long season.
                     </p>
                     <p className="text-sm text-txt-muted leading-relaxed mt-2">
-                      Wage runway:{' '}
+                      <TermInfo termId="runway" label="Wage runway" size="inline" />
+                      :{' '}
                       <span className={wageRunway >= 8 ? 'text-txt-primary font-medium' : 'text-alert-red font-medium'}>
                         {wageRunway === Infinity ? '∞' : `${wageRunway}w runway`}
                       </span>
