@@ -26,6 +26,7 @@ export * from './reducers';
 // Simulation
 export * from './simulation/rng';
 export * from './simulation/match';
+export * from './simulation/diagnostics';
 export * from './simulation/season';
 export * from './simulation/events';
 export * from './simulation/commentary';

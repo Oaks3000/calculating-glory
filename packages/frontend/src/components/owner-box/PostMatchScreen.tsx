@@ -7,7 +7,7 @@
  * Shows: result badge, score, goal timeline, league position, NPC reactions.
  */
 
-import { GameState, GameEvent, generateNpcMessages, avgSquadMorale } from '@calculating-glory/domain';
+import { GameState, GameEvent, generateNpcMessages, avgSquadMorale, diagnoseMatch, MatchFactor } from '@calculating-glory/domain';
 import { MatchTimeline, MatchScore } from '@calculating-glory/domain';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -131,6 +131,10 @@ export function PostMatchScreen({
   // Squad morale
   const morale = avgSquadMorale(state.club.squad);
 
+  // Why-this-result factors — top 3 contributing inputs the player can act on.
+  // Pulls from the same modifier weights the simulation actually used.
+  const factors = diagnoseMatch(state.club, isHome, 3);
+
   // NPC reactions — POST_MATCH + WEEKLY_SUMMARY, capped at 3
   const allNpcMessages = generateNpcMessages(state, events);
   const npcReactions = allNpcMessages
@@ -194,6 +198,35 @@ export function PostMatchScreen({
                   </span>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Why-this-result panel — ties the score back to player-controllable inputs */}
+        {factors.length > 0 && (
+          <div className="bg-bg-raised rounded-card border border-white/5 p-3">
+            <p className="text-xs font-bold text-txt-muted uppercase tracking-wider mb-2">
+              {result === 'W' ? 'Why we won' : result === 'L' ? 'Why we lost' : 'Why it ended level'}
+            </p>
+            <div className="flex flex-col gap-2">
+              {factors.map((f: MatchFactor, i: number) => {
+                const colour =
+                  f.sign === 'positive' ? 'text-pitch-green' :
+                  f.sign === 'negative' ? 'text-alert-red' :
+                  'text-warn-amber';
+                const glyph = f.sign === 'positive' ? '▲' : f.sign === 'negative' ? '▼' : '◆';
+                return (
+                  <div key={i} className="flex items-start gap-2.5">
+                    <span className={`text-xs2 ${colour} shrink-0 leading-snug`} aria-hidden>
+                      {glyph}
+                    </span>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-semibold text-txt-primary leading-snug">{f.label}</span>
+                      <span className="text-xs2 text-txt-muted leading-relaxed">{f.detail}</span>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
