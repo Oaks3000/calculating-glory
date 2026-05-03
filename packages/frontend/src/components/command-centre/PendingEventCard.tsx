@@ -1,6 +1,70 @@
 import { useState } from 'react';
 import { PendingClubEvent, GameCommand, formatMoney } from '@calculating-glory/domain';
 
+type MathsResolution = 'correct' | 'wrong' | 'skip' | null;
+
+/**
+ * Returns the budgetEffect that will actually apply when this choice resolves,
+ * given the current maths state. Mirrors the domain logic at
+ * commands/handlers.ts:755–761 so the UI shows what the player will get,
+ * not the fallback.
+ */
+function effectiveBudgetEffect(
+  choice: PendingClubEvent['choices'][number],
+  mathsResult: MathsResolution,
+): number | undefined {
+  if (mathsResult === 'correct' && choice.mathsCorrectBudgetEffect !== undefined) {
+    return choice.mathsCorrectBudgetEffect;
+  }
+  if (mathsResult === 'wrong' && choice.mathsWrongBudgetEffect !== undefined) {
+    return choice.mathsWrongBudgetEffect;
+  }
+  return choice.budgetEffect;
+}
+
+/**
+ * The counterfactual: what budgetEffect would have applied with the opposite
+ * maths outcome. Used to surface "could have been £X" / "was nearly £Y" lines.
+ * Returns undefined when there's no meaningful counterfactual to show.
+ */
+function counterfactualBudgetEffect(
+  choice: PendingClubEvent['choices'][number],
+  mathsResult: MathsResolution,
+): number | undefined {
+  if (mathsResult === 'correct' && choice.mathsWrongBudgetEffect !== undefined) {
+    return choice.mathsWrongBudgetEffect;
+  }
+  if (mathsResult === 'wrong' && choice.mathsCorrectBudgetEffect !== undefined) {
+    return choice.mathsCorrectBudgetEffect;
+  }
+  return undefined;
+}
+
+/** Format an absolute pence value as "£1,500" (no sign). */
+function formatBudgetAbs(pence: number) {
+  return Math.abs(pence / 100).toLocaleString('en-GB', {
+    style: 'currency',
+    currency: 'GBP',
+    maximumFractionDigits: 0,
+  });
+}
+
+/**
+ * Best-case delta across all choices for this maths state — used in the
+ * post-answer banner to summarise "you captured up to £X" or "you missed up to £Y".
+ * Picks the choice with the largest |correct − wrong| gap.
+ */
+function maxMathsDelta(event: PendingClubEvent): number {
+  let max = 0;
+  for (const c of event.choices) {
+    if (c.mathsCorrectBudgetEffect !== undefined && c.mathsWrongBudgetEffect !== undefined) {
+      const delta = Math.abs(c.mathsCorrectBudgetEffect - c.mathsWrongBudgetEffect);
+      if (delta > max) max = delta;
+    }
+  }
+  return max;
+}
+
 interface PendingEventCardProps {
   event: PendingClubEvent;
   dispatch: (command: GameCommand) => { error?: string };
@@ -363,17 +427,29 @@ export function PendingEventCard({ event, dispatch, onError, onMathChallenge }: 
         />
       )}
 
-      {/* Maths result confirmation banner */}
-      {event.mathsChallenge && mathsResult === 'correct' && (
-        <div className="mb-3 rounded-tag bg-pitch-green/10 border border-pitch-green/30 px-2 py-1 text-xs text-pitch-green font-medium">
-          ✓ Maths correct — full outcome unlocked
-        </div>
-      )}
-      {event.mathsChallenge && mathsResult === 'wrong' && (
-        <div className="mb-3 rounded-tag bg-warn-amber/10 border border-warn-amber/30 px-2 py-1 text-xs text-warn-amber font-medium">
-          ⚠ Maths incomplete — outcomes may be less favourable
-        </div>
-      )}
+      {/* Maths result confirmation banner — quantifies the delta the player captured/missed */}
+      {event.mathsChallenge && mathsResult === 'correct' && (() => {
+        const delta = maxMathsDelta(event);
+        return (
+          <div className="mb-3 rounded-tag bg-pitch-green/10 border border-pitch-green/30 px-2 py-1 text-xs text-pitch-green font-medium">
+            ✓ Maths correct
+            {delta > 0 && (
+              <span className="text-txt-muted font-normal"> — up to {formatBudgetAbs(delta)} better than the wrong-answer outcome</span>
+            )}
+          </div>
+        );
+      })()}
+      {event.mathsChallenge && mathsResult === 'wrong' && (() => {
+        const delta = maxMathsDelta(event);
+        return (
+          <div className="mb-3 rounded-tag bg-warn-amber/10 border border-warn-amber/30 px-2 py-1 text-xs text-warn-amber font-medium">
+            ⚠ Maths incomplete
+            {delta > 0 && (
+              <span className="text-txt-muted font-normal"> — up to {formatBudgetAbs(delta)} on the table if the maths had been right</span>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Choices — shown after maths challenge is attempted (or no maths challenge) */}
       {choicesUnlocked && (
@@ -381,6 +457,10 @@ export function PendingEventCard({ event, dispatch, onError, onMathChallenge }: 
           {/* Standard choices */}
           {standardChoices.map(choice => {
             const risky = isRiskyChoice(choice);
+            const effective = effectiveBudgetEffect(choice, mathsResult);
+            const counterfactual = counterfactualBudgetEffect(choice, mathsResult);
+            const showCounterfactual =
+              counterfactual !== undefined && effective !== undefined && counterfactual !== effective;
             return (
               <button
                 key={choice.id}
@@ -400,11 +480,18 @@ export function PendingEventCard({ event, dispatch, onError, onMathChallenge }: 
                 </span>
                 <p className="text-xs2 text-txt-muted mt-0.5 leading-relaxed">{choice.description}</p>
                 <EffectPills
-                  budgetEffect={choice.budgetEffect}
+                  budgetEffect={effective}
                   reputationEffect={choice.reputationEffect}
                   performanceEffect={choice.performanceEffect}
                   moraleEffect={choice.moraleEffect}
                 />
+                {showCounterfactual && (
+                  <p className="text-xs2 text-txt-muted mt-1 italic">
+                    {mathsResult === 'correct'
+                      ? `Wrong-answer outcome would have been ${formatBudget(counterfactual!)}`
+                      : `Correct-answer outcome would have been ${formatBudget(counterfactual!)}`}
+                  </p>
+                )}
               </button>
             );
           })}
